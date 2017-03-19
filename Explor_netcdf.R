@@ -17,20 +17,17 @@ flist <- list.files(pattern= "^.*\\.(nc|NC|Nc|Nc)$")
 nc <- nc_open(paste0(flist[1]))
 print(nc)
 
-
-# Save the print(nc) dump to a text file (same name as the nc file with a txt extension)
-{
-  sink(paste0("data/", flist[1], ".txt"))
-  print(nc)
-  sink()
-}
-
+ncname <-  "2017315214914EnsembleGPP_GL"
+ncfname <- paste(ncname, ".nc", sep="")
+dname <- "gpp"
 # Get a list of the NetCDF's R attributes:
 attributes(nc)$names
 # Get a list of the nc variable names.
 attributes(nc$var)$names
 # Take a look at the GPP variable's nc attributes (units etc).
 ncatt_get(nc, attributes(nc$var)$names[4])
+
+print(nc)
 
 #Get lat and long
 lon <- ncvar_get (nc, "lon")
@@ -111,4 +108,34 @@ gpp_vec <- as.vector(gpp_slice)
 length(gpp_vec)
 
 gpp_df01 <- data.frame(cbind(lonlat, gpp_vec))
-names()
+names(gpp_df01) <- c("lon", "lat", paste(dname, as.character(m), sep="_"))
+head(na.omit(gpp_df01), 10)
+
+csvfile <- "GL_GPP_1.csv"
+write.table(na.omit(gpp_df01), csvfile, row.names=FALSE, sep=",")
+
+#Convert the whole array to a dataframe----------------
+gpp_vec_long <- as.vector(gpp_array)
+length(gpp_vec_long)
+
+#reshape vector into 2592000x360 (months) matrix using matrix() function and verify dimensions
+#360 comes from: 
+#Goes from May 1982 to May 2012 - 12 months per year * 30 years = 360
+#For the ones from the 2017 dataset they will be 12 apiece for the monthly
+
+gpp_mat <- matrix(gpp_vec_long, nrow=nlon*nlat, ncol=nt)
+dim(gpp_mat)
+
+head(na.omit(gpp_mat))
+
+lonlat <- as.matrix(expand.grid(lon,lat))
+gpp_df02 <- data.frame(cbind(lonlat, gpp_mat))
+names(gpp_df02) <- c("lon", "lat", "May1982")
+head(na.omit(gpp_df02, 20))
+
+#Can get annual mean, variance, etc. here
+#eg. gpp_df02$mtwa <- apply(gpp_df02[3:14], 1, max)
+
+dim(na.omit(gpp_df02))
+csvfile <- "GL_GPP_2.csv"
+write.table(na.omit(gpp_df02), csvfile,row.names=FALSE, sep=",")
