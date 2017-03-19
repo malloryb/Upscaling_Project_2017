@@ -7,7 +7,8 @@ library(lattice)
 library(RColorBrewer)
 
 #"Using this as a template:
-#https://www.r-bloggers.com/a-netcdf-4-in-r-cheatsheet/"
+#http://geog.uoregon.edu/GeogR/topics/netCDF-read-ncdf4.html
+#http://geog.uoregon.edu/GeogR/topics/netCDF-dataframe.html
 
 setwd("C:/Users/rsstudent/Upscaling_Data/Jung_2011")
 #retrieve a list of nc files in folder
@@ -68,31 +69,46 @@ references <- ncatt_get(nc,0,"references")
 history <- ncatt_get(nc,0,"history")
 Conventions <- ncatt_get(nc,0,"Conventions")
 
-
+#List files
 ls()
 
 #Convert Netcdf into dataframes so I can actually understand what's going on here
+tustr <- strsplit(tunits$value, " ")
+tdstr <- strsplit(unlist(tustr)[3], "-")
+tmonth=as.integer(unlist(tdstr)[2])
+tday=as.integer(unlist(tdstr)[3])
+tyear=as.integer(unlist(tdstr)[1])
+chron(t,origin=c(tmonth, tday, tyear))
 
+#replace netCDF varaible's fill values with R NA's
+gpp_array[gpp_array==fillvalue$value] <-NA
 
+#This is the number of non-missing grid cells (i.e. land cells)
+length(na.omit(as.vector(gpp_array[,,1])))
 
+#Get single slice of the data, create an R data frame, and write a .csv file
+m <- 1
+gpp_slice <- gpp_array[,,m]
+#dimensions should be 720 by 360 rows
+#verify dimensions
+dim(gpp_slice)
+gpp_slice
+lat
+lon
 
-gpp <- attributes(nc$var)$names[4]
-ncvar_get(nc, gpp)
-# Retrieve a matrix of the GPP data using the ncvar_get function:
-GPP_mean <- ncvar_get(nc, attributes(nc$var)$names[4])
+image(lon,lat, gpp_slice, col=rev(brewer.pal(10, "RdBu")))
 
+grid <- expand.grid(lon=lon, lat=lat)
+cutpts <- c(-1,-0.5,0,0.5, 1)
+levelplot(gpp_slice ~ lon*lat, data=grid, at=cutpts, cuts=4, pretty=T, col.regions=(rev(brewer.pal(10,"YlGnBu"))))
 
-# Print the data's dimensions
-dim(GPP_mean)
+#Still trying to extract time series
+lonlat <- as.matrix(expand.grid(lon,lat))
+dim(lonlat)
+#vector of 'gpp' values
 
-#Retrieve lat long values
-attributes(nc$dim)$names
+gpp_vec <- as.vector(gpp_slice)
+length(gpp_vec)
 
-nc_lat <- ncvar_get( nc, attributes(nc$dim)$names[3])
-nc_lon <- ncvar_get( nc, attributes(nc$dim)$names[1])
-
-print(paste(dim(nc_lat), "latitudes and", dim(nc_lon), "longitudes"))
-
-#Global attributes
-nc_atts <- ncatt_get(nc,0)
-names(nc_atts)
+gpp_df01 <- data.frame(cbind(lonlat, gpp_vec))
+names()
