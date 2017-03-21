@@ -14,10 +14,10 @@ setwd("C:/Users/rsstudent/Upscaling_Data/Jung_2011")
 #retrieve a list of nc files in folder
 flist <- list.files(pattern= "^.*\\.(nc|NC|Nc|Nc)$")
 #Open to first file in our list
-nc <- nc_open(paste0(flist[1]))
+nc <- nc_open(paste0(flist[2]))
 print(nc)
 
-ncname <-  "2017315214914EnsembleGPP_GL"
+ncname <-  "2017315214914EnsembleGPP_MR"
 ncfname <- paste(ncname, ".nc", sep="")
 dname <- "gpp"
 # Get a list of the NetCDF's R attributes:
@@ -52,10 +52,10 @@ nt
 tunits <- ncatt_get(nc, "time", "units")
 
 #Get input variable (gp) and its attributes and verify the size of the array
-gpp_array <- ncvar_get(nc, gpp)
-dlname <- ncatt_get(nc, gpp, "long_name")
-dunits <- ncatt_get(nc, gpp, "units")
-fillvalue <- ncatt_get(nc, gpp, "_FillValue")
+gpp_array <- ncvar_get(nc, "gpp")
+dlname <- ncatt_get(nc, "gpp", "long_name")
+dunits <- ncatt_get(nc, "gpp", "units")
+fillvalue <- ncatt_get(nc, "gpp", "_FillValue")
 
 
 #Get global attributes
@@ -93,11 +93,11 @@ gpp_slice
 lat
 lon
 
-image(lon,lat, gpp_slice, col=rev(brewer.pal(10, "RdBu")))
+#image(lon,lat, gpp_slice, col=rev(brewer.pal(10, "RdBu")))
 
 grid <- expand.grid(lon=lon, lat=lat)
-cutpts <- c(-1,-0.5,0,0.5, 1)
-levelplot(gpp_slice ~ lon*lat, data=grid, at=cutpts, cuts=4, pretty=T, col.regions=(rev(brewer.pal(10,"YlGnBu"))))
+cutpts <- c(0,0.00000001,0.00000002, 0.00000004, 0.00000006, 0.0000001)
+levelplot(gpp_slice ~ lon*lat, data=grid, at=cutpts, cuts=6, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))))
 
 #Still trying to extract time series
 lonlat <- as.matrix(expand.grid(lon,lat))
@@ -111,7 +111,7 @@ gpp_df01 <- data.frame(cbind(lonlat, gpp_vec))
 names(gpp_df01) <- c("lon", "lat", paste(dname, as.character(m), sep="_"))
 head(na.omit(gpp_df01), 10)
 
-csvfile <- "GL_GPP_1.csv"
+csvfile <- "MR_GPP_1.csv"
 write.table(na.omit(gpp_df01), csvfile, row.names=FALSE, sep=",")
 
 #Convert the whole array to a dataframe----------------
@@ -137,5 +137,5 @@ head(na.omit(gpp_df02, 20))
 #eg. gpp_df02$mtwa <- apply(gpp_df02[3:14], 1, max)
 
 dim(na.omit(gpp_df02))
-csvfile <- "GL_GPP_2.csv"
+csvfile <- "MR_GPP_all.csv"
 write.table(na.omit(gpp_df02), csvfile,row.names=FALSE, sep=",")
