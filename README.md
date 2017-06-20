@@ -1,6 +1,6 @@
 # Upscaling_Project_2017
 
-##Files existing within this repository: 
+## Files existing within this repository: 
 
 * 00_MODIS_datadownload.R - Very short code trying to download modis data by tile 
 * 01_Explore_Jung2011NetCDF.R - Takes Jung_2011 data and slices and dieces to get all files
