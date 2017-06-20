@@ -1,7 +1,7 @@
 library(reshape2)
 
 #Jung_2017
-Jung_2017 <- read.csv("C:/Users/rsstudent/Upscaling_Data/FluxCom_Monthly/MARS_GPP_all_years_3_22_20117.csv")
+Jung_2017 <- read.csv("C:/Users/rsstudent/odrive/UA_Google_Drive/MARS_GPP_all_years_3_22_20117.csv")
 #Jung_2011
 Jung_2011 <- read.csv("C:/Users/rsstudent/Upscaling_Data/Jung_2011/MR_GPP_all.csv")
 names(Jung_2011) <- gsub("\\.", "_", names(Jung_2011))
@@ -34,7 +34,7 @@ us_whs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.
 us_wjs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-105.75 & Jung_2017$lat==34.25), 1000*86400*subset(Jung_2011, Jung_2011$lon==-105.75 & Jung_2011$lat==34.25))
 us_wkg<- bind_rows(subset(Jung_2017, Jung_2017$lon==-109.75 & Jung_2017$lat==31.75), 1000*86400*subset(Jung_2011, Jung_2011$lon==-109.75 & Jung_2011$lat==31.75))
 
-setwd("C:/Users/rsstudent/Upscaling_Data/")
+setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/Upscaling_Data/")
 
 d.list <- list(us_aud, us_cop, us_fuf, us_lpa, us_mpj, us_ray, us_scc, us_scf, us_scw, us_seg, us_sen, us_ses, us_sob, us_son,
                us_soy, us_src, us_srg, us_srm, us_tes, us_vcp, us_vcm, us_whs, us_wjs, us_wkg)

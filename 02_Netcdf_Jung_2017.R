@@ -9,7 +9,7 @@ library(RColorBrewer)
 #"Using this as a template:
 #http://geog.uoregon.edu/GeogR/topics/netCDF_read_ncdf4.html
 #http://geog.uoregon.edu/GeogR/topics/netCDF_dataframe.html
-setwd("C:/Users/rsstudent/Upscaling_Data/FluxCom_Monthly/")
+setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/FluxCom_Monthly/")
 #retrieve a list of nc files in folder
 flist <- list.files(path="GPP_Reichstein", pattern= "^.*\\.(nc|NC|Nc|Nc)$")
 tlist <- flist[1:2]
@@ -27,7 +27,10 @@ ncatt_get(nc, attributes(nc$var)$names[4])
 
 print(nc)
 
-setwd("C:/Users/rsstudent/Upscaling_Data/FluxCom_Monthly/GPP_Reichstein/")
+setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/FluxCom_Monthly/GPP_Reichstein/")
+
+#User-defined function to process all .ncdf files (thesese files are monthly) in a given list
+ 
 process_nc1 <- function(f){
     nc_tmp <- nc_open(f)
     #store values from variables and attributes
@@ -75,6 +78,7 @@ process_nc1 <- function(f){
 return(gpp_df)
 }
 
+#This step takes awhile
 tmp <- lapply(flist, process_nc1) %>% bind_cols()
 str(tmp)
 data <- tmp[!duplicated(as.list(tmp))]

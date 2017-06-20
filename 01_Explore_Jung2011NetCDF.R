@@ -10,7 +10,8 @@ library(RColorBrewer)
 #http://geog.uoregon.edu/GeogR/topics/netCDF-read-ncdf4.html
 #http://geog.uoregon.edu/GeogR/topics/netCDF-dataframe.html
 
-setwd("C:/Users/Mallory/Documents/")
+setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/Jung_2011/")
+
 #retrieve a list of nc files in folder
 flist <- list.files(pattern= "^.*\\.(nc|NC|Nc|Nc)$")
 #Open to first file in our list
