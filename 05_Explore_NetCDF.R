@@ -10,14 +10,14 @@ library(RColorBrewer)
 #http://geog.uoregon.edu/GeogR/topics/netCDF-read-ncdf4.html
 #http://geog.uoregon.edu/GeogR/topics/netCDF-dataframe.html
 
-setwd("C:/Users/rsstudent/Upscaling_Data/Jung_2011")
+setwd("C:/Users/Mallory/Documents/")
 #retrieve a list of nc files in folder
 flist <- list.files(pattern= "^.*\\.(nc|NC|Nc|Nc)$")
 #Open to first file in our list
-nc <- nc_open(paste0(flist[2]))
+nc <- nc_open(paste0(flist[1]))
 print(nc)
 
-ncname <-  "2017315214914EnsembleGPP_MR"
+ncname <-  "2017322161812EnsembleGPP_MR"
 ncfname <- paste(ncname, ".nc", sep="")
 dname <- "gpp"
 # Get a list of the NetCDF's R attributes:
@@ -84,7 +84,7 @@ gpp_array[gpp_array==fillvalue$value] <-NA
 length(na.omit(as.vector(gpp_array[,,1])))
 
 #Get single slice of the data, create an R data frame, and write a .csv file
-m <- 1
+m <- 02
 gpp_slice <- gpp_array[,,m]
 #dimensions should be 720 by 360 rows
 #verify dimensions
@@ -96,8 +96,8 @@ lon
 #image(lon,lat, gpp_slice, col=rev(brewer.pal(10, "RdBu")))
 
 grid <- expand.grid(lon=lon, lat=lat)
-cutpts <- c(0,0.00000001,0.00000002, 0.00000004, 0.00000006, 0.0000001)
-levelplot(gpp_slice ~ lon*lat, data=grid, at=cutpts, cuts=6, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))))
+cutpts <- c(0,0.00000001,0.000000015, 0.00000002, 0.000000025, 0.0000008)
+levelplot(gpp_slice ~ lon*lat, data=grid, ylim=c(20,40), xlim=c(-125, -100), at=cutpts, cuts=6, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))))
 
 #Still trying to extract time series
 lonlat <- as.matrix(expand.grid(lon,lat))
@@ -130,7 +130,7 @@ head(na.omit(gpp_mat))
 
 lonlat <- as.matrix(expand.grid(lon,lat))
 gpp_df02 <- data.frame(cbind(lonlat, gpp_mat))
-names(gpp_df02) <- c("lon", "lat", "May1982")
+names(gpp_df02) <- c("lon", "lat", "Jan1982", "Feb1982", "Mar1982", )
 head(na.omit(gpp_df02, 20))
 
 #Can get annual mean, variance, etc. here
