@@ -71,6 +71,8 @@ cols2<- c(3, 5, 7:18)
 cols3<- c(5, 7:8, 10:11, 14:18)
 #Model using: same as cols1 except: Precip, Tair, VPD
 cols4<- c(5, 10:18)
+#Model using: ONLY LST and NDVI
+cols5 <- c(17:18)
 head(All_sites.training)
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx (4:12pm - xx:xxpm for 1)
@@ -78,16 +80,16 @@ model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='
 model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf3 <-train(All_sites.training[,cols3], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf4 <- train(All_sites.training[,cols4], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-
+model_rf5 <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
 #Predict based on model
-predictions <- predict(object=model_rf2, All_sites.test[,cols2])
+predictions <- predict(object=model_rf5, All_sites.test[,cols5])
 table(predictions)
 pred1 <- as.numeric(predictions)
 cor(pred1, All_sites.test[,6])
-model_rf2
-RF2 <- model_rf2$finalModel
-varImp(RF2)
-varImpPlot(RF2, type=2)
+model_rf5
+RF5 <- model_rf5$finalModel
+varImp(RF5)
+varImpPlot(RF5, type=2)
 lb1 <- paste("R^2 == ", "0.77")
 RMSE1 <- paste("RMSE==", "0.085")
 
