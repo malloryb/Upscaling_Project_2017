@@ -9,7 +9,6 @@ All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_7_
 head(All_sites)
 #add column names
 str(All_sites)
-All_sites$us_cop
 All_sites$month <- as.factor(All_sites$month)
 #2. Know your data----------------------
 #Iris scatter plots using ggvis and some correlations
@@ -89,9 +88,12 @@ varImpPlot(RF5, type=2)
 lb1 <- paste("R^2 == ", "0.73")
 RMSE1 <- paste("RMSE==", "0.088")
 
+#Plot predicted vs. measured
 qplot(pred1, All_sites.test[,6]) + 
   geom_point(shape=19, colour="tomato2", size=4)+
   geom_abline(intercept = 0, slope = 1)+
+  xlim(0,1)+
+  ylim(0,1)+
   xlab("Flux monthly GPP")+
   ylab("Predicted monthly GPP")+
   theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
