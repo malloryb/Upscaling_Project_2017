@@ -53,5 +53,8 @@ write.csv(for_spei, "F:/Upscaling_Project/Site_based_RF/for_spei.csv")
 for_spei <- read.csv("F:/Upscaling_Project/Site_based_RF/for_spei.csv")
 
 head(for_spei)
+str(for_spei)
 
-for_spei$BAl <- for_spei$precip - for_spei$PET_thorn 
+for_spei$BAL <- for_spei$precip - for_spei$PET_thorn 
+str(for_spei)
+spei(ts(for_spei[,'BAL'], freq=12, start=c(2008,5)), 12)
