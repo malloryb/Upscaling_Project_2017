@@ -114,28 +114,29 @@ Jan2 <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.t
 #OK this seriously took over an hour
 Jan_2001_EVI <- overlay(Jan1, Jan2, fun=mean_na)
 
+#Remote NAs and rescale (EVI scale factor)
 Jan_2001_EVI[Jan_2001_EVI<0] <- NA 
 Jan_2001_EVI <- (Jan_2001_EVI * 0.0001)
 Jan_2001_EVI
 plot(Jan_2001_EVI)
 
-?alignExtent
+#Trying to algin rasters so they can be stacked
 Jan_2001_tminext <- alignExtent(EVIext, Jan_2001_tmin)
 Upscext <- extent(-123.0019, -102.9983, 22.9687, 40.9991)
-EVIext <- extent(Jan_2001_EVI)
-Jan_2001_tminext <- crop(Jan_2001_tmin, EVIext)
+Jan_2001_tminext <- crop(Jan_2001_tmin, Upscext)
+Jan_2001_EVIext <- crop(Jan_2001_EVI, Upscext)
 
+alignExtent(Upscext, Jan_2001_tmin, snap='near')
+alignExtent(Upscext, Jan_2001_EVI, snap='near')
 r.new = resample(Jan_2001_EVI, Jan_2001_tminext, "bilinear")
 extent(Jan_2001_tminext)
 extent(Jan_2001_EVI)
 
-r.new = mask(r.new, Jan_2001_tminext)
-Jan_2001_tminext <- setExtent(Jan_2001_tmin, EVIext, keepres=TRUE)
-plot(Jan_2001_EVI)
-plot(Jan_2001_tminext)
+#Resample takes a bit but not too long...
+Jan_2001_tminresample <- resample(Jan_2001_tmin, Jan_2001_EVI, method="bilinear")
+Jan_2001_tmaxresample <- resample(Jan_2001_tmax, Jan_2001_EVI, method="bilinear")
+Jan_2001_Precipesample <- resample(Jan_2001_Precip, Jan_2001_EVI, method="bilinear")
 
-stack(Jan_2001_tminext, Jan_2001_EVI)
+#Stack
+stack(Jan_2001_tminresample, Jan_2001_tmaxresample, Jan2001_Precipesample, Jan_2001_EVI)
 
-compareRaster(Jan_2001_EVI, Jan_2001_tmax, Jan_2001_tmin, Jan_2001_precip)
-stack(Jan_2001_EVI, Jan_2001_tmax, Jan_2001_tmin, Jan_2001_precip)
-Jan_2001_EVI
