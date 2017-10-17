@@ -80,37 +80,62 @@ gc()
 
 #Read rasters from Guillermo--------------------------------
 Precip <-raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif")
-Temp <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif")
+Tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif")
+Tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif")
 EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
 
-plot(Precip[[1]])
-setMinMax(Precip)
-Precip[Precip==-9999] <- NA 
-plot(Precip[[1]])
-Precip
 
+#Precip
 Jan_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
        band = 13)
 
 Jan_2001_precip[Jan_2001_precip==-9999] <- NA 
 plot(Jan_2001_precip)
 
-Jan_2001_temp <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+
+#Tmax
+Jan_2001_tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
                         band = 13)
 
-Jan_2001_temp[Jan_2001_temp==-9999] <- NA 
-plot(Jan_2001_temp)
+Jan_2001_tmax[Jan_2001_tmax==-9999] <- NA 
+plot(Jan_2001_tmax)
 
+#Tmin
+Jan_2001_tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+                        band = 13)
+
+Jan_2001_tmin[Jan_2001_tmin==-9999] <- NA 
+
+
+#EVI
 Jan1 <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=1)
 Jan2 <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=2)
 
+#OK this seriously took over an hour
 Jan_2001_EVI <- overlay(Jan1, Jan2, fun=mean_na)
 
 Jan_2001_EVI[Jan_2001_EVI<0] <- NA 
 Jan_2001_EVI <- (Jan_2001_EVI * 0.0001)
-plot(Jan_2001_EVI)
 Jan_2001_EVI
+plot(Jan_2001_EVI)
 
+?alignExtent
+Jan_2001_tminext <- alignExtent(EVIext, Jan_2001_tmin)
+Upscext <- extent(-123.0019, -102.9983, 22.9687, 40.9991)
+EVIext <- extent(Jan_2001_EVI)
+Jan_2001_tminext <- crop(Jan_2001_tmin, EVIext)
 
+r.new = resample(Jan_2001_EVI, Jan_2001_tminext, "bilinear")
+extent(Jan_2001_tminext)
+extent(Jan_2001_EVI)
 
+r.new = mask(r.new, Jan_2001_tminext)
+Jan_2001_tminext <- setExtent(Jan_2001_tmin, EVIext, keepres=TRUE)
+plot(Jan_2001_EVI)
+plot(Jan_2001_tminext)
 
+stack(Jan_2001_tminext, Jan_2001_EVI)
+
+compareRaster(Jan_2001_EVI, Jan_2001_tmax, Jan_2001_tmin, Jan_2001_precip)
+stack(Jan_2001_EVI, Jan_2001_tmax, Jan_2001_tmin, Jan_2001_precip)
+Jan_2001_EVI
