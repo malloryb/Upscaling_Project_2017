@@ -7,20 +7,6 @@ library(lubridate)
 library(MODIS)
 library(ncdf4)
 library(MODIStsp)
-#For LST-----------------------------------------------
-#Set working directory
-setwd("C:/Users/Mallory/Documents/MRT/")
-#List of .TIF files to process
-filenames <- list.files("Params/", pattern= "*tif$")
-filenames_Jan <- list.files("Params/", pattern="*A200100.*tif$")
-
-
-rast_test <- raster("C:/Users/Mallory/Documents/MRT/Params/MOD11A2.A2001017.LST_Day_1km.tif")
-plot(rast_test)
-extent(rast_test)
-res(rast_test)
-
-
 #MeanIgnoringZeroes -> user-defined function to get mean without zeros
 
 meanIgnoringZeroes <- function(x) {
@@ -55,12 +41,6 @@ scale_raster <- function(x) {
 }
 
 #For NDVI
-
-#List of .TIF files to process
-filenames_NDVI <- list.files("NDVIParam/", pattern= "*tif$")
-filenames_Jan_NDVI <- list.files("NDVIParam/", pattern="*A200100.*tif$")
-
-
 scale_raster_NDVI <- function(x) {
   filename <- paste(x)
   print(filename)
@@ -74,12 +54,6 @@ scale_raster_NDVI <- function(x) {
   rast <- setNames(rast, date)
   return(rast)
 }
-
-
-s22 <-lapply(filenames_NDVI, scale_raster_NDVI)
-s32 <- lapply(filenames_Jan_NDVI, scale_raster_NDVI)
-
-plot(s32[[1]])
 
 #Overlay rasters by month
 #TAKES FOREVER
@@ -99,14 +73,12 @@ Dec_mean <- overlay(s22[[22]], s22[[23]], fun=mean_na)
 stkNDVI <- stack(Jan_mean,Feb_mean,Mar_mean,Apr_mean, May_mean, Jun_mean, Jul_mean, Aug_mean,Sep_mean, Oct_mean, Nov_mean, Dec_mean)
 names(stkNDVI) <- c('Jan','Feb','Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
-
 writeRaster(stkNDVI, file="C:/Users/Mallory/Documents/MRT/Monthly_NDVI_2001.nc", overwrite=TRUE) 
 memory.limit(size = 150000)
 memory.limit()
 gc()
 
-
-#Read rasters from Guillermo
+#Read rasters from Guillermo--------------------------------
 Precip <-raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif")
 Temp <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif")
 EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
