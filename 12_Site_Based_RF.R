@@ -4,7 +4,7 @@ library(caret)
 library(randomForest)
 
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_7_12_2017.csv") 
+All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_13_2017_less_NA.csv") 
 #Print first lines
 head(All_sites)
 #add column names
@@ -35,13 +35,12 @@ normalize <- function(x) {
 
 #Normalize quantitative data 
 str(All_sites)
-All_sites <- All_sites[c("X", "date", "site", "IGBP", "month", "GPP", "Precip", "Tair", "VPD", "daylength",
+All_sites <- All_sites[c("date", "site", "IGBP", "month", "Latitude", "Longitude"," GPP", "Precip", "Tair", "VPD", "daylength",
                          "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI")]
 All_sites[complete.cases(All_sites),]
-All_normalized <- as.data.frame(lapply(All_sites[6:18], normalize))
+All_normalized <- as.data.frame(lapply(All_sites[5:17], normalize))
 str(All_normalized)
-str(All_normalized)
-All <- cbind(All_sites[1:5], All_normalized)
+All <- cbind(All_sites[1:4], All_normalized)
 All_normalized <- All[complete.cases(All_normalized),]
 
 #Machine Learning with "caret"
@@ -64,7 +63,7 @@ cols2<- c(3, 5, 7:18)
 cols3<- c(5, 7:8, 10:11, 14:18)
 #Model using: same as cols1 except: Precip, Tair, VPD
 cols4<- c(5, 10:18)
-#Model using: ONLY LST and NDVI
+#Model using: precip, NDVI, tmax, tmin,month
 cols5 <- c(5, 11, 14:16, 18)
 head(All_sites.training)
 #Train a model (trying both KNN and random forest)
