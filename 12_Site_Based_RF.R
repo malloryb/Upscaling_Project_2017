@@ -124,14 +124,14 @@ sw <- extent(Jan_2001)
 Jan_2001
 #This step takes awhile: 11:23am - on personal laptop
 Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
-plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP", zlim=c(0,8))
+plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP", zlim=c(0,7))
 
 #For June
 Jun_2001 <- stack("D:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
 names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 sw <- extent(Jun_2001)
 Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
-plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,8))
+plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,7))
 
 saveRDS(RF5, "D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
 readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
