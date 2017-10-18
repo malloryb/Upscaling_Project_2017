@@ -115,16 +115,20 @@ qplot(pred1, All_sites.test[,7]) +
   ggtitle("Random forest - 5 (RS/Daymet Only)")  
 
 #Predict based on test raster
+
 #For January 
 Jan_2001 <- stack("D:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
 
 names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 sw <- extent(Jan_2001)
 Jan_2001
+#This step takes awhile: 11:23am - on personal laptop
 Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
-plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP")
+plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP", zlim=c(0,8))
 
 #For June
 Jun_2001 <- stack("D:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
+names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+sw <- extent(Jun_2001)
 Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
-plot(Jun_2001_GPP, main="June 2001 upscaled GPP")
+plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,8))
