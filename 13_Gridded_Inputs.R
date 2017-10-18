@@ -70,7 +70,7 @@ Tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_
 Tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif")
 EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
 
-
+#Jan_2001---------------------------------------------------------------
 #Precip
 Jan_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
        band = 13)
@@ -129,9 +129,68 @@ Jan_2001 <- stack(Jan_2001_tminresample, Jan_2001_tmaxresample, Jan_2001_Precipe
 
 names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 
-writeRaster(Jan_2001, file="F:/Upscaling_Project/Gridded_Inputs/Jan_2001_.nc")
-
+#writeRaster(Jan_2001, file="F:/Upscaling_Project/Gridded_Inputs/Jan_2001_.nc")
 #Actually I think we want to write it as a .tif
 #to write: 
 writeRaster(Jan_2001, filename="F:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
 #to read: Jan_2001 <- stack("F:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
+
+
+#June_2001---------------------------------------------------------------
+#Precip
+Jun_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+                          band = 18)
+
+Jun_2001_precip[Jun_2001_precip==-9999] <- NA 
+plot(Jun_2001_precip)
+
+#Tmax
+Jun_2001_tmax <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+                        band = 18)
+
+Jun_2001_tmax[Jun_2001_tmax==-9999] <- NA 
+plot(Jun_2001_tmax)
+
+#Tmin
+Jun_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+                        band = 18)
+
+Jun_2001_tmin[Jun_2001_tmin==-9999] <- NA 
+plot(Jun_2001_tmin)
+
+#EVI
+Jun1 <- raster("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=11)
+Jun2 <- raster("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=12)
+
+#OK this seriously took over an hour
+Jun_2001_EVI <- overlay(Jun1, Jun2, fun=mean_na)
+
+#Remote NAs and rescale (EVI scale factor)
+#I think scale value is actually -3000...tray that next time
+
+Jun_2001_EVI[Jun_2001_EVI==-3000] <-NA
+#Jun_2001_EVI[Jun_2001_EVI<0] <- NA 
+Jun_2001_EVI <- (Jun_2001_EVI * 0.0001)
+Jun_2001_EVI
+plot(Jun_2001_EVI)
+
+#Trying to algin rasters so they can be stacked
+Upscext <- extent(Jun_2001_EVI)
+
+#Resample takes a bit but not too long...
+Jun_2001_tminresample <- resample(Jun_2001_tmin, Jun_2001_EVI, method="bilinear")
+Jun_2001_tmaxresample <- resample(Jun_2001_tmax, Jun_2001_EVI, method="bilinear")
+Jun_2001_Precipesample <- resample(Jun_2001_precip, Jun_2001_EVI, method="bilinear")
+
+#Create blank raster for month with value of "1"
+month = raster (ext=Upscext, res=0.002081004)
+values(month) <-6
+plot(month)
+
+#Stack
+Jun_2001 <- stack(Jun_2001_tminresample, Jun_2001_tmaxresample, Jun_2001_Precipesample, Jun_2001_EVI, month)
+#Rename rasters in raster stack
+#Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
+
+names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+writeRaster(Jan_2001, filename="D:/Upscaling_Project/Gridded_inputs/Jun_2001.tif")
