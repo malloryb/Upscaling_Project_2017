@@ -21,25 +21,11 @@ mean_na <- function(x) {
   mean(x,na.rm=T)
 }
 
-#Function to process MODIS LST 1km Daytime rasters
+#Function to process MODIS EVI rasters
 #Function must (could do lapply): 
 #Read in TIFF file 
 #Extract Date from TIFF file
 #Rescale raster
-scale_raster <- function(x) {
-  filename <- paste(x)
-  print(filename)
-  rast <- raster(paste("Params", x, sep="/"))
-  rast_date <- extractDate(x, pos1=10, pos2=16, asDate=TRUE)
-  rast_date <- rast_date[[1]][1]
-  date <- (as.character(rast_date))
-  rast <- setMinMax(rast)
-  rast[rast==0]<-NA
-  rast <- ((rast * 0.02) - 273.15)
-  rast <- setNames(rast, date)
-  return(rast)
-}
-
 #For NDVI
 scale_raster_NDVI <- function(x) {
   filename <- paste(x)
@@ -115,28 +101,32 @@ Jan2 <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.t
 Jan_2001_EVI <- overlay(Jan1, Jan2, fun=mean_na)
 
 #Remote NAs and rescale (EVI scale factor)
-Jan_2001_EVI[Jan_2001_EVI<0] <- NA 
+#I think scale value is actually -3000...tray that next time
+
+Jan_2001_EVI[Jan_2001_EVI=-3000] <-NA
+#Jan_2001_EVI[Jan_2001_EVI<0] <- NA 
 Jan_2001_EVI <- (Jan_2001_EVI * 0.0001)
 Jan_2001_EVI
 plot(Jan_2001_EVI)
 
 #Trying to algin rasters so they can be stacked
-Jan_2001_tminext <- alignExtent(EVIext, Jan_2001_tmin)
-Upscext <- extent(-123.0019, -102.9983, 22.9687, 40.9991)
-Jan_2001_tminext <- crop(Jan_2001_tmin, Upscext)
-Jan_2001_EVIext <- crop(Jan_2001_EVI, Upscext)
-
-alignExtent(Upscext, Jan_2001_tmin, snap='near')
-alignExtent(Upscext, Jan_2001_EVI, snap='near')
-r.new = resample(Jan_2001_EVI, Jan_2001_tminext, "bilinear")
-extent(Jan_2001_tminext)
-extent(Jan_2001_EVI)
+Upscext <- extent(Jan_2001_EVI)
 
 #Resample takes a bit but not too long...
 Jan_2001_tminresample <- resample(Jan_2001_tmin, Jan_2001_EVI, method="bilinear")
 Jan_2001_tmaxresample <- resample(Jan_2001_tmax, Jan_2001_EVI, method="bilinear")
-Jan_2001_Precipesample <- resample(Jan_2001_Precip, Jan_2001_EVI, method="bilinear")
+Jan_2001_Precipesample <- resample(Jan_2001_precip, Jan_2001_EVI, method="bilinear")
+
+#Create blank raster for month with value of "1"
+month = raster (ext=Upscext, res=0.002081004)
+values(month) <-1
+plot(month)
 
 #Stack
-stack(Jan_2001_tminresample, Jan_2001_tmaxresample, Jan2001_Precipesample, Jan_2001_EVI)
+Jan_2001 <- stack(Jan_2001_tminresample, Jan_2001_tmaxresample, Jan_2001_Precipesample, Jan_2001_EVI, month)
+#Rename rasters in raster stack
+#Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
 
+names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+
+writeRaster(Jan_2001, file="F:/Upscaling_Project/Gridded_Inputs/Jan_2001_.nc")
