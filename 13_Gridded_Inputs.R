@@ -191,6 +191,5 @@ plot(month)
 Jun_2001 <- stack(Jun_2001_tminresample, Jun_2001_tmaxresample, Jun_2001_Precipesample, Jun_2001_EVI, month)
 #Rename rasters in raster stack
 #Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
-
 names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
-writeRaster(Jan_2001, filename="D:/Upscaling_Project/Gridded_inputs/Jun_2001.tif")
+writeRaster(Jun_2001, filename="D:/Upscaling_Project/Gridded_inputs/Jun_2001.tif")
