@@ -4,7 +4,7 @@ library(caret)
 library(randomForest)
 
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_13_2017_less_NA.csv") 
+All_sites <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_13_2017_less_NA.csv") 
 #Print first lines
 head(All_sites)
 #add column names
@@ -65,7 +65,7 @@ cols3<- c(5, 7:8, 10:11, 14:18)
 #Model using: same as cols1 except: Precip, Tair, VPD
 cols4<- c(5, 10:18)
 #Model using: precip, NDVI, tmax, tmin,month
-cols5 <- c(7, 4, 9, 12:13, 16)
+cols5 <- c(4, 9, 12:13, 16)
 head(All_sites.training)
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
@@ -73,21 +73,21 @@ model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='
 model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf3 <-train(All_sites.training[,cols3], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf4 <- train(All_sites.training[,cols4], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf5 <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
+model_rf5 <- train(All_sites.training[,cols5], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf5preproc <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE,  preProcess=c("center", "scale"))
 #Predict based on model
 predictions <- predict(object=model_rf5, All_sites.test[,cols5])
 
 table(predictions)
 pred1 <- as.numeric(predictions)
-cor(pred1, All_sites.test[,6])
-model_rf5preproc
+cor(pred1, All_sites.test[,7])
+model_rf5
 RF5 <- model_rf5$finalModel
 varImp(RF5)
+RF5
 varImpPlot(RF5, type=2)
-lb1 <- paste("R^2 == ", "0.73")
+lb1 <- paste("R^2 == ", "0.75")
 RMSE1 <- paste("RMSE==", "0.088")
-
 #Plot predicted vs. measured
 qplot(pred1, All_sites.test[,6]) + 
   geom_point(shape=19, colour="tomato2", size=4)+
@@ -103,4 +103,10 @@ qplot(pred1, All_sites.test[,6]) +
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   ggtitle("Random forest - 5 (RS/Daymet Only)")  
 
-
+#Predict based on test raster
+Jan_2001 <- stack("D:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
+names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+sw <- extent(Jan_2001)
+Jan_2001
+Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
+plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP")
