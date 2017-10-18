@@ -28,21 +28,30 @@ cor(All_sites$VPD, All_sites$vp, use="complete.obs")
 #example normalization (normalize each case individually)
 #feature normalization (adjust each feature in the same way across all cases)
 #Normalization a good idea when one attribute has a wide range of values compared to others
+
 #User-defined normalization function
 normalize <- function(x) {
   return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
+}
+
+#Function to see if any cols have NAs. Now that I'm not standardizing GPP anymore having issues w/ NAs
+nacols <- function(df) {
+  colnames(df)[unlist(lapply(df, function(x) any(is.na(x))))]
 }
 
 #Normalize quantitative data 
 str(All_sites)
 All_sites <- All_sites[c("date", "site", "IGBP", "month", "Latitude", "Longitude", "GPP", "daylength",
                          "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI")]
-All_sites[complete.cases(All_sites),]
+All_sites <- All_sites[complete.cases(All_sites),]
+nacols(All_sites)
 head(All_sites)
-All_normalized <- as.data.frame(lapply(All_sites[7:16], normalize))
+
+All_normalized <- as.data.frame(lapply(All_sites[8:16], normalize))
 str(All_normalized)
-All <- cbind(All_sites[1:6], All_normalized)
+All <- cbind(All_sites[1:7], All_normalized)
 All_normalized <- All[complete.cases(All_normalized),]
+head(All_normalized)
 
 #Machine Learning with "caret"
 #Split data into training and test set (a little different) - ratio 75/25
@@ -57,24 +66,26 @@ str(All_normalized)
 names(getModelInfo())
 head(All_normalized)
 #Model using: month, precip, Tair, VPD, daylength, precip, srad, swe, tmax, tmin, vp, LST, NDVI
-cols1 <- c(5, 7:18)
+#cols1 <- c(5, 7:18)
 #Model using: same as cols1 + site component
-cols2<- c(3, 5, 7:18)
+#cols2<- c(3, 5, 7:18)
 #Model using: same as as cols1 except: VPD, srad, swe 
-cols3<- c(5, 7:8, 10:11, 14:18)
+#cols3<- c(5, 7:8, 10:11, 14:18)
 #Model using: same as cols1 except: Precip, Tair, VPD
-cols4<- c(5, 10:18)
+#cols4<- c(5, 10:18)
 #Model using: precip, NDVI, tmax, tmin,month
 cols5 <- c(4, 9, 12:13, 16)
 head(All_sites.training)
+All_sites.training[,cols5]
+All_sites.training[,7:8]
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf3 <-train(All_sites.training[,cols3], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf4 <- train(All_sites.training[,cols4], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
+#model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
+#model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
+#model_rf3 <-train(All_sites.training[,cols3], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
+#model_rf4 <- train(All_sites.training[,cols4], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf5 <- train(All_sites.training[,cols5], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf5preproc <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE,  preProcess=c("center", "scale"))
+#model_rf5preproc <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE,  preProcess=c("center", "scale"))
 #Predict based on model
 predictions <- predict(object=model_rf5, All_sites.test[,cols5])
 
