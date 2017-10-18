@@ -72,7 +72,7 @@ EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.ti
 
 #Jan_2001---------------------------------------------------------------
 #Precip
-Jan_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+Jan_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
        band = 13)
 
 Jan_2001_precip[Jan_2001_precip==-9999] <- NA 
@@ -87,17 +87,17 @@ Jan_2001_tmax[Jan_2001_tmax==-9999] <- NA
 plot(Jan_2001_tmax)
 
 #Tmin
-Jan_2001_tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+Jan_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
                         band = 13)
 
 Jan_2001_tmin[Jan_2001_tmin==-9999] <- NA 
 
 
 #EVI
-Jan1 <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=1)
-Jan2 <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=2)
+Jan1 <- raster("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=1)
+Jan2 <- raster("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=2)
 
-#OK this seriously took over an hour
+#OK this seriously took over an hour on ARS computer, seems to be quicker on USDA computer
 Jan_2001_EVI <- overlay(Jan1, Jan2, fun=mean_na)
 
 #Remote NAs and rescale (EVI scale factor)
@@ -124,16 +124,16 @@ plot(month)
 
 #Stack
 Jan_2001 <- stack(Jan_2001_tminresample, Jan_2001_tmaxresample, Jan_2001_Precipesample, Jan_2001_EVI, month)
+
 #Rename rasters in raster stack
 #Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
 
 names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
-
 #writeRaster(Jan_2001, file="F:/Upscaling_Project/Gridded_Inputs/Jan_2001_.nc")
 #Actually I think we want to write it as a .tif
 #to write: 
-writeRaster(Jan_2001, filename="F:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
-#to read: Jan_2001 <- stack("F:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
+writeRaster(Jan_2001.2, filename="D:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
+Jan_2001 <- stack("D:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
 
 
 #June_2001---------------------------------------------------------------
