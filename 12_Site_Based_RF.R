@@ -110,3 +110,7 @@ sw <- extent(Jan_2001)
 Jan_2001
 Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
 plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP")
+
+
+Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
+plot(Jun_2001_GPP, main="June 2001 upscaled GPP")
