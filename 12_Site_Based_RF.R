@@ -132,3 +132,6 @@ names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 sw <- extent(Jun_2001)
 Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
 plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,8))
+
+saveRDS(RF5, "D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
+readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
