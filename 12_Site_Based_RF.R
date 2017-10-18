@@ -76,8 +76,8 @@ head(All_normalized)
 #Model using: precip, NDVI, tmax, tmin,month
 cols5 <- c(4, 9, 12:13, 16)
 head(All_sites.training)
-All_sites.training[,cols5]
-All_sites.training[,7:8]
+head(All_sites.training[,cols5])
+head(All_sites.training[,7:8])
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
 #model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
@@ -97,31 +97,34 @@ RF5 <- model_rf5$finalModel
 varImp(RF5)
 RF5
 varImpPlot(RF5, type=2)
-lb1 <- paste("R^2 == ", "0.75")
-RMSE1 <- paste("RMSE==", "0.088")
+lb1 <- paste("R^2 == ", "0.73")
+RMSE1 <- paste("RMSE==", "0.65")
 #Plot predicted vs. measured
-qplot(pred1, All_sites.test[,6]) + 
-  geom_point(shape=19, colour="tomato2", size=4)+
+qplot(pred1, All_sites.test[,7]) + 
+  geom_point(shape=19, colour="tomato2", size=3)+
   geom_abline(intercept = 0, slope = 1)+
-  xlim(0,1)+
-  ylim(0,1)+
+  xlim(0,7.5)+
+  ylim(0,7.5)+
   xlab("Flux monthly GPP")+
   ylab("Predicted monthly GPP")+
   theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
-  annotate("text", label = lb1, parse=TRUE, x = 0.1, y = 0.7, size = 5, colour = "Black")+
-  annotate("text", label = RMSE1, parse=TRUE, x = 0.1, y = 0.6, size = 5, colour = "Black")+
+  annotate("text", label = lb1, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
+  annotate("text", label = RMSE1, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
   theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   ggtitle("Random forest - 5 (RS/Daymet Only)")  
 
 #Predict based on test raster
+#For January 
 Jan_2001 <- stack("D:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
+
 names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 sw <- extent(Jan_2001)
 Jan_2001
 Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
 plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP")
 
-
+#For June
+Jun_2001 <- stack("D:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
 Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
 plot(Jun_2001_GPP, main="June 2001 upscaled GPP")
