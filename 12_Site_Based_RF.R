@@ -35,12 +35,13 @@ normalize <- function(x) {
 
 #Normalize quantitative data 
 str(All_sites)
-All_sites <- All_sites[c("date", "site", "IGBP", "month", "Latitude", "Longitude"," GPP", "Precip", "Tair", "VPD", "daylength",
+All_sites <- All_sites[c("date", "site", "IGBP", "month", "Latitude", "Longitude", "GPP", "daylength",
                          "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI")]
 All_sites[complete.cases(All_sites),]
-All_normalized <- as.data.frame(lapply(All_sites[5:17], normalize))
+head(All_sites)
+All_normalized <- as.data.frame(lapply(All_sites[7:16], normalize))
 str(All_normalized)
-All <- cbind(All_sites[1:4], All_normalized)
+All <- cbind(All_sites[1:6], All_normalized)
 All_normalized <- All[complete.cases(All_normalized),]
 
 #Machine Learning with "caret"
@@ -64,7 +65,7 @@ cols3<- c(5, 7:8, 10:11, 14:18)
 #Model using: same as cols1 except: Precip, Tair, VPD
 cols4<- c(5, 10:18)
 #Model using: precip, NDVI, tmax, tmin,month
-cols5 <- c(5, 11, 14:16, 18)
+cols5 <- c(7, 4, 9, 12:13, 16)
 head(All_sites.training)
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins

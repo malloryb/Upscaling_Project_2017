@@ -130,3 +130,8 @@ Jan_2001 <- stack(Jan_2001_tminresample, Jan_2001_tmaxresample, Jan_2001_Precipe
 names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 
 writeRaster(Jan_2001, file="F:/Upscaling_Project/Gridded_Inputs/Jan_2001_.nc")
+
+#Actually I think we want to write it as a .tif
+#to write: 
+writeRaster(Jan_2001, filename="F:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
+#to read: Jan_2001 <- stack("F:/Upscaling_Project/Gridded_inputs/Jan_2001.tif")
