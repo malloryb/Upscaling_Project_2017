@@ -193,3 +193,94 @@ Jun_2001 <- stack(Jun_2001_tminresample, Jun_2001_tmaxresample, Jun_2001_Precipe
 #Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
 names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 writeRaster(Jun_2001, filename="D:/Upscaling_Project/Gridded_inputs/Jun_2001.tif", overwrite=TRUE)
+
+
+#Batch processing --------------
+
+#Apply function to scale NDVI properly to all layers in raster stack
+#Then overlay with mean.na function
+
+EVI2001 <- stack("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
+
+
+scaleVI <- function(x) {
+  x[x==-3000]<-NA
+  y<- ((x* 0.0001))
+  return(y)
+}
+
+ndvi_scaled <- calc(EVI2001, scaleVI)
+plot(ndvi_scaled)
+#replaced ndvi_scaled w/s22 before this 
+
+Jan_2001_EVI <- overlay(ndvi_scaled[[1]], ndvi_scaled[[2]], fun=mean_na)
+writeRaster(Jan_2001_EVI, filename="D:/Upscaling_Project/Gridded_Inputs/EVI/Jan_2001_EVI.tif")
+Feb_2001_EVI <- overlay(ndvi_scaled[[3]], ndvi_scaled[[4]], fun=mean_na)
+writeRaster(Feb_2001_EVI, filename="H:/My Drive/Upscaling_Project/Feb_2001_EVI.tif")
+Mar_2001_EVI <- overlay(ndvi_scaled[[5]], ndvi_scaled[[6]], fun=mean_na)
+writeRaster(Mar_2001_EVI, filename="H:/My Drive/Upscaling_Project/Mar_2001_EVI.tif")
+Apr_2001_EVI <- overlay(ndvi_scaled[[7]], ndvi_scaled[[8]], fun=mean_na)
+writeRaster(Apr_2001_EVI, filename="H:/My Drive/Upscaling_Project/Apr_2001_EVI.tif")
+May_2001_EVI <- overlay(ndvi_scaled[[9]], ndvi_scaled[[10]], fun=mean_na)
+writeRaster(May_2001_EVI, filename="H:/My Drive/Upscaling_Project/May_2001_EVI.tif")
+Jun_2001_EVI <- overlay(ndvi_scaled[[11]], ndvi_scaled[[12]], fun=mean_na)
+writeRaster(Jun_2001_EVI, filename="H:/My Drive/Upscaling_Project/Jun_2001_EVI.tif")
+Jul_2001_EVI <- overlay(ndvi_scaled[[13]], ndvi_scaled[[14]], fun=mean_na)
+writeRaster(Jul_2001_EVI, filename="H:/My Drive/Upscaling_Project/Jul_2001_EVI.tif")
+Aug_2001_EVI <- overlay(ndvi_scaled[[15]], ndvi_scaled[[16]], fun=mean_na)
+writeRaster(Aug_2001_EVI, filename="H:/My Drive/Upscaling_Project/Aug_2001_EVI.tif")
+Sep_2001_EVI <- overlay(ndvi_scaled[[17]], ndvi_scaled[[18]], fun=mean_na)
+writeRaster(Sep_2001_EVI, filename="H:/My Drive/Upscaling_Project/Sep_2001_EVI.tif")
+Oct_2001_EVI <- overlay(ndvi_scaled[[19]],  fun=mean_na)
+writeRaster(Oct_2001_EVI, filename="H:/My Drive/Upscaling_Project/Oct_2001_EVI.tif")
+Nov_2001_EVI <- overlay(ndvi_scaled[[20]], ndvi_scaled[[21]], fun=mean_na)
+writeRaster(Nov_2001_EVI, filename="H:/My Drive/Upscaling_Project/Nov_2001_EVI.tif")
+Dec_2001_EVI <- overlay(ndvi_scaled[[22]], ndvi_scaled[[23]], fun=mean_na)
+writeRaster(Dec_2001_EVI, filename="H:/My Drive/Upscaling_Project/Dec_2001_EVI.tif")
+
+
+#Precip
+Feb_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+                          band = 13)
+
+Feb_2001_precip[Feb_2001_precip==-9999] <- NA 
+plot(Feb_2001_precip)
+
+#Tmax
+Feb_2001_tmax <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+                        band = 13)
+
+Feb_2001_tmax[Feb_2001_tmax==-9999] <- NA 
+plot(Feb_2001_tmax)
+
+#Tmin
+Feb_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+                        band = 13)
+
+Feb_2001_tmin[Feb_2001_tmin==-9999] <- NA 
+plot(Feb_2001_tmin)
+
+#Trying to algin rasters so they can be stacked
+Upscext <- extent(Feb_2001_EVI)
+
+#Resample takes a bit but not too long...
+Feb_2001_tminresample <- resample(Feb_2001_tmin, Feb_2001_EVI, method="bilinear")
+Feb_2001_tmaxresample <- resample(Feb_2001_tmax, Feb_2001_EVI, method="bilinear")
+Feb_2001_Precipesample <- resample(Feb_2001_precip, Feb_2001_EVI, method="bilinear")
+
+#Create blank raster for month with value of "1" for Jan, "2" for Feb, etc. 
+month = raster (ext=Upscext, res=0.002081004)
+values(month) <-2
+plot(month)
+
+#Stack
+Feb_2001 <- stack(Feb_2001_tminresample, Feb_2001_tmaxresample, Feb_2001_Precipesample, Feb_2001_EVI, month)
+#Rename rasters in raster stack
+#Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
+names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Feb_2001
+
+writeRaster(Feb_2001, filename="D:/Upscaling_Project/Gridded_inputs/Feb_2001.tif")
+
+
+
