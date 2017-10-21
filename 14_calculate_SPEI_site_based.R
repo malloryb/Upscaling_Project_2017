@@ -5,6 +5,8 @@ library(SPEI)
 library(dplyr)
 library(plyr)
 library(raster)
+library(data.table)
+library(lubridate)
 
 site_based <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_13_2017_less_NA.csv")
 str(site_based)
@@ -18,8 +20,26 @@ completeFun <- function(data, desiredCols){
   return(data[completeVec, ])
 }
 
+setwd("C:/Users/Mallory/odrive/Dissertation Dropbox/Daymet/SPEI_calc/")
 
-str(site_based)
+test_file <- read.csv("us-aud.csv")
+
+#Function needs to: calculate hargreaves PET, calculate "BAL", then calculate: 1, 3, 6, 9 month SPEI
+str(dat)
+calc_spei <- function(x){
+  header <- read.table(x, nrows = 1, header = FALSE, sep =';', stringsAsFactors = FALSE)
+  header <- as.character(header$V1)
+  lat = substr(header, 10, 17)
+  dat   <- read.table(x, skip = 7, header = TRUE, sep =',')  
+  setnames(dat, c("year", "yday", "daylength", "precip", "srad", "swe", "tmax", "tmin", "vp"))
+  x$Date <- format(strptime(x$yday, format="%j"), format="%m-%d")
+  x$Date <-paste(x$year, x$Date, sep = "_")
+  x$Date <- floor_date(x$Date, "month")
+  
+  }
+  
+}
+
 
 for_spei <- completeFun(site_based, "tmed")
 
