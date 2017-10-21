@@ -29,17 +29,27 @@ str(dat)
 calc_spei <- function(x){
   header <- read.table(x, nrows = 1, header = FALSE, sep =';', stringsAsFactors = FALSE)
   header <- as.character(header$V1)
-  lat = substr(header, 10, 17)
-  dat   <- read.table(x, skip = 7, header = TRUE, sep =',')  
+  latitude = substr(header, 10, 17)
+  dat <- read.table(x, skip = 7, header = TRUE, sep =',')  
   setnames(dat, c("year", "yday", "daylength", "precip", "srad", "swe", "tmax", "tmin", "vp"))
-  x$Date <- format(strptime(x$yday, format="%j"), format="%m-%d")
-  x$Date <-paste(x$year, x$Date, sep = "_")
-  x$Date <- floor_date(x$Date, "month")
-  
+  str(dat)
+  dat$Date <- format(strptime(dat$yday, format="%j"), format="%m-%d")
+  dat$Date <-paste(dat$year, dat$Date, sep = "-")
+  str(dat$Date)
+  dat$Date <- as.Date(dat$Date)
+  str(dat$Date)
+  dat$Date <- floor_date(dat$Date, "month")
+  monthly <- ddply(dat, .(Date), summarise, precip=sum(precip, na.rm=TRUE), tmax=mean(tmax, na.rm=TRUE),
+                  tmin=mean(tmin, na.rm=TRUE), tmed= mean(tmin+tmax, na.rm=TRUE)) 
+  str(monthly)
+  latitude <- as.numeric(latitude)
+  monthly$PET_harg <- hargreaves(monthly$tmin, monthly$tmax, lat=latitude, na.rm=TRUE)
+  monthly$BAL <- monthly$precip - monthly$PET_harg 
+  spei_12 <- spei(monthly[,'BAL'], 1)
+  return(spei_12)
   }
   
-}
-
+calc_spei("us-aud.csv")
 
 for_spei <- completeFun(site_based, "tmed")
 
