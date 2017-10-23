@@ -8,7 +8,7 @@ library(raster)
 library(data.table)
 library(lubridate)
 
-site_based <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_13_2017_less_NA.csv")
+site_based <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_23_2017.csv")
 str(site_based)
 #first: compare thornthwaite and hargreaves methods of calculating SPEI 
 #For thornthwaite -> will need to calculate mean monthly temp (or from MODIS_LST?)

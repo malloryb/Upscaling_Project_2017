@@ -239,22 +239,25 @@ Dec_2001_EVI <- overlay(ndvi_scaled[[22]], ndvi_scaled[[23]], fun=mean_na)
 writeRaster(Dec_2001_EVI, filename="H:/My Drive/Upscaling_Project/Dec_2001_EVI.tif")
 
 
+Feb_2001_EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Feb_2001_EVI.tif")
+
+
 #Precip
-Feb_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+Feb_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
                           band = 13)
 
 Feb_2001_precip[Feb_2001_precip==-9999] <- NA 
 plot(Feb_2001_precip)
 
 #Tmax
-Feb_2001_tmax <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+Feb_2001_tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
                         band = 13)
 
 Feb_2001_tmax[Feb_2001_tmax==-9999] <- NA 
 plot(Feb_2001_tmax)
 
 #Tmin
-Feb_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+Feb_2001_tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
                         band = 13)
 
 Feb_2001_tmin[Feb_2001_tmin==-9999] <- NA 
@@ -280,7 +283,11 @@ Feb_2001 <- stack(Feb_2001_tminresample, Feb_2001_tmaxresample, Feb_2001_Precipe
 names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 Feb_2001
 
-writeRaster(Feb_2001, filename="D:/Upscaling_Project/Gridded_inputs/Feb_2001.tif")
+writeRaster(Feb_2001, filename="F:/Upscaling_Project/Gridded_inputs/Feb_2001.tif")
 
-
+plot(raster("F:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif"))
+#read RF5 random forest model
+RF5 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
+Feb_2001_GPP <- predict(Feb_2001, RF5, ext=sw)
+plot(Feb_2001_GPP, main="Feb 2001 upscaled GPP", zlim=c(0,7))
 
