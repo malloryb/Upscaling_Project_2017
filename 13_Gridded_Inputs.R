@@ -239,55 +239,55 @@ Dec_2001_EVI <- overlay(ndvi_scaled[[22]], ndvi_scaled[[23]], fun=mean_na)
 writeRaster(Dec_2001_EVI, filename="H:/My Drive/Upscaling_Project/Dec_2001_EVI.tif")
 
 
-Feb_2001_EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Feb_2001_EVI.tif")
+Apr_2001_EVI <- raster("D:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif")
 
 
 #Precip
-Feb_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
-                          band = 13)
+Apr_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+                          band = 15)
 
-Feb_2001_precip[Feb_2001_precip==-9999] <- NA 
+Apr_2001_precip[Apr_2001_precip==-9999] <- NA 
 plot(Feb_2001_precip)
 
 #Tmax
-Feb_2001_tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
-                        band = 13)
+Apr_2001_tmax <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+                        band = 15)
 
-Feb_2001_tmax[Feb_2001_tmax==-9999] <- NA 
+Apr_2001_tmax[Apr_2001_tmax==-9999] <- NA 
 plot(Feb_2001_tmax)
 
 #Tmin
-Feb_2001_tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
-                        band = 13)
+Apr_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+                        band = 15)
 
-Feb_2001_tmin[Feb_2001_tmin==-9999] <- NA 
+Apr_2001_tmin[Apr_2001_tmin==-9999] <- NA 
 plot(Feb_2001_tmin)
 
 #Trying to algin rasters so they can be stacked
-Upscext <- extent(Feb_2001_EVI)
+Upscext <- extent(Apr_2001_EVI)
 
 #Resample takes a bit but not too long...
-Feb_2001_tminresample <- resample(Feb_2001_tmin, Feb_2001_EVI, method="bilinear")
-Feb_2001_tmaxresample <- resample(Feb_2001_tmax, Feb_2001_EVI, method="bilinear")
-Feb_2001_Precipesample <- resample(Feb_2001_precip, Feb_2001_EVI, method="bilinear")
+Apr_2001_tminresample <- resample(Apr_2001_tmin, Apr_2001_EVI, method="bilinear")
+Apr_2001_tmaxresample <- resample(Apr_2001_tmax, Apr_2001_EVI, method="bilinear")
+Apr_2001_Precipesample <- resample(Apr_2001_precip, Apr_2001_EVI, method="bilinear")
 
 #Create blank raster for month with value of "1" for Jan, "2" for Feb, etc. 
 month = raster (ext=Upscext, res=0.002081004)
-values(month) <-2
+values(month) <-4
 plot(month)
 
 #Stack
-Feb_2001 <- stack(Feb_2001_tminresample, Feb_2001_tmaxresample, Feb_2001_Precipesample, Feb_2001_EVI, month)
+Apr_2001 <- stack(Apr_2001_tminresample, Apr_2001_tmaxresample, Apr_2001_Precipesample, Apr_2001_EVI, month)
 #Rename rasters in raster stack
 #Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
-names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
-Feb_2001
+names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Apr_2001
 
-writeRaster(Feb_2001, filename="F:/Upscaling_Project/Gridded_inputs/Feb_2001.tif")
+writeRaster(Apr_2001, filename="F:/Upscaling_Project/Gridded_inputs/Apr_2001.tif")
 
-plot(raster("F:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif"))
+plot(raster("F:/Upscaling_Project/Gridded_Inputs/Apr_2001.tif"))
 #read RF5 random forest model
-RF5 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
-Feb_2001_GPP <- predict(Feb_2001, RF5, ext=sw)
-plot(Feb_2001_GPP, main="Feb 2001 upscaled GPP", zlim=c(0,7))
-
+RF5 <- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
+Apr_2001_GPP <- predict(Apr_2001, RF5, ext=sw)
+plot(Apr_2001_GPP, main="April 2001 upscaled GPP", zlim=c(0,7))
+writeRaster(Apr_2001_GPP, filename="")
