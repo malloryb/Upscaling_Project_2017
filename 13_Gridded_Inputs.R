@@ -7,6 +7,9 @@ library(lubridate)
 library(MODIS)
 library(ncdf4)
 library(MODIStsp)
+
+getwd()
+setwd("/mnt/DATA/users/mbarnes/")
 #MeanIgnoringZeroes -> user-defined function to get mean without zeros
 
 meanIgnoringZeroes <- function(x) {
@@ -65,14 +68,14 @@ memory.limit()
 gc()
 
 #Read rasters from Guillermo--------------------------------
-Precip <-raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif")
-Tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif")
-Tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif")
-EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
+Precip <-raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif")
+Tmax <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif")
+Tmin <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif")
+EVI <- raster("Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
 
 #Jan_2001---------------------------------------------------------------
 #Precip
-Jan_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+Jan_2001_precip <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
        band = 13)
 
 Jan_2001_precip[Jan_2001_precip==-9999] <- NA 
@@ -80,22 +83,22 @@ plot(Jan_2001_precip)
 
 
 #Tmax
-Jan_2001_tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+Jan_2001_tmax <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
                         band = 13)
 
 Jan_2001_tmax[Jan_2001_tmax==-9999] <- NA 
 plot(Jan_2001_tmax)
 
 #Tmin
-Jan_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+Jan_2001_tmin <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
                         band = 13)
 
 Jan_2001_tmin[Jan_2001_tmin==-9999] <- NA 
 
 
 #EVI
-Jan1 <- raster("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=1)
-Jan2 <- raster("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=2)
+Jan1 <- raster("Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=1)
+Jan2 <- raster("Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif", band=2)
 
 #OK this seriously took over an hour on ARS computer, seems to be quicker on USDA computer
 Jan_2001_EVI <- overlay(Jan1, Jan2, fun=mean_na)
@@ -200,7 +203,7 @@ writeRaster(Jun_2001, filename="D:/Upscaling_Project/Gridded_inputs/Jun_2001.tif
 #Apply function to scale NDVI properly to all layers in raster stack
 #Then overlay with mean.na function
 
-EVI2001 <- stack("D:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
+EVI2001 <- stack("Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
 
 
 scaleVI <- function(x) {
@@ -214,50 +217,50 @@ plot(ndvi_scaled)
 #replaced ndvi_scaled w/s22 before this 
 
 Jan_2001_EVI <- overlay(ndvi_scaled[[1]], ndvi_scaled[[2]], fun=mean_na)
-writeRaster(Jan_2001_EVI, filename="D:/Upscaling_Project/Gridded_Inputs/EVI/Jan_2001_EVI.tif")
+writeRaster(Jan_2001_EVI, filename="Upscaling_Project/Gridded_Inputs/EVI/Jan_2001_EVI.tif")
 Feb_2001_EVI <- overlay(ndvi_scaled[[3]], ndvi_scaled[[4]], fun=mean_na)
-writeRaster(Feb_2001_EVI, filename="H:/My Drive/Upscaling_Project/Feb_2001_EVI.tif")
+writeRaster(Feb_2001_EVI, filename="My Drive/Upscaling_Project/Feb_2001_EVI.tif")
 Mar_2001_EVI <- overlay(ndvi_scaled[[5]], ndvi_scaled[[6]], fun=mean_na)
-writeRaster(Mar_2001_EVI, filename="H:/My Drive/Upscaling_Project/Mar_2001_EVI.tif")
+writeRaster(Mar_2001_EVI, filename="My Drive/Upscaling_Project/Mar_2001_EVI.tif")
 Apr_2001_EVI <- overlay(ndvi_scaled[[7]], ndvi_scaled[[8]], fun=mean_na)
-writeRaster(Apr_2001_EVI, filename="H:/My Drive/Upscaling_Project/Apr_2001_EVI.tif")
+writeRaster(Apr_2001_EVI, filename="My Drive/Upscaling_Project/Apr_2001_EVI.tif")
 May_2001_EVI <- overlay(ndvi_scaled[[9]], ndvi_scaled[[10]], fun=mean_na)
-writeRaster(May_2001_EVI, filename="H:/My Drive/Upscaling_Project/May_2001_EVI.tif")
+writeRaster(May_2001_EVI, filename="My Drive/Upscaling_Project/May_2001_EVI.tif")
 Jun_2001_EVI <- overlay(ndvi_scaled[[11]], ndvi_scaled[[12]], fun=mean_na)
-writeRaster(Jun_2001_EVI, filename="H:/My Drive/Upscaling_Project/Jun_2001_EVI.tif")
+writeRaster(Jun_2001_EVI, filename="My Drive/Upscaling_Project/Jun_2001_EVI.tif")
 Jul_2001_EVI <- overlay(ndvi_scaled[[13]], ndvi_scaled[[14]], fun=mean_na)
-writeRaster(Jul_2001_EVI, filename="H:/My Drive/Upscaling_Project/Jul_2001_EVI.tif")
+writeRaster(Jul_2001_EVI, filename="My Drive/Upscaling_Project/Jul_2001_EVI.tif")
 Aug_2001_EVI <- overlay(ndvi_scaled[[15]], ndvi_scaled[[16]], fun=mean_na)
-writeRaster(Aug_2001_EVI, filename="H:/My Drive/Upscaling_Project/Aug_2001_EVI.tif")
+writeRaster(Aug_2001_EVI, filename="My Drive/Upscaling_Project/Aug_2001_EVI.tif")
 Sep_2001_EVI <- overlay(ndvi_scaled[[17]], ndvi_scaled[[18]], fun=mean_na)
-writeRaster(Sep_2001_EVI, filename="H:/My Drive/Upscaling_Project/Sep_2001_EVI.tif")
+writeRaster(Sep_2001_EVI, filename="My Drive/Upscaling_Project/Sep_2001_EVI.tif")
 Oct_2001_EVI <- overlay(ndvi_scaled[[19]],  fun=mean_na)
-writeRaster(Oct_2001_EVI, filename="H:/My Drive/Upscaling_Project/Oct_2001_EVI.tif")
+writeRaster(Oct_2001_EVI, filename="My Drive/Upscaling_Project/Oct_2001_EVI.tif")
 Nov_2001_EVI <- overlay(ndvi_scaled[[20]], ndvi_scaled[[21]], fun=mean_na)
-writeRaster(Nov_2001_EVI, filename="H:/My Drive/Upscaling_Project/Nov_2001_EVI.tif")
+writeRaster(Nov_2001_EVI, filename="My Drive/Upscaling_Project/Nov_2001_EVI.tif")
 Dec_2001_EVI <- overlay(ndvi_scaled[[22]], ndvi_scaled[[23]], fun=mean_na)
-writeRaster(Dec_2001_EVI, filename="H:/My Drive/Upscaling_Project/Dec_2001_EVI.tif")
+writeRaster(Dec_2001_EVI, filename="My Drive/Upscaling_Project/Dec_2001_EVI.tif")
 
 
-Apr_2001_EVI <- raster("D:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif")
+Apr_2001_EVI <- raster("Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif")
 
 
 #Precip
-Apr_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+Apr_2001_precip <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
                           band = 15)
 
 Apr_2001_precip[Apr_2001_precip==-9999] <- NA 
 plot(Feb_2001_precip)
 
 #Tmax
-Apr_2001_tmax <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+Apr_2001_tmax <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
                         band = 15)
 
 Apr_2001_tmax[Apr_2001_tmax==-9999] <- NA 
 plot(Feb_2001_tmax)
 
 #Tmin
-Apr_2001_tmin <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+Apr_2001_tmin <- raster("Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
                         band = 15)
 
 Apr_2001_tmin[Apr_2001_tmin==-9999] <- NA 
@@ -283,11 +286,11 @@ Apr_2001 <- stack(Apr_2001_tminresample, Apr_2001_tmaxresample, Apr_2001_Precipe
 names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 Apr_2001
 
-writeRaster(Apr_2001, filename="F:/Upscaling_Project/Gridded_inputs/Apr_2001.tif")
+writeRaster(Apr_2001, filename="Upscaling_Project/Gridded_inputs/Apr_2001.tif")
 
-plot(raster("F:/Upscaling_Project/Gridded_Inputs/Apr_2001.tif"))
+plot(raster("Upscaling_Project/Gridded_Inputs/Apr_2001.tif"))
 #read RF5 random forest model
-RF5 <- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
+RF5 <- readRDS("Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
 Apr_2001_GPP <- predict(Apr_2001, RF5, ext=sw)
 plot(Apr_2001_GPP, main="April 2001 upscaled GPP", zlim=c(0,7))
 writeRaster(Apr_2001_GPP, filename="")
