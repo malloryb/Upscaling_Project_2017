@@ -291,3 +291,89 @@ RF5 <- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
 Apr_2001_GPP <- predict(Apr_2001, RF5, ext=sw)
 plot(Apr_2001_GPP, main="April 2001 upscaled GPP", zlim=c(0,7))
 writeRaster(Apr_2001_GPP, filename="")
+
+
+
+#Batch create input files for RF model: 
+#Function needs to: 
+#1) Open proper Tmax, Tmin, and Precip files (from Daymet files)
+#2) Set -9999 to NA for all
+#3) Resample Daymet files to EVI resolution
+#4) Create raster with only 1 value (month) as input
+#5) Write out input files 
+#How to do this? Function will be different for each one...ugh
+
+create_input_raster <- function(band1, month, monthno, year){
+  filenameEVI <- paste0("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/", month, "_", year, "_", "EVI.tif")
+  EVI <- raster(filenameEVI)
+  filenamePrecip <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif"
+  filenameTmax <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif"
+  filenameTmin <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif"
+  
+  Precip <- raster(filenamePrecip, band = band1)
+  Tmax <- raster(filenameTmax, band = band1)
+  Tmin <- raster(filenameTmin, band = band1)
+  
+  Tmax[Tmax==-9999] <-NA
+  Tmin[Tmin==-9999] <-NA
+  Precip[Precip==-9999] <-NA
+  
+  Upscext <- extent(EVI)
+  
+  Precipresample <- resample(Precip, EVI, method="bilinear")
+  Tmaxresample <- resample(Tmax, EVI, method="bilinear")
+  Tminresample <- resample(Tmin, EVI, method="bilinear")
+  
+  monthrast = raster (ext=Upscext, res=0.002081004)
+  values(monthrast) <- monthno
+  
+  rast_stack <- stack(Tminresample, Tmaxresample, Precipresample, EVI, monthrast)
+  names(rast_stack) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+  
+  return(rast_stack)
+  }
+
+
+
+create_input_raster(band= 14, month="Feb", year=2001, monthno=2)
+
+Feb_2001_EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif")
+Feb_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+                          band = 16)
+
+Apr_2001_precip[Apr_2001_precip==-9999] <- NA 
+#Tmax
+Apr_2001_tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
+                        band = 16)
+
+Apr_2001_tmax[Apr_2001_tmax==-9999] <- NA 
+
+#Tmin
+Apr_2001_tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
+                        band = 16)
+
+Apr_2001_tmin[Apr_2001_tmin==-9999] <- NA 
+
+#Trying to algin rasters so they can be stacked
+Upscext <- extent(Apr_2001_EVI)
+
+#Resample takes a bit but not too long...
+Apr_2001_tminresample <- resample(Apr_2001_tmin, Apr_2001_EVI, method="bilinear")
+Apr_2001_tmaxresample <- resample(Apr_2001_tmax, Apr_2001_EVI, method="bilinear")
+Apr_2001_Precipesample <- resample(Apr_2001_precip, Apr_2001_EVI, method="bilinear")
+
+#Create blank raster for month with value of "1" for Jan, "2" for Feb, etc. 
+month = raster (ext=Upscext, res=0.002081004)
+values(month) <-4
+plot(month)
+
+#Stack
+Apr_2001 <- stack(Apr_2001_tminresample, Apr_2001_tmaxresample, Apr_2001_Precipesample, Apr_2001_EVI, month)
+#Rename rasters in raster stack
+#Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
+names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Apr_2001
+
+writeRaster(Apr_2001, filename="F:/Upscaling_Project/Gridded_inputs/Apr_2001.tif")
+
+plot(raster("F:/Upscaling_Project/Gridded_Inputs/Apr_2001.tif"))
