@@ -59,7 +59,7 @@ Dec_mean <- overlay(s22[[22]], s22[[23]], fun=mean_na)
 stkNDVI <- stack(Jan_mean,Feb_mean,Mar_mean,Apr_mean, May_mean, Jun_mean, Jul_mean, Aug_mean,Sep_mean, Oct_mean, Nov_mean, Dec_mean)
 names(stkNDVI) <- c('Jan','Feb','Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
-writeRaster(stkNDVI, file="C:/Users/Mallory/Documents/MRT/Monthly_NDVI_2001.nc", overwrite=TRUE) 
+writeRaster(stkNDVI, file="C:/Users/Mallory/Documents/MRT/Monthly_NDVI_2002.nc", overwrite=TRUE) 
 memory.limit(size = 150000)
 memory.limit()
 gc()
@@ -68,11 +68,11 @@ gc()
 Precip <-raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif")
 Tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif")
 Tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif")
-EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2001_EVI.tif")
+EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/EVI/upscalingArea_2002_EVI.tif")
 
-#Jan_2001---------------------------------------------------------------
+#Jan_2002---------------------------------------------------------------
 #Precip
-Jan_2001_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
+Jan_2002_precip <- raster("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
        band = 13)
 
 Jan_2001_precip[Jan_2001_precip==-9999] <- NA 
@@ -330,50 +330,144 @@ create_input_raster <- function(band1, month, monthno, year){
   rast_stack <- stack(Tminresample, Tmaxresample, Precipresample, EVI, monthrast)
   names(rast_stack) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
   
+  outputfilename <- paste("F:/Upscaling_Project/Gridded_inputs/RF_Input/",month,"_",year,".tif")
+  writeRaster(rast_stack, outputfilename)
   return(rast_stack)
   }
 
 
+create_input_raster(band1=25, month="Jan", monthno=1, year=2002)
+create_input_raster(band1=26, month="Feb", monthno=2, year=2002)
+create_input_raster(band1=27, month="Mar", monthno=3, year=2002)
+create_input_raster(band1=28, month="Apr", monthno=4, year=2002)
+create_input_raster(band1=29, month="May", monthno=5, year=2002)
+create_input_raster(band1=30, month="Jun", monthno=6, year=2002)
+create_input_raster(band1=31, month="Jul", monthno=7, year=2002)
+create_input_raster(band1=32, month="Aug", monthno=8, year=2002)
+create_input_raster(band1=33, month="Sep", monthno=9, year=2002)
+create_input_raster(band1=34, month="Oct", monthno=10, year=2002)
+create_input_raster(band1=35, month="Nov", monthno=11, year=2002)
+create_input_raster(band1=36, month="Dec", monthno=12, year=2002)
 
-create_input_raster(band= 14, month="Feb", year=2001, monthno=2)
 
-Feb_2001_EVI <- raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif")
-Feb_2001_precip <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif", 
-                          band = 16)
+Jan_2002 <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jan_2002.tif")
+names(Jan_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Feb_2002 <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Feb_2002.tif")
+names(Feb_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Mar_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Mar_2002.tif")
+names(Mar_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Apr_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2002.tif")
+names(Apr_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+May_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/May_2002.tif")
+names(May_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Jun_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jun_2002.tif")
+names(Jun_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Jul_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jul_2002.tif")
+names(Jul_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Aug_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Aug_2002.tif")
+names(Aug_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Sep_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Sep_2002.tif")
+names(Sep_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Oct_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Oct_2002.tif")
+names(Oct_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Nov_2002<-stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Nov_2002.tif")
+names(Nov_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Dec_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Dec_2002.tif")
+names(Dec_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 
-Apr_2001_precip[Apr_2001_precip==-9999] <- NA 
-#Tmax
-Apr_2001_tmax <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif", 
-                        band = 16)
+sw <- extent(Feb_2002)
 
-Apr_2001_tmax[Apr_2001_tmax==-9999] <- NA 
 
-#Tmin
-Apr_2001_tmin <- raster("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif", 
-                        band = 16)
+RF5 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
 
-Apr_2001_tmin[Apr_2001_tmin==-9999] <- NA 
+#started @ 3:50 pm
+Jan_2002_GPP <- predict(Jan_2002, RF5, ext=sw)
+Feb_2002_GPP <- predict(Feb_2002, RF5, ext=sw)
+Mar_2002_GPP <- predict(Mar_2002, RF5, ext=sw)
+Apr_2002_GPP <- predict(Apr_2002, RF5, ext=sw)
+May_2002_GPP <- predict(May_2002, RF5, ext=sw)
+Jun_2002_GPP <- predict(Jun_2002, RF5, ext=sw)
+Jul_2002_GPP <- predict(Jul_2002, RF5, ext=sw)
+Aug_2002_GPP <- predict(Aug_2002, RF5, ext=sw)
+Sep_2002_GPP <- predict(Sep_2002, RF5, ext=sw)
+Oct_2002_GPP <- predict(Oct_2002, RF5, ext=sw)
+Nov_2002_GPP <- predict(Nov_2002, RF5, ext=sw)
+Dec_2002_GPP <- predict(Dec_2002, RF5, ext=sw)
 
-#Trying to algin rasters so they can be stacked
-Upscext <- extent(Apr_2001_EVI)
 
-#Resample takes a bit but not too long...
-Apr_2001_tminresample <- resample(Apr_2001_tmin, Apr_2001_EVI, method="bilinear")
-Apr_2001_tmaxresample <- resample(Apr_2001_tmax, Apr_2001_EVI, method="bilinear")
-Apr_2001_Precipesample <- resample(Apr_2001_precip, Apr_2001_EVI, method="bilinear")
+Stack_2002_GPP <- stack(Jan_2002_GPP, Feb_2002_GPP, Mar_2002_GPP, Apr_2002_GPP, May_2002_GPP, Jun_2002_GPP, Jul_2002_GPP,
+      Aug_2002_GPP, Sep_2002_GPP, Oct_2002_GPP, Nov_2002_GPP, Dec_2002_GPP)
 
-#Create blank raster for month with value of "1" for Jan, "2" for Feb, etc. 
-month = raster (ext=Upscext, res=0.002081004)
-values(month) <-4
-plot(month)
+names(Stack_2002_GPP) <- paste(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", 
+                                 "Sep", "Oct", "Nov", "Dec"))
+plot(Stack_2002_GPP, zlim=c(0,6))
 
-#Stack
-Apr_2001 <- stack(Apr_2001_tminresample, Apr_2001_tmaxresample, Apr_2001_Precipesample, Apr_2001_EVI, month)
-#Rename rasters in raster stack
-#Calling EVI "NDVI" for now. Then: tmax, tmin, and month.
-names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
-Apr_2001
+Stack_2002_GPP
 
-writeRaster(Apr_2001, filename="F:/Upscaling_Project/Gridded_inputs/Apr_2001.tif")
+Stack_2002_GPP
+point <- cbind(-110.75, 31.75)
+result <- extract(Stack_2002_GPP, point)
+plot(result[1:12])
 
-plot(raster("F:/Upscaling_Project/Gridded_Inputs/Apr_2001.tif"))
+
+point <- cbind(-111.75, 35.25)
+result <-extract(Stack_2002_GPP, point)
+plot(result[1:12])
+
+
+point <- cbind(-119.75, 37.1)
+result <-extract(Stack_2002_GPP, point)
+plot(result[1:12])
+
+point <- cbind(-110, 31.75)
+result <-extract(Stack_2002_GPP, point)
+plot(result[1:12])
+
+
+
+as.data.frame(getValues(Stack_2002_GPP))
+timeseries <- extract(Stack_2002_GPP, 1:ncell(Stack_2002_GPP))
+head(timeseries)
+writeRaster(Stack_2002_GPP, "F:/Upscaling_Project/Upscaling_Project_2017/GPP_2002.grd", format="raster", overwrite=TRUE)
+
+
+file <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-wkg_merged.csv")
+file$date <- as.Date(paste("01", file$monthyear, sep="_"), format="%d_%b_%Y")
+str(file)
+file[10:20,]
+#Initial TS plot
+
+p <- ggplot() +
+  geom_line(data = file, aes(x = date, y = GPP, color =I("red"))) +
+  geom_line(data = file, aes(x = date, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = file, aes(x = date, y = Jung_2017, color = I("green"))) +
+  xlab('data_date') +
+  ylab('GPP')
+
+p
+
+#get mean seasonal cycle
+file$month <- month(file$date)
+file$year <- year(file$date)
+
+seasonal <- ddply(file, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+
+q <- ggplot() +
+  geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = seasonal, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = seasonal, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data= seasonal, aes(x=month, y=Barnes, color=I("purple")))+
+  xlab('month') +
+  ylab('GPP')+
+  ggtitle("US-Wkg")+
+  theme_bw()
+
+q
+
+
+point <- cbind(-110.75, 31.75)
+result <- extract(Stack_2002_GPP, point)
+str(result)
+str(seasonal)
+seasonal$Barnes <- (result[1:12])
+str(seasonal)
