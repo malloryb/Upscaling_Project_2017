@@ -10,6 +10,7 @@ head(All_sites)
 #add column names
 str(All_sites)
 All_sites$month <- as.factor(All_sites$month)
+All_sites$IGBP_no <- as.factor(All_sites$IGBP_no)
 #2. Know your data----------------------
 #Iris scatter plots using ggvis and some correlations
 All_sites %>% ggvis(~GPP, ~ET, fill=~site) %>% layer_points()
@@ -41,7 +42,7 @@ nacols <- function(df) {
 
 #Normalize quantitative data 
 str(All_sites)
-All_sites <- All_sites[c("date", "site", "IGBP", "month", "Latitude", "Longitude", "GPP", "daylength",
+All_sites <- All_sites[c("date", "site", "IGBP_no", "month", "Latitude", "Longitude", "GPP", "daylength",
                          "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI", "SPEI_1", "SPEI_3", 
                          "SPEI_6", "SPEI_9", "SPEI_12", "SPEI_IGBP", "CCP")]
 All_sites <- All_sites[complete.cases(All_sites),]
@@ -83,7 +84,7 @@ head(All_sites.training[,cols1])
 head(All_sites.training[,7:8])
 
 #Model using: precip, NDVI, tmax, tmin,month
-cols5 <- c(4, 9, 12:13, 16)
+cols5 <- c(3:4, 9, 12:13, 16)
 head(All_sites.training)
 head(All_sites.training[,cols5])
 head(All_sites.training[,7:8])
@@ -174,5 +175,5 @@ Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
 Jun_2001_GPP <-raster("F:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
 plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,7))
 
-saveRDS(RF5, "D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
+saveRDS(RF5, "F:/Upscaling_Project/Upscaling_Project_2017/RF5_11_8.rds")
 readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
