@@ -12,6 +12,14 @@ mean_na <- function(x) {
   mean(x,na.rm=T)
 }
 
+Global_LC <- raster("F:/Upscaling_Project/Gridded_Inputs/LC_5min_global_2001.tif")
+Upscext <- extent(EVI)
+EVI <- (raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif"))
+
+LC_Resample <- resample(Global_LC, EVI, method="bilinear")
+plot(LC_Resample)
+
+writeRaster(LC_Resample, "F:/Upscaling_Project/Gridded_Inputs/LC_Resample.tif")
 
 create_input_raster <- function(band1, month, monthno, year){
   filenameEVI <- paste0("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/", month, "_", year, "_", "EVI.tif")
@@ -44,8 +52,7 @@ create_input_raster <- function(band1, month, monthno, year){
   writeRaster(rast_stack, outputfilename)
   return(rast_stack)
 }
-
-
+Stack_2001_GPP
 #For 2002-----------------------------------
 create_input_raster(band1=25, month="Jan", monthno=1, year=2002)
 create_input_raster(band1=26, month="Feb", monthno=2, year=2002)
