@@ -19,6 +19,17 @@ EVI <- (raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif
 LC_Resample <- resample(Global_LC, EVI, method="bilinear")
 plot(LC_Resample)
 
+# Elevation
+dem = raster("F:/Upscaling_Project/Gridded_Inputs/Hydro1k/na_dem.bil")
+dem[dem==-9999] = NA
+dem[dem>10000] = NA
+plot(dem)
+EVI <- (raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/Apr_2001_EVI.tif"))
+Upscext <- extent(EVI)
+temp = projectRaster(dem, EVI) #reproject/resample to MODIS extent and resolution
+temp <- writeRaster(temp, filename="F:/Upscaling_Project/Gridded_Inputs/Hydro1k/SW_dem.tif",format="GTiff",overwrite=TRUE)
+
+
 writeRaster(LC_Resample, "F:/Upscaling_Project/Gridded_Inputs/LC_Resample.tif")
 
 create_input_raster <- function(band1, month, monthno, year){
@@ -27,6 +38,7 @@ create_input_raster <- function(band1, month, monthno, year){
   filenamePrecip <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_prcp_2000_2016_AOI.tif"
   filenameTmax <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmax_2000_2016_AOI.tif"
   filenameTmin <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif"
+  DEM <- "F:/Upscaling_Project/Gridded_Inputs/Hydro1k/SW_dem.tif"
   
   Precip <- raster(filenamePrecip, band = band1)
   Tmax <- raster(filenameTmax, band = band1)
@@ -46,13 +58,55 @@ create_input_raster <- function(band1, month, monthno, year){
   values(monthrast) <- monthno
   
   rast_stack <- stack(Tminresample, Tmaxresample, Precipresample, EVI, monthrast)
-  names(rast_stack) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+  names(rast_stack) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "DEM"))
   
   outputfilename <- paste("F:/Upscaling_Project/Gridded_inputs/RF_Input/",month,"_",year,".tif")
   writeRaster(rast_stack, outputfilename)
   return(rast_stack)
 }
-Stack_2001_GPP
+
+
+dem <- raster("F:/Upscaling_Project/Gridded_Inputs/Hydro1k/SW_dem.tif")
+
+#For 2001-----------------------------------
+create_input_raster(band1=25, month="Jan", monthno=1, year=2001)
+create_input_raster(band1=26, month="Feb", monthno=2, year=2001)
+create_input_raster(band1=27, month="Mar", monthno=3, year=2001)
+create_input_raster(band1=28, month="Apr", monthno=4, year=2001)
+create_input_raster(band1=29, month="May", monthno=5, year=2001)
+create_input_raster(band1=30, month="Jun", monthno=6, year=2001)
+create_input_raster(band1=31, month="Jul", monthno=7, year=2001)
+create_input_raster(band1=32, month="Aug", monthno=8, year=2001)
+create_input_raster(band1=33, month="Sep", monthno=9, year=2001)
+create_input_raster(band1=34, month="Oct", monthno=10, year=2001)
+create_input_raster(band1=35, month="Nov", monthno=11, year=2001)
+create_input_raster(band1=36, month="Dec", monthno=12, year=2001)
+
+Jan_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jan_2001.tif", dem)
+plot(Jan_2001)
+names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Feb_2002 <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Feb_2002.tif")
+names(Feb_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Mar_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Mar_2002.tif")
+names(Mar_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Apr_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2002.tif")
+names(Apr_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+May_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/May_2002.tif")
+names(May_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Jun_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jun_2002.tif")
+names(Jun_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Jul_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jul_2002.tif")
+names(Jul_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Aug_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Aug_2002.tif")
+names(Aug_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Sep_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Sep_2002.tif")
+names(Sep_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Oct_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Oct_2002.tif")
+names(Oct_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Nov_2002<-stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Nov_2002.tif")
+names(Nov_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
+Dec_2002<- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Dec_2002.tif")
+names(Dec_2002) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
 #For 2002-----------------------------------
 create_input_raster(band1=25, month="Jan", monthno=1, year=2002)
 create_input_raster(band1=26, month="Feb", monthno=2, year=2002)
