@@ -4,7 +4,7 @@ library(caret)
 library(randomForest)
 
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_10_23_2017.csv") 
+All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscalling_All_Sites_11_10.csv") 
 #Print first lines
 head(All_sites)
 #add column names
@@ -42,7 +42,7 @@ nacols <- function(df) {
 
 #Normalize quantitative data 
 str(All_sites)
-All_sites <- All_sites[c("date", "site", "IGBP_no", "month", "Latitude", "Longitude", "GPP", "daylength",
+All_sites <- All_sites[c("date", "site", "elev", "month", "Latitude", "Longitude", "GPP", "daylength",
                          "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI", "SPEI_1", "SPEI_3", 
                          "SPEI_6", "SPEI_9", "SPEI_12", "SPEI_IGBP", "CCP")]
 All_sites <- All_sites[complete.cases(All_sites),]
@@ -175,5 +175,5 @@ Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
 Jun_2001_GPP <-raster("F:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
 plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,7))
 
-saveRDS(RF5, "F:/Upscaling_Project/Upscaling_Project_2017/RF5_11_8.rds")
+saveRDS(RF5, "F:/Upscaling_Project/Upscaling_Project_2017/RF5_11_13.rds")
 readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF5_10_18.rds")
