@@ -364,36 +364,36 @@ create_input_raster(band1=35, month="Nov", monthno=11, year=2002)
 create_input_raster(band1=36, month="Dec", monthno=12, year=2002)
 
 LC_Resample <- raster("F:/Upscaling_Project/Gridded_Inputs/LC_Resample.tif")
-plot(LC_Resample)
-Jan_2001 <- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jan_2001.tif"), LC_Resample)
-names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Feb_2001 <- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Feb_2001.tif"), LC_Resample)
-names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Mar_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Mar_2001.tif"), LC_Resample)
-names(Mar_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Apr_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2001.tif"), LC_Resample)
-names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-May_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/May_2001.tif"), LC_Resample)
-names(May_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Jun_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jun_2001.tif"), LC_Resample)
-names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Jul_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jul_2001.tif"), LC_Resample)
-names(Jul_2001) <-paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Aug_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Aug_2001.tif"), LC_Resample)
-names(Aug_2001) <-paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Sep_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Sep_2001.tif"), LC_Resample)
-names(Sep_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Oct_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Oct_2001.tif"), LC_Resample)
-names(Oct_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Nov_2001<-stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Nov_2001.tif"), LC_Resample)
-names(Nov_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
-Dec_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Dec_2001.tif"), LC_Resample)
-names(Dec_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "IGBP_no"))
+dem <- raster("F:/Upscaling_Project/Gridded_Inputs/Hydro1k/SW_dem.tif")
 
+Jan_2001 <- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jan_2001.tif"), dem)
+names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Feb_2001 <- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Feb_2001.tif"), dem)
+names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Mar_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Mar_2001.tif"), dem)
+names(Mar_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Apr_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2001.tif"), dem)
+names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+May_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/May_2001.tif"), dem)
+names(May_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Jun_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jun_2001.tif"), dem)
+names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Jul_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jul_2001.tif"), dem)
+names(Jul_2001) <-paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Aug_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Aug_2001.tif"), dem)
+names(Aug_2001) <-paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Sep_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Sep_2001.tif"), dem)
+names(Sep_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Oct_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Oct_2001.tif"), dem)
+names(Oct_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Nov_2001<-stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Nov_2001.tif"), dem)
+names(Nov_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
+Dec_2001<- stack(("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Dec_2001.tif"), dem)
+names(Dec_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev"))
 sw <- extent(Jan_2001)
 
 
-RF5 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF5_11_8.rds")
+RF5 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF5_11_13.rds")
 
 #started @ 3:50 pm
 Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
@@ -425,24 +425,24 @@ plot(Stack_2001_GPP, zlim=c(0,6))
 Stack_2001_GPP
 
 #US-Srm
-point <- cbind(-110.86, 31.82)
-result <- extract(Stack_2001_GPP, point)
-plot(result[1:12])
+SRMpoint <- cbind(-110.86, 31.82)
+SRMresult <- extract(Stack_2001_GPP, SRMpoint)
+SRMplot(result[1:12])
 
 #US-fuf
-point <- cbind(-111.76, 35.12)
-result <-extract(Stack_2001_GPP, point)
-plot(result[1:12])
+FUFpoint <- cbind(-111.76, 35.12)
+FUFresult <-extract(Stack_2001_GPP, FUFpoint)
+plot(FUFresult[1:12])
 
 #US-CA
-point <- cbind(-119.76, 37.12)
-result <-extract(Stack_2001_GPP, point)
-plot(result[1:12])
+CApoint <- cbind(-119.76, 37.12)
+CAresult <-extract(Stack_2001_GPP, CApoint)
+plot(CAresult[1:12])
 
 #US-Wkg
-point <- cbind(-109.96, 31.74)
-result <-extract(Stack_2001_GPP, point)
-plot(result[1:12])
+WKGpoint <- cbind(-109.96, 31.74)
+WKGresult <-extract(Stack_2001_GPP, WKGpoint)
+plot(WKGresult[1:12])
 
 
 
@@ -472,6 +472,8 @@ file$month <- month(file$date)
 file$year <- year(file$date)
 
 seasonal <- ddply(file, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+seasonal$Barnes <- (WKGresult[1:12])
+str(seasonal)
 
 q <- ggplot() +
   geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
@@ -483,12 +485,9 @@ q <- ggplot() +
   ggtitle("US-Wkg")+
   theme_bw()
 
-q
 
 
 point <- cbind(-110.75, 31.75)
 result <- extract(Stack_2001_GPP, point)
 str(result)
-str(seasonal)
-seasonal$Barnes <- (result[1:12])
 str(seasonal)
