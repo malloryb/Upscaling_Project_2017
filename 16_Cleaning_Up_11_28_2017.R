@@ -357,25 +357,30 @@ plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP", zlim=c(0,7))
 saveRDS(RF4, "D:/Upscaling_Project/Upscaling_Project_2017/RF4_11_29.rds")
 library(caret)
 library(randomForest)
-#Ok going backwards 
+
+#Ok next step: Adding WB rasters 
 RF4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF4_11_29.rds")
+
+
 MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
 MAT_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
 
 plot(MAP_resample)
 plot(MAT_resample)
+
 sw <- extent(Jun_2001)
+test <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Jun_2001.tif")
 Jun_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jun2001.grd")
-Jun_2001 <- dropLayer(Jun_2001, 7)
 Jun_2001 <- stack(Jun_2001, MAP_resample, MAT_resample)
+names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
 plot(Jun_2001)
-names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
 Jun_2001_GPP <- predict(Jun_2001, RF4, ext=sw)
 
 Jul_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jul2001.grd")
 Jul_2001 <- dropLayer(Jul_2001, 7)
 Jul_2001 <- stack(Jul_2001, MAP_resample, MAT_resample)
 names(Jul_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
+plot(Jul_2001)
 Jul_2001_GPP <- predict(Jul_2001, RF4, ext=sw)
 
 Aug_2001 <- stack("Upscaling_Project/Gridded_Inputs/Idaho_MET/Aug2001.grd")
