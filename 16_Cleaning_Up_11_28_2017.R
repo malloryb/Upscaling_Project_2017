@@ -192,13 +192,16 @@ Jan_2001 <- dropLayer(Jan_2001, 7)
 #4) Run site-based RF with proper variables --------
 
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
+All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
 #Print first lines
 head(All_sites)
 #add column names
+library(lubridate)
 str(All_sites)
+
+All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%d/%m/%Y")))
 All_sites$month <- as.factor(All_sites$month)
-All_sites$IGBP_no <- as.factor(All_sites$IGBP_no)
+#All_sites$IGBP_no <- as.factor(All_sites$IGBP_no)
 #3. Prepare your data----------------------
 #Normalization makes data easier for the RF algorithm to learn
 #Two types of normalization: 
@@ -220,7 +223,7 @@ nacols <- function(df) {
 str(All_sites)
 All_sites <- All_sites[c("date", "site", "elev", "month", "Latitude", "Longitude", "GPP", "daylength",
                          "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI", "SPEI_1", "SPEI_3", 
-                         "SPEI_6", "SPEI_9", "SPEI_12", "SPEI_IGBP", "CCP",  "MAP", "MAT", "PET", "wb")]
+                         "SPEI_6", "SPEI_9", "SPEI_12", "SPEI_IGBP", "CCP",  "MAP", "MAT", "PET", "wb", "year")]
 All_sites <- All_sites[complete.cases(All_sites),]
 nacols(All_sites)
 head(All_sites)
@@ -229,15 +232,14 @@ All_normalized <- as.data.frame(lapply(All_sites[8:16], normalize))
 str(All_normalized)
 All <- cbind(All_sites[1:7], All_normalized)
 All <- cbind(All, All_sites[17:27])
-str(All)
 All_normalized <- All[complete.cases(All_normalized),]
-head(All_normalized)
+#All_normalized<-All_sites
 #Here's where we can split
 #All_normalized <- subset(All_normalized, site="us-fuf")
 #Machine Learning with "caret"
 #Split data into training and test set (a little different) - ratio 75/25
 #Create index to split based on labels
-index <- createDataPartition(All_normalized$GPP, p=0.75, list=FALSE)
+index <- createDataPartition(All_normalized$year, p=0.80, list=FALSE)
 index
 #Subset training set
 All_sites.training <- All_normalized[index,]
@@ -279,6 +281,13 @@ head(All_sites.training)
 head(All_sites.training[,cols4])
 head(All_sites.training[,7:8])
 
+#Model using: precip, NDVI, tmax, tmin, MAP, MAT, wb, month, and elev
+cols5 <- c(3:4, 9, 12:13, 16, 24:25, 27)
+head(All_sites.training)
+head(All_sites.training[,cols5])
+head(All_sites.training[,7:8])
+
+
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
 #model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
@@ -290,6 +299,7 @@ model_rf1 <- train(All_sites.training[,cols1], All_sites.training[,7], method='r
 model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf3<- train(All_sites.training[,cols3], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
 model_rf4<- train(All_sites.training[,cols4], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
+model_rf5<- train(All_sites.training[,cols5], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
 
 #model_rf5preproc <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE,  preProcess=c("center", "scale"))
 #Predict based on model
@@ -297,7 +307,7 @@ model_rf4<- train(All_sites.training[,cols4], All_sites.training[,7], method='rf
 predictions <- predict(object=model_rf1, All_sites.test[,cols1])
 predictions <- predict(object=model_rf2, All_sites.test[,cols2])
 predictions <- predict(object=model_rf3, All_sites.test[,cols3])
-
+predictions <- predict(object=model_rf5, All_sites.test[,cols5])
 table(predictions)
 pred1 <- as.numeric(predictions)
 cor(pred1, All_sites.test[,7])
@@ -307,11 +317,14 @@ RF1 <- model_rf1$finalModel
 RF2 <- model_rf2$finalModel
 RF3 <- model_rf3$finalModel
 RF4 <- model_rf4$finalModel
+RF5 <- model_rf5$finalModel
 
 varImpPlot(RF1)
 varImpPlot(RF2)
 varImpPlot(RF3)
 varImpPlot(RF4)
+varImpPlot(RF5)
+
 lb1 <- paste("R^2 == ", "0.73")
 RMSE1 <- paste("RMSE==", "0.65")
 #Plot predicted vs. measured
@@ -374,9 +387,10 @@ Jun_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jun2001.grd")
 Jun_2001 <- stack(Jun_2001, MAP_resample, MAT_resample)
 names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
 plot(Jun_2001)
-Jun_2001_GPP <- predict(Jun_2001, RF4, ext=sw)
+Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
+plot(Jun_2001_GPP)
 
-Jul_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jul2001.grd")
+ul_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jul2001.grd")
 Jul_2001 <- dropLayer(Jul_2001, 7)
 Jul_2001 <- stack(Jul_2001, MAP_resample, MAT_resample)
 names(Jul_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
