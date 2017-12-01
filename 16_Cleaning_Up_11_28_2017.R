@@ -379,6 +379,7 @@ library(caret)
 library(randomForest)
 
 #Ok next step: Adding WB rasters 
+stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2007.tif")
 
 #Function where x is a list of filenames
 format_rasters_wb <- function(month, year){
