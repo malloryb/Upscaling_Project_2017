@@ -379,21 +379,25 @@ library(caret)
 library(randomForest)
 
 #Ok next step: Adding WB rasters 
-RF4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF4_11_29.rds")
+
+#Function where x is a list of filenames
+format_rasters_wb <- function(month, year){
+  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month_year, ".tif")
+  print(filename)
+  model<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF4_11_29.rds")
+  MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  month_year <- stack(filename)
+  
+  sw <- extent(month_year)
+  month_year <- stack(month_year, MAP_resample, MAT_resample)
+  names(month_year) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
+  month_year_GPP <- predict(month_year, model, ext=sw)
+  return(month_year_GPP)}
+
+format_rasters_wb("Jun", "2001")  
 
 
-MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
-MAT_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
-
-plot(MAP_resample)
-plot(MAT_resample)
-
-sw <- extent(Jun_2001)
-
-Jun_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jun2001.grd")
-Jun_2001 <- stack(Jun_2001, MAP_resample, MAT_resample)
-names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
 
 Jul_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jul2001.grd")
 Jul_2001 <- stack(Jul_2001, MAP_resample, MAT_resample)
