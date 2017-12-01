@@ -195,6 +195,13 @@ Jan_2001 <- dropLayer(Jan_2001, 7)
 All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
 #Print first lines
 head(All_sites)
+numcols <- c(3:16, 18, 23, 25:33, 34:35)
+Allsites_sum <- All_sites[,numcols]
+head(Allsites_sum)
+descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
+highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
+descrCor[,-highCorDescr]
 #add column names
 library(lubridate)
 str(All_sites)
@@ -382,6 +389,7 @@ plot(MAP_resample)
 plot(MAT_resample)
 
 sw <- extent(Jun_2001)
+
 Jun_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jun2001.grd")
 Jun_2001 <- stack(Jun_2001, MAP_resample, MAT_resample)
 names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
@@ -391,151 +399,196 @@ Jul_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jul2001.grd")
 Jul_2001 <- stack(Jul_2001, MAP_resample, MAT_resample)
 names(Jul_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
 Jul_2001_GPP <- predict(Jul_2001, RF5, ext=sw)
+plot(Jul_2001_GPP)
 
-Aug_2001 <- stack("Upscaling_Project/Gridded_Inputs/Idaho_MET/Aug2001.grd")
+Aug_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Aug2001.grd")
 Aug_2001 <- stack(Aug_2001, MAP_resample, MAT_resample)
 names(Aug_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
 Aug_2001_GPP <- predict(Aug_2001, RF5, ext=sw)
 
-Sep_2001 <- stack("Upscaling_Project/Gridded_Inputs/Idaho_MET/Sep2001.grd")
-Sep_2001 <- dropLayer(Sep_2001, 7)
-Sep_2001 <- stack(Sep_2001, MAP_resample, MAT_resample)
-names(Sep_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
-Sep_2001_GPP <- predict(Sep_2001, RF4, ext=sw)
+Jan_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jan2001.grd")
+Jan_2001 <- stack(Jan_2001, MAP_resample, MAT_resample)
+names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
+Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
 
-Oct_2001 <- stack("Upscaling_Project/Gridded_Inputs/Idaho_MET/Oct2001.grd")
-Oct_2001 <- dropLayer(Oct_2001, 7)
-Oct_2001 <- stack(Oct_2001, MAP_resample, MAT_resample)
-names(Oct_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
-Oct_2001_GPP <- predict(Oct_2001, RF4, ext=sw)
-
-Nov_2001 <- stack("Upscaling_Project/Gridded_Inputs/Idaho_MET/Nov2001.grd")
-Nov_2001 <- dropLayer(Nov_2001, 7)
-Nov_2001 <- stack(Nov_2001, MAP_resample, MAT_resample)
-names(Nov_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
-Nov_2001_GPP <- predict(Nov_2001, RF4, ext=sw)
-
-plot(Sep_2001_GPP)
-plot(Oct_2001_GPP)
-plot(Nov_2001_GPP)
-
-writeRaster(Nov_2001_GPP, "F:/Upscaling_Project/Nov_2001_GPP.tif")
-writeRaster(Oct_2001_GPP, "F:/Upscaling_Project/Oct_2001_GPP.tif")
-writeRaster(Jun_2001_GPP, "F:/Upscaling_Project/Jun_2001_GPP.tif")
-writeRaster(Jul_2001_GPP, "F:/Upscaling_Project/Jul_2001_GPP.tif")            
-writeRaster(Aug_2001_GPP, "F:/Upscaling_Project/Aug_2001_GPP.tif")
-writeRaster(Sep_2001_GPP, "F:/Upscaling_Project/Sep_2001_GPP.tif")
-
+Feb_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Feb2001.grd")
+Feb_2001 <- stack(Feb_2001, MAP_resample, MAT_resample)
+names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
+Feb_2001_GPP <- predict(Feb_2001, RF5, ext=sw)
 
 Mar_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Mar2001.grd")
-Mar_2001 <- dropLayer(Mar_2001, 7)
 Mar_2001 <- stack(Mar_2001, MAP_resample, MAT_resample)
-names(Mar_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
-Mar_2001_GPP <- predict(Mar_2001, RF4, ext=sw)
-writeRaster(Mar_2001_GPP, "F:/Upscaling_Project/Mar_2001_GPP.tif")
+names(Mar_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
+Mar_2001_GPP <- predict(Mar_2001, RF5, ext=sw)
 
 Apr_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Apr2001.grd")
-Apr_2001 <- dropLayer(Apr_2001, 7)
 Apr_2001 <- stack(Apr_2001, MAP_resample, MAT_resample)
-names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
-Apr_2001_GPP <- predict(Apr_2001, RF4, ext=sw)
-writeRaster(Apr_2001_GPP, "F:/Upscaling_Project/Apr_2001_GPP.tif")
+names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
+Apr_2001_GPP <- predict(Apr_2001, RF5, ext=sw)
 
 May_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/May2001.grd")
-May_2001 <- dropLayer(May_2001, 7)
 May_2001 <- stack(May_2001, MAP_resample, MAT_resample)
-names(May_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "MAP", "MAT"))
-May_2001_GPP <- predict(May_2001, RF4, ext=sw)
-writeRaster(May_2001_GPP, "F:/Upscaling_Project/May_2001_GPP.tif")
+names(May_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
+May_2001_GPP <- predict(May_2001, RF5, ext=sw)
+
+Sep_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Sep2001.grd")
+Sep_2001 <- stack(Sep_2001, MAP_resample, MAT_resample)
+names(Sep_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
+Sep_2001_GPP <- predict(Sep_2001, RF5, ext=sw)
+
+Oct_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Oct2001.grd")
+Oct_2001 <- stack(Oct_2001, MAP_resample, MAT_resample)
+names(Oct_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
+Oct_2001_GPP <- predict(Oct_2001, RF5, ext=sw)
+
+Nov_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Nov2001.grd")
+Nov_2001 <- stack(Nov_2001, MAP_resample, MAT_resample)
+names(Nov_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
+Nov_2001_GPP <- predict(Nov_2001, RF5, ext=sw)
+
+Dec_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Dec2001.grd")
+Dec_2001 <- stack(Dec_2001, MAP_resample, MAT_resample)
+names(Dec_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
+Dec_2001_GPP <- predict(Dec_2001, RF5, ext=sw)
 
 #Stack them all up
-Jan_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jan_2001_GPP.tif")
-Feb_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Feb_2001_GPP.tif")
-Mar_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Mar_2001_GPP.tif")
-Apr_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Apr_2001_GPP.tif")
-May_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/May_2001_GPP.tif")
-Jun_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jun_2001_GPP.tif")
-Jul_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jul_2001_GPP.tif")
-Aug_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Aug_2001_GPP.tif")
-Sep_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Sep_2001_GPP.tif")
-Oct_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Oct_2001_GPP.tif")
-Nov_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Nov_2001_GPP.tif")
-Dec_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Dec_2001_GPP.tif")
-
-stack_2001_GPP <- stack(Jan_2001, Feb_2001, Mar_2001, Apr_2001, May_2001, Jun_2001, Jul_2001, Aug_2001, Sep_2001, Oct_2001, Nov_2001, Dec_2001)
+#Jan_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jan_2001_GPP.tif")
+#Feb_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Feb_2001_GPP.tif")
+#Mar_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Mar_2001_GPP.tif")
+#Apr_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Apr_2001_GPP.tif")
+#May_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/May_2001_GPP.tif")
+#Jun_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jun_2001_GPP.tif")
+#Jul_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jul_2001_GPP.tif")
+#Aug_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Aug_2001_GPP.tif")
+#Sep_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Sep_2001_GPP.tif")
+#Oct_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Oct_2001_GPP.tif")
+#Nov_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Nov_2001_GPP.tif")
+#Dec_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Dec_2001_GPP.tif")
+plot(stack_2001_GPP)
+stack_2001_GPP <- stack(Jan_2001_GPP, Feb_2001_GPP, Mar_2001_GPP, Apr_2001_GPP, May_2001_GPP, Jun_2001_GPP, Jul_2001_GPP, Aug_2001_GPP, Sep_2001_GPP, Oct_2001_GPP, Nov_2001_GPP, Dec_2001_GPP)
 names(stack_2001_GPP) <- paste(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-#write(Stack_2001_GPP, "F:/Uspcaling_Project/Upscaling_11_29/Stack_2001_GPP.tif")
+writeRaster(stack_2001_GPP, "F:/Upscaling_Project/Upscaled_GPP/Stack_2001_GPP_waterbalance.tif")
 #Compare to other things...
 #Stack_2001_GPP <- stack("F:/Upscaling_Project/Upscaling_11_29/Stack_2001_GPP.tif")
-plot(Stack_2001_GPP, zlim=c(0,6))
+plot(stack_2001_GPP, zlim=c(0,6))
 
 Stack_2001_GPP
 
+
+library(lubridate)
+library(plyr)
 #US-Srm
 SRMpoint <- cbind(-110.86, 31.82)
-SRMresult <- extract(Stack_2001_GPP, SRMpoint)
+SRMresult <- extract(stack_2001_GPP, SRMpoint)
 plot(SRMresult[1:12])
-
 #US-fuf
 #FUFpoint <- cbind(-111.76, 35.12)
-FUFpoint <- cbind(-111, 35)
-FUFresult <-extract(Stack_2001_GPP, FUFpoint)
+FUFpoint <- cbind(-111.76, 35.0890)
+FUFresult <-extract(stack_2001_GPP, FUFpoint)
 plot(FUFresult[1:12])
 
 #US-CA
-CApoint <- cbind(-119.76, 37.12)
-CAresult <-extract(Stack_2001_GPP, CApoint)
-plot(CAresult[1:12])
+#CApoint <- cbind(-119.76, 37.12)
+#CAresult <-extract(Stack_2001_GPP, CApoint)
+#plot(CAresult[1:12])
 
 #US-Wkg
 #WKGpoint <- cbind(-109.96, 31.74)
-WKGpoint <- cbind(-110, 32)
-WKGresult <-extract(Stack_2001_GPP, WKGpoint)
+WKGpoint <- cbind(-109.94, 31.7365)
+WKGresult <-extract(stack_2001_GPP, WKGpoint)
 plot(WKGresult[1:12])
 
+VCMpoint <- cbind(-106.5, 35.888447)
+VCMresult <-extract(stack_2001_GPP, WKGpoint)
+plot(VCMresult[1:12])
 
-file <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-fuf_merged.csv")
-file$date <- as.Date(paste("01", file$monthyear, sep="_"), format="%d_%b_%Y")
-str(file)
-file[10:20,]
+VCPpoint <- cbind(-106.59, 35.864)
+VCPresult <-extract(stack_2001_GPP, WKGpoint)
+plot(VCPresult[1:12])
+
+
+
+fuf <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-fuf_merged.csv")
+fuf$date <- as.Date(paste("01", fuf$monthyear, sep="_"), format="%d_%b_%Y")
+str(fuf)
+fuf[10:20,]
+#get mean seasonal cycle
+fuf$month <- month(fuf$date)
+fuf$year <- year(fuf$date)
+seasonalfuf <- ddply(fuf, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+seasonalfuf$BarnesFUF <- (FUFresult[1:12])
+
+
+vcm <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-vcp_merged.csv")
+vcm$date <- as.Date(paste("01", vcm$monthyear, sep="_"), format="%d_%b_%Y")
+str(vcm)
+vcm[10:20,]
+#get mean seasonal cycle
+vcm$month <- month(vcm$date)
+vcm$year <- year(vcm$date)
+seasonalvcm <- ddply(vcm, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+seasonalvcm$BarnesVCM <- (VCMresult[1:12])
+
+srm <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-srm_merged.csv")
+srm$date <- as.Date(paste("01", srm$monthyear, sep="_"), format="%d_%b_%Y")
+str(srm)
+srm[10:20,]
 library(lubridate)
 library(plyr)
 #get mean seasonal cycle
-file$month <- month(file$date)
-file$year <- year(file$date)
-seasonal <- ddply(file, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
-seasonal$BarnesWKG <- (WKGresult[1:12])
-seasonal$BarnesFUF <- (FUFresult[1:12])
-seasonal$BarnesSRM <- (SRMresult[1:12])
+srm$month <- month(srm$date)
+srm$year <- year(srm$date)
+seasonalsrm <- ddply(srm, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+seasonalsrm$BarnesSRM <- (SRMresult[1:12])
+
+wkg <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-wkg_merged.csv")
+wkg$date <- as.Date(paste("01", wkg$monthyear, sep="_"), format="%d_%b_%Y")
+str(wkg)
+wkg[10:20,]
+#get mean seasonal cycle
+wkg$month <- month(wkg$date)
+wkg$year <- year(wkg$date)
+seasonalwkg <- ddply(wkg, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+seasonalwkg$BarnesWKG <- (WKGresult[1:12])
 str(seasonal)
 
 WKG <- ggplot() +
-  geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2011, color = I("blue"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2017, color = I("green"))) +
-  geom_line(data= seasonal, aes(x=month, y=BarnesWKG, color=I("purple")))+
+  geom_line(data = seasonalwkg, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = seasonalwkg, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = seasonalwkg, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data= seasonalwkg, aes(x=month, y=BarnesWKG, color=I("purple")))+
   xlab('month') +
   ylab('GPP')+
   ggtitle("US-Wkg")+
   theme_bw()
 
 SRM <- ggplot() +
-  geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2011, color = I("blue"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2017, color = I("green"))) +
-  geom_line(data= seasonal, aes(x=month, y=BarnesSRM, color=I("purple")))+
+  geom_line(data = seasonalsrm, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = seasonalsrm, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = seasonalsrm, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data= seasonalsrm, aes(x=month, y=BarnesSRM, color=I("purple")))+
   xlab('month') +
   ylab('GPP')+
   ggtitle("US-Srm")+
   theme_bw()
 
 FUF <- ggplot() +
-  geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2011, color = I("blue"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2017, color = I("green"))) +
-  geom_line(data= seasonal, aes(x=month, y=BarnesWKG, color=I("purple")))+
+  geom_line(data = seasonalfuf, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = seasonalfuf, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = seasonalfuf, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data= seasonalfuf, aes(x=month, y=BarnesFUF, color=I("purple")))+
   xlab('month') +
   ylab('GPP')+
   ggtitle("US-Fuf")+
   theme_bw()
 
+
+VCP <- ggplot() +
+  geom_line(data = seasonalvcm, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = seasonalvcm, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = seasonalvcm, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data= seasonalvcm, aes(x=month, y=BarnesVCM, color=I("purple")))+
+  xlab('month') +
+  ylab('GPP')+
+  ggtitle("US-Vcp")+
+  theme_bw()
