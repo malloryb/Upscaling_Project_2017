@@ -192,7 +192,7 @@ Jan_2001 <- dropLayer(Jan_2001, 7)
 #4) Run site-based RF with proper variables --------
 
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
+All_sites <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
 #Print first lines
 head(All_sites)
 numcols <- c(3:16, 18, 23, 25:33, 34:35)
@@ -228,17 +228,16 @@ nacols <- function(df) {
 
 #Normalize quantitative data 
 str(All_sites)
-All_sites <- All_sites[c("date", "site", "elev", "month", "Latitude", "Longitude", "GPP", "daylength",
-                         "precip", "srad", "swe", "tmax", "tmin", "vp", "LST", "NDVI", "SPEI_1", "SPEI_3", 
-                         "SPEI_6", "SPEI_9", "SPEI_12", "SPEI_IGBP", "CCP",  "MAP", "MAT", "PET", "wb", "year")]
+All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
+                         "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "PET", "wb","NDVI")]
 All_sites <- All_sites[complete.cases(All_sites),]
 nacols(All_sites)
 head(All_sites)
 
-All_normalized <- as.data.frame(lapply(All_sites[8:16], normalize))
+All_normalized <- as.data.frame(lapply(All_sites[10:21], normalize))
 str(All_normalized)
-All <- cbind(All_sites[1:7], All_normalized)
-All <- cbind(All, All_sites[17:27])
+All <- cbind(All_sites[1:8], All_normalized)
+All <- cbind(All, All_sites[21:27])
 All_normalized <- All[complete.cases(All_normalized),]
 #All_normalized<-All_sites
 #Here's where we can split
