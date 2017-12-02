@@ -229,22 +229,17 @@ nacols <- function(df) {
 #Normalize quantitative data 
 str(All_sites)
 All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
-                         "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "PET", "wb","NDVI")]
+                         "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "wb","NDVI")]
 All_sites <- All_sites[complete.cases(All_sites),]
 nacols(All_sites)
 head(All_sites)
 
-All_normalized <- as.data.frame(lapply(All_sites[10:21], normalize))
-str(All_normalized)
-All <- cbind(All_sites[1:8], All_normalized)
-All <- cbind(All, All_sites[21:27])
-All_normalized <- All[complete.cases(All_normalized),]
-#All_normalized<-All_sites
+#No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
 #All_normalized <- subset(All_normalized, site="us-fuf")
 #Machine Learning with "caret"
-#Split data into training and test set (a little different) - ratio 75/25
-#Create index to split based on labels
+#Split into training and testing data
+#Create index to split based on year
 index <- createDataPartition(All_normalized$year, p=0.80, list=FALSE)
 index
 #Subset training set
