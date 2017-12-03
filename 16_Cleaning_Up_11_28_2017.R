@@ -271,9 +271,8 @@ head(All_sites.training[,5:6])
 
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-#Time for this model - 1:01pm to ...
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', importance=TRUE, do.trace=TRUE)
+model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 predictionsA1 <- predict(object=model_rfA1, All_sites.test[,colsA1])
 predictionsA2 <- predict(object=model_rfA2, All_sites.test[,colsA2])
@@ -291,10 +290,16 @@ RFA2 <- model_rfA2$finalModel
 varImpPlot(RFA1)
 varImpPlot(RFA2)
 
-lb1 <- paste("R^2 == ", "0.73")
-RMSE1 <- paste("RMSE==", "0.65")
+RFA1
+RFA2
+lb1 <- paste("R^2 == ", "0.78")
+RMSE1 <- paste("RMSE==", "0.37")
+lb2 <- paste("R^2 == ", "0.78")
+RMSE2 <- paste("RMSE==", "0.37")
+
 #Plot predicted vs. measured
-qplot(pred1, All_sites.test[,7]) + 
+#Model A1
+qplot(predA1, All_sites.test[,5]) + 
   geom_point(shape=19, colour="tomato2", size=3)+
   geom_abline(intercept = 0, slope = 1)+
   xlim(0,7.5)+
@@ -306,8 +311,25 @@ qplot(pred1, All_sites.test[,7]) +
   annotate("text", label = RMSE1, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
   theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("Random forest - 5 (RS/Daymet Only)")  
+  ggtitle("Random forest - A1")  
 
+#Model A2 
+qplot(predA2, All_sites.test[,5]) + 
+  geom_point(shape=19, colour="tomato2", size=3)+
+  geom_abline(intercept = 0, slope = 1)+
+  xlim(0,7.5)+
+  ylim(0,7.5)+
+  xlab("Flux monthly GPP")+
+  ylab("Predicted monthly GPP")+
+  theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
+  annotate("text", label = lb2, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
+  annotate("text", label = RMSE2, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
+  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("Random forest - A2 (A1 + water balance)")  
+
+saveRDS(RFA1, "F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+saveRDS(RFA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFA2_12_2.rds")
 
 #Predict based on rasters
 library(dismo)
@@ -315,47 +337,74 @@ library(raster)
 library(randomForest)
 library(caret)
 
-sw <- extent(Jan_2001)
-Jan_2001
+#Doing everything for 2007
 
-model_rf2
-varImpPlot(model_rf2)
-#For January 
-#This step takes awhile: 11:23am - on personal laptop
-Jan_2001_GPP <- predict(Jan_2001, RF3, ext=sw)
-plot(Jan_2001_GPP, main="Jan 2001 upscaled GPP", zlim=c(0,7))
 
-#For June
-#Jun_2001 <- stack("D:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
-#names(Jun_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month"))
-#sw <- extent(Jun_2001)
-#Jun_2001_GPP <- predict(Jun_2001, RF5, ext=sw)
-#Jun_2001_GPP <-raster("F:/Upscaling_Project/Gridded_Inputs/Jun_2001.tif")
-#plot(Jun_2001_GPP, main="June 2001 upscaled GPP", zlim=c(0,7))
+ 
+test1 <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2007.tif")
+MAP_res <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
 
-saveRDS(RF4, "D:/Upscaling_Project/Upscaling_Project_2017/RF4_11_29.rds")
-library(caret)
-library(randomForest)
 
-#Ok next step: Adding WB rasters 
-stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2007.tif")
-
+names("NDVI", "month", "elev", "precip", "tmin", "tmax")
 #Function where x is a list of filenames
-format_rasters_wb <- function(month, year){
-  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month_year, ".tif")
-  print(filename)
-  model<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF4_11_29.rds")
+RF_Agu_Analysis <- function(band1, month, monthno, year){
+  #Read in files
+  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month,"_",year, ".tif")
+  filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameSwe <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_swe_2000_2016_AOI.tif"
+  filenameWB <- paste0("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/","wb_",year,"_",monthno,".tif")
   MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
   MAT_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
-  month_year <- stack(filename)
+  inputrast <- stack(filename)
+  names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
+  srad <- raster(filenameSrad, band = band1)
+  swe <- raster(filenameSwe, band = band1)
+  wb <- raster(filenameWB)
+  print("filesloaded")
   
-  sw <- extent(month_year)
-  month_year <- stack(month_year, MAP_resample, MAT_resample)
-  names(month_year) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-  month_year_GPP <- predict(month_year, model, ext=sw)
-  return(month_year_GPP)}
+  test1 <- stack(inputrast, MAP_resample)
+  print("tested")
+  test2 <- stack(wb, inputrast)
+  print("tested2")
+  
+  #Process and resample Daymet variables
+  srad[srad==-9999] <-NA
+  swe[swe==-9999] <-NA
+  print("Subsetting done")
+  Sradresample <- resample(srad, MAP_resample, method="bilinear")
+  Sweresample <- resample(swe, MAT_resample, method="bilinear")
+  print("resampling done")
+  
+  
+  #Raster stack for prediction
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, Sweresample, wb)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin","MAP", "MAT","srad", "swe", "wb"))
+  
+  #Predict and write out model A1
+  sw <- extent(rast_stack)
+  
+  
+  #Predict and write out model A2 
+  modelA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  modelA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  
+  
+  
+  #month_year_GPP <- predict(month_year, model, ext=sw)
+  return(rast_stack)}
 
-format_rasters_wb("Jun", "2001")  
+RF_Agu_Analysis(band1=85, month="Jan", monthno=1, year=2007)
+RF_Agu_Analysis(band1=86, month="Feb", monthno=2, year=2007)
+RF_Agu_Analysis(band1=87, month="Mar", monthno=3, year=2007)
+RF_Agu_Analysis(band1=88, month="Apr", monthno=4, year=2007)
+RF_Agu_Analysis(band1=89, month="May", monthno=5, year=2007)
+RF_Agu_Analysis(band1=90, month="Jun", monthno=6, year=2007)
+RF_Agu_Analysis(band1=91, month="Jul", monthno=7, year=2007)
+RF_Agu_Analysis(band1=92, month="Aug", monthno=8, year=2007)
+RF_Agu_Analysis(band1=93, month="Sep", monthno=9, year=2007)
+RF_Agu_Analysis(band1=94, month="Oct", monthno=10, year=2007)
+RF_Agu_Analysis(band1=95, month="Nov", monthno=11, year=2007)
+RF_Agu_Analysis(band1=96, month="Dec", monthno=12, year=2007)
 
 
 
