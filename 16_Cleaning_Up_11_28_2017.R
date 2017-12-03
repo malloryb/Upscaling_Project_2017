@@ -195,13 +195,13 @@ Jan_2001 <- dropLayer(Jan_2001, 7)
 All_sites <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
 #Print first lines
 head(All_sites)
-numcols <- c(3:16, 18, 23, 25:33, 34:35)
-Allsites_sum <- All_sites[,numcols]
-head(Allsites_sum)
-descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
-highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
-highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
-descrCor[,-highCorDescr]
+#numcols <- c(3:16, 18, 23, 25:33, 34:35)
+#Allsites_sum <- All_sites[,numcols]
+#head(Allsites_sum)
+#descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
+#highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
+#highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
+#descrCor[,-highCorDescr]
 #add column names
 library(lubridate)
 str(All_sites)
@@ -217,9 +217,9 @@ All_sites$month <- as.factor(All_sites$month)
 #Normalization a good idea when one attribute has a wide range of values compared to others
 
 #User-defined normalization function
-normalize <- function(x) {
-  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
-}
+#normalize <- function(x) {
+#  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
+#}
 
 #Function to see if any cols have NAs. Now that I'm not standardizing GPP anymore having issues w/ NAs
 nacols <- function(df) {
@@ -240,15 +240,15 @@ head(All_sites)
 #Machine Learning with "caret"
 #Split into training and testing data
 #Create index to split based on year
-index <- createDataPartition(All_normalized$year, p=0.80, list=FALSE)
+index <- createDataPartition(All_sites$year, p=0.80, list=FALSE)
 index
 #Subset training set
-All_sites.training <- All_normalized[index,]
-All_sites.test <- All_normalized[-index,]
-str(All_normalized)
+All_sites.training <- All_sites[index,]
+All_sites.test <- All_sites[-index,]
+str(All_sites)
 #Overview of algorithms supported by caret function
 names(getModelInfo())
-head(All_normalized)
+head(All_sites)
 #Model using: month, precip, Tair, VPD, daylength, precip, srad, swe, tmax, tmin, vp, LST, NDVI
 #cols1 <- c(5, 7:18)
 #Model using: same as cols1 + site component
@@ -258,16 +258,16 @@ head(All_normalized)
 #Model using: same as cols1 except: Precip, Tair, VPD
 #cols4<- c(5, 10:18)
 #Model with all:
-cols1 <- c(3:4, 5:6, 9, 12:27)
+colsA1 <- c(3:4, 7:14, 16)
 head(All_sites.training)
-head(All_sites.training[,cols1])
-head(All_sites.training[,7:8])
+head(All_sites.training[,colsA1])
+head(All_sites.training[,5:6])
 
 #Model using: precip, NDVI, tmax, tmin,month, elev, and wb
-cols2 <- c(3:4, 9, 12:13, 16, 27)
+colsA2 <- c(3:4, 7:16)
 head(All_sites.training)
-head(All_sites.training[,cols2])
-head(All_sites.training[,7:8])
+head(All_sites.training[,colsA2])
+head(All_sites.training[,5:6])
 
 
 #Model using: precip, NDVI, tmax, tmin,month, and elev
