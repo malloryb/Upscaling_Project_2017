@@ -339,19 +339,13 @@ library(caret)
 
 #Doing everything for 2007
 
-
- 
-test1 <- stack("F:/Upscaling_Project/Gridded_Inputs/RF_Input/Apr_2007.tif")
-MAP_res <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
-
-
-names("NDVI", "month", "elev", "precip", "tmin", "tmax")
 #Function where x is a list of filenames
 RF_Agu_Analysis <- function(band1, month, monthno, year){
   #Read in files
   filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month,"_",year, ".tif")
   filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
   filenameSwe <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_swe_2000_2016_AOI.tif"
+  filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
   filenameWB <- paste0("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/","wb_",year,"_",monthno,".tif")
   MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
   MAT_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
@@ -360,39 +354,55 @@ RF_Agu_Analysis <- function(band1, month, monthno, year){
   srad <- raster(filenameSrad, band = band1)
   swe <- raster(filenameSwe, band = band1)
   wb <- raster(filenameWB)
+  vp <- raster(filenameVP)
   print("filesloaded")
-  
-  test1 <- stack(inputrast, MAP_resample)
-  print("tested")
-  test2 <- stack(wb, inputrast)
-  print("tested2")
-  
+
   #Process and resample Daymet variables
   srad[srad==-9999] <-NA
   swe[swe==-9999] <-NA
+  vp[vp==-9999] <-NA
   print("Subsetting done")
   Sradresample <- resample(srad, MAP_resample, method="bilinear")
   Sweresample <- resample(swe, MAT_resample, method="bilinear")
+  vpresample <- resample(vp, MAT_resample, method="bilinear")
+  wbresample <- resample(wb, MAT_resample)
   print("resampling done")
   
-  
   #Raster stack for prediction
-  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, Sweresample, wb)
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin","MAP", "MAT","srad", "swe", "wb"))
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, Sweresample, wbresample, vpresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin","MAP", "MAT","srad", "swe", "wb", "vp"))
   
   #Predict and write out model A1
   sw <- extent(rast_stack)
   
-  
   #Predict and write out model A2 
-  modelA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
-  modelA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  RFA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  RFA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
   
-  
-  
-  #month_year_GPP <- predict(month_year, model, ext=sw)
-  return(rast_stack)}
+  #PredictA1
+  rast_stackA1 <- dropLayer(rast_stack, 11)
+  print("PredictA1")
+  RFA1_predicted <- predict(rast_stackA1, RFA1, ext=sw)
+  print("PredictA2")
+  RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
 
+  outputfilenameA1 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/",month,"_",year,".tif", sep="")
+  outputfilenameA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/",month,"_",year,".tif", sep="")
+  
+  print(paste("writing out", outputfilenameA1))
+  writeRaster(RFA1_predicted, outputfilenameA1, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenameA2))
+  writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  
+  gc()
+}
+
+A1_Jan_2007 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jan_2007.tif") 
+A2_Jan_2007 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jan_2007.tif") 
+
+plot(A1_Jan_2007)
+plot(A2_Jan_2007)
 RF_Agu_Analysis(band1=85, month="Jan", monthno=1, year=2007)
 RF_Agu_Analysis(band1=86, month="Feb", monthno=2, year=2007)
 RF_Agu_Analysis(band1=87, month="Mar", monthno=3, year=2007)
