@@ -269,62 +269,27 @@ head(All_sites.training)
 head(All_sites.training[,colsA2])
 head(All_sites.training[,5:6])
 
-
-#Model using: precip, NDVI, tmax, tmin,month, and elev
-cols3 <- c(3:4, 9, 12:13, 16)
-head(All_sites.training)
-head(All_sites.training[,cols3])
-head(All_sites.training[,7:8])
-
-#Model using: precip, NDVI, tmax, tmin, MAP, MAT, month, and elev
-cols4 <- c(3:4, 9, 12:13, 16, 24:25)
-head(All_sites.training)
-head(All_sites.training[,cols4])
-head(All_sites.training[,7:8])
-
-#Model using: precip, NDVI, tmax, tmin, MAP, MAT, wb, month, and elev
-cols5 <- c(3:4, 9, 12:13, 16, 24:25, 27)
-head(All_sites.training)
-head(All_sites.training[,cols5])
-head(All_sites.training[,7:8])
-
-
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-#model_rf1 <- train(All_sites.training[, cols1], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-#model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-#model_rf3 <-train(All_sites.training[,cols3], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
-#model_rf4 <- train(All_sites.training[,cols4], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE)
+#Time for this model - 1:01pm to ...
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', importance=TRUE, do.trace=TRUE)
 
-model_rf1 <- train(All_sites.training[,cols1], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf2 <- train(All_sites.training[,cols2], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf3<- train(All_sites.training[,cols3], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf4<- train(All_sites.training[,cols4], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
-model_rf5<- train(All_sites.training[,cols5], All_sites.training[,7], method='rf', importance=TRUE, do.trace=TRUE)
+predictionsA1 <- predict(object=model_rfA1, All_sites.test[,colsA1])
+predictionsA2 <- predict(object=model_rfA2, All_sites.test[,colsA2])
+table(predictionsA1)
+table(predictionsA2)
+predA1 <- as.numeric(predictionsA1)
+cor(predA1, All_sites.test[,5])
 
-#model_rf5preproc <- train(All_sites.training[,cols5], All_sites.training[,6], method='rf', importance=TRUE, do.trace=TRUE,  preProcess=c("center", "scale"))
-#Predict based on model
+predA2 <- as.numeric(predictionsA2)
+cor(predA2, All_sites.test[,5])
 
-predictions <- predict(object=model_rf1, All_sites.test[,cols1])
-predictions <- predict(object=model_rf2, All_sites.test[,cols2])
-predictions <- predict(object=model_rf3, All_sites.test[,cols3])
-predictions <- predict(object=model_rf5, All_sites.test[,cols5])
-table(predictions)
-pred1 <- as.numeric(predictions)
-cor(pred1, All_sites.test[,7])
+RFA1 <- model_rfA1$finalModel
+RFA2 <- model_rfA2$finalModel
 
-model_rf1
-RF1 <- model_rf1$finalModel
-RF2 <- model_rf2$finalModel
-RF3 <- model_rf3$finalModel
-RF4 <- model_rf4$finalModel
-RF5 <- model_rf5$finalModel
-
-varImpPlot(RF1)
-varImpPlot(RF2)
-varImpPlot(RF3)
-varImpPlot(RF4)
-varImpPlot(RF5)
+varImpPlot(RFA1)
+varImpPlot(RFA2)
 
 lb1 <- paste("R^2 == ", "0.73")
 RMSE1 <- paste("RMSE==", "0.65")
