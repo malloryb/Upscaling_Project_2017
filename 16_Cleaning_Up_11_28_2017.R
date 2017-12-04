@@ -192,15 +192,15 @@ Jan_2001 <- dropLayer(Jan_2001, 7)
 #4) Run site-based RF with proper variables --------
 
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
+All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
 #Print first lines
 head(All_sites)
 #numcols <- c(3:16, 18, 23, 25:33, 34:35)
 #Allsites_sum <- All_sites[,numcols]
 #head(Allsites_sum)
-#descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
-#highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
-#highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
+descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
+highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
 #descrCor[,-highCorDescr]
 #add column names
 library(lubridate)
@@ -217,9 +217,9 @@ All_sites$month <- as.factor(All_sites$month)
 #Normalization a good idea when one attribute has a wide range of values compared to others
 
 #User-defined normalization function
-#normalize <- function(x) {
-#  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
-#}
+normalize <- function(x) {
+  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
+}
 
 #Function to see if any cols have NAs. Now that I'm not standardizing GPP anymore having issues w/ NAs
 nacols <- function(df) {
@@ -229,10 +229,16 @@ nacols <- function(df) {
 #Normalize quantitative data 
 str(All_sites)
 All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
-                         "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "wb","NDVI")]
+                         "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "wb","NDVI", "tmed")]
 All_sites <- All_sites[complete.cases(All_sites),]
 nacols(All_sites)
 head(All_sites)
+All_sites_num  <- All_sites[c("elev", "GPP", "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "wb", "NDVI", "tmed")]
+descrCor <- cor(All_sites_num, use="pairwise.complete.obs")
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
+highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
+descrCor[,-highCorDescr]
+
 
 #No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
@@ -240,7 +246,7 @@ head(All_sites)
 #Machine Learning with "caret"
 #Split into training and testing data
 #Create index to split based on year
-index <- createDataPartition(All_sites$year, p=0.80, list=FALSE)
+index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 #Subset training set
 All_sites.training <- All_sites[index,]
@@ -336,9 +342,11 @@ library(dismo)
 library(raster)
 library(randomForest)
 library(caret)
-
+vp <- stack("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_vp_2000_2016_AOI.tif")
+srad <- stack("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif")
+plot(srad)
+plot(vp, zlim=0,1000)
 #Doing everything for 2007
-
 #Function where x is a list of filenames
 RF_Agu_Analysis <- function(band1, month, monthno, year){
   #Read in files
@@ -398,11 +406,7 @@ RF_Agu_Analysis <- function(band1, month, monthno, year){
   gc()
 }
 
-A1_Jan_2007 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jan_2007.tif") 
-A2_Jan_2007 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jan_2007.tif") 
 
-plot(A1_Jan_2007)
-plot(A2_Jan_2007)
 RF_Agu_Analysis(band1=85, month="Jan", monthno=1, year=2007)
 RF_Agu_Analysis(band1=86, month="Feb", monthno=2, year=2007)
 RF_Agu_Analysis(band1=87, month="Mar", monthno=3, year=2007)
@@ -416,109 +420,67 @@ RF_Agu_Analysis(band1=94, month="Oct", monthno=10, year=2007)
 RF_Agu_Analysis(band1=95, month="Nov", monthno=11, year=2007)
 RF_Agu_Analysis(band1=96, month="Dec", monthno=12, year=2007)
 
+#Read and stack them all up----------------
+Jan_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jan_2007.tif")
+Feb_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Feb_2007.tif")
+Mar_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Mar_2007.tif")
+Apr_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Apr_2007.tif")
+May_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/May_2007.tif")
+Jun_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jun_2007.tif")
+Jul_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jul_2007.tif")
+Aug_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Aug_2007.tif")
+Sep_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Sep_2007.tif")
+Oct_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Oct_2007.tif")
+Nov_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Nov_2007.tif")
+Dec_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Dec_2007.tif")
+
+stack_2007A1 <- stack(Jan_2007A1, Feb_2007A1, Mar_2007A1, Apr_2007A1, May_2007A1, Jun_2007A1, Jul_2007A1, Aug_2007A1, Sep_2007A1, Oct_2007A1, Nov_2007A1, Dec_2007A1)
+names(stack_2007A1) <- paste(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+plot(stack_2007A1, zlim=c(0,5))
+
+writeRaster(stack_2007A1, "F:/Upscaling_Project/Upscaled_GPP/Stack_2007A1.tif")
 
 
-Jul_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jul2001.grd")
-Jul_2001 <- stack(Jul_2001, MAP_resample, MAT_resample)
-names(Jul_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-Jul_2001_GPP <- predict(Jul_2001, RF5, ext=sw)
-plot(Jul_2001_GPP)
+#For model A2
+Jan_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jan_2007.tif")
+Feb_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Feb_2007.tif")
+Mar_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Mar_2007.tif")
+Apr_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Apr_2007.tif")
+May_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/May_2007.tif")
+Jun_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jun_2007.tif")
+Jul_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jul_2007.tif")
+Aug_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Aug_2007.tif")
+Sep_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Sep_2007.tif")
+Oct_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Oct_2007.tif")
+Nov_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Nov_2007.tif")
+Dec_2007A2 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Dec_2007.tif")
 
-Aug_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Aug2001.grd")
-Aug_2001 <- stack(Aug_2001, MAP_resample, MAT_resample)
-names(Aug_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-Aug_2001_GPP <- predict(Aug_2001, RF5, ext=sw)
+stack_2007A2 <- stack(Jan_2007A2, Feb_2007A2, Mar_2007A2, Apr_2007A2, May_2007A2, Jun_2007A2, Jul_2007A2, Aug_2007A2, Sep_2007A2, Oct_2007A2, Nov_2007A2, Dec_2007A2)
+names(stack_2007A2) <- paste(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+plot(stack_2007A2, zlim=c(0,5))
 
-Jan_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Jan2001.grd")
-Jan_2001 <- stack(Jan_2001, MAP_resample, MAT_resample)
-names(Jan_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-Jan_2001_GPP <- predict(Jan_2001, RF5, ext=sw)
-
-Feb_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Feb2001.grd")
-Feb_2001 <- stack(Feb_2001, MAP_resample, MAT_resample)
-names(Feb_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
-Feb_2001_GPP <- predict(Feb_2001, RF5, ext=sw)
-
-Mar_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Mar2001.grd")
-Mar_2001 <- stack(Mar_2001, MAP_resample, MAT_resample)
-names(Mar_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
-Mar_2001_GPP <- predict(Mar_2001, RF5, ext=sw)
-
-Apr_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Apr2001.grd")
-Apr_2001 <- stack(Apr_2001, MAP_resample, MAT_resample)
-names(Apr_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
-Apr_2001_GPP <- predict(Apr_2001, RF5, ext=sw)
-
-May_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/May2001.grd")
-May_2001 <- stack(May_2001, MAP_resample, MAT_resample)
-names(May_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
-May_2001_GPP <- predict(May_2001, RF5, ext=sw)
-
-Sep_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Sep2001.grd")
-Sep_2001 <- stack(Sep_2001, MAP_resample, MAT_resample)
-names(Sep_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-Sep_2001_GPP <- predict(Sep_2001, RF5, ext=sw)
-
-Oct_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Oct2001.grd")
-Oct_2001 <- stack(Oct_2001, MAP_resample, MAT_resample)
-names(Oct_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb", "MAP", "MAT"))
-Oct_2001_GPP <- predict(Oct_2001, RF5, ext=sw)
-
-Nov_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Nov2001.grd")
-Nov_2001 <- stack(Nov_2001, MAP_resample, MAT_resample)
-names(Nov_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
-Nov_2001_GPP <- predict(Nov_2001, RF5, ext=sw)
-
-Dec_2001 <- stack("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/Dec2001.grd")
-Dec_2001 <- stack(Dec_2001, MAP_resample, MAT_resample)
-names(Dec_2001) <- paste(c("tmin", "tmax", "precip", "NDVI", "month", "elev", "wb","MAP", "MAT"))
-Dec_2001_GPP <- predict(Dec_2001, RF5, ext=sw)
-
-#Stack them all up
-#Jan_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jan_2001_GPP.tif")
-#Feb_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Feb_2001_GPP.tif")
-#Mar_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Mar_2001_GPP.tif")
-#Apr_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Apr_2001_GPP.tif")
-#May_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/May_2001_GPP.tif")
-#Jun_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jun_2001_GPP.tif")
-#Jul_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Jul_2001_GPP.tif")
-#Aug_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Aug_2001_GPP.tif")
-#Sep_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Sep_2001_GPP.tif")
-#Oct_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Oct_2001_GPP.tif")
-#Nov_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Nov_2001_GPP.tif")
-#Dec_2001 <- raster("F:/Upscaling_Project/Upscaling_11_29/Dec_2001_GPP.tif")
-plot(stack_2001_GPP)
-stack_2001_GPP <- stack(Jan_2001_GPP, Feb_2001_GPP, Mar_2001_GPP, Apr_2001_GPP, May_2001_GPP, Jun_2001_GPP, Jul_2001_GPP, Aug_2001_GPP, Sep_2001_GPP, Oct_2001_GPP, Nov_2001_GPP, Dec_2001_GPP)
-names(stack_2001_GPP) <- paste(c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-writeRaster(stack_2001_GPP, "F:/Upscaling_Project/Upscaled_GPP/Stack_2001_GPP_waterbalance.tif")
 #Compare to other things...
 #Stack_2001_GPP <- stack("F:/Upscaling_Project/Upscaling_11_29/Stack_2001_GPP.tif")
-plot(stack_2001_GPP, zlim=c(0,6))
-
-Stack_2001_GPP
-
-
 library(lubridate)
 library(plyr)
 #US-Srm
 SRMpoint <- cbind(-110.86, 31.82)
-SRMresult <- extract(stack_2001_GPP, SRMpoint)
-plot(SRMresult[1:12])
-#US-fuf
-#FUFpoint <- cbind(-111.76, 35.12)
-FUFpoint <- cbind(-111.76, 35.0890)
-FUFresult <-extract(stack_2001_GPP, FUFpoint)
-plot(FUFresult[1:12])
+SRMresultA1 <- extract(stack_2007A1, SRMpoint)
+SRMresultA2 <- extract(stack_2007A2, SRMpoint)
+plot(SRMresultA1[1:12])
+plot(SRMresultA2[1:12])
 
-#US-CA
-#CApoint <- cbind(-119.76, 37.12)
-#CAresult <-extract(Stack_2001_GPP, CApoint)
-#plot(CAresult[1:12])
+#US-fuf
+FUFpoint <- cbind(-111.76, 35.0890)
+FUFresultA1 <-extract(stack_2007A1, FUFpoint)
+FUFresultA2 <-extract(stack_2007A2, FUFpoint)
+plot(FUFresultA1[1:12])
+plot(FUFresultA2[1:12])
+
 
 #US-Wkg
-#WKGpoint <- cbind(-109.96, 31.74)
 WKGpoint <- cbind(-109.94, 31.7365)
-WKGresult <-extract(stack_2001_GPP, WKGpoint)
+WKGresult <-extract(stack_2007A1, WKGpoint)
 plot(WKGresult[1:12])
 
 VCMpoint <- cbind(-106.5, 35.888447)
@@ -529,17 +491,18 @@ VCPpoint <- cbind(-106.59, 35.864)
 VCPresult <-extract(stack_2001_GPP, WKGpoint)
 plot(VCPresult[1:12])
 
-
-
 fuf <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-fuf_merged.csv")
 fuf$date <- as.Date(paste("01", fuf$monthyear, sep="_"), format="%d_%b_%Y")
 str(fuf)
 fuf[10:20,]
-#get mean seasonal cycle
+#get seasonal cycle for only 
 fuf$month <- month(fuf$date)
 fuf$year <- year(fuf$date)
-seasonalfuf <- ddply(fuf, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
-seasonalfuf$BarnesFUF <- (FUFresult[1:12])
+fuf_2007 <- subset(fuf, year==2007)
+#seasonalfuf <- ddply(fuf, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+#seasonalfuf$BarnesFUF <- (FUFresult[1:12])
+fuf_2007_monthly <- ddply(fuf_2007, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+fuf_2007_monthly$BarnesFUF <- FUFresultA1[1:12]
 
 
 vcm <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-vcp_merged.csv")
@@ -549,6 +512,7 @@ vcm[10:20,]
 #get mean seasonal cycle
 vcm$month <- month(vcm$date)
 vcm$year <- year(vcm$date)
+subset(vcm, year==2007)
 seasonalvcm <- ddply(vcm, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
 seasonalvcm$BarnesVCM <- (VCMresult[1:12])
 
@@ -556,11 +520,10 @@ srm <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jun
 srm$date <- as.Date(paste("01", srm$monthyear, sep="_"), format="%d_%b_%Y")
 str(srm)
 srm[10:20,]
-library(lubridate)
-library(plyr)
 #get mean seasonal cycle
 srm$month <- month(srm$date)
 srm$year <- year(srm$date)
+subset(srm, year==2007)
 seasonalsrm <- ddply(srm, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
 seasonalsrm$BarnesSRM <- (SRMresult[1:12])
 
@@ -571,6 +534,7 @@ wkg[10:20,]
 #get mean seasonal cycle
 wkg$month <- month(wkg$date)
 wkg$year <- year(wkg$date)
+wkg=subset(wkg, year==2007)
 seasonalwkg <- ddply(wkg, ~month, summarize, Jung_2011=mean(Jung_2011, na.rm=TRUE), Jung_2017=mean(Jung_2017, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
 seasonalwkg$BarnesWKG <- (WKGresult[1:12])
 str(seasonal)
@@ -596,10 +560,10 @@ SRM <- ggplot() +
   theme_bw()
 
 FUF <- ggplot() +
-  geom_line(data = seasonalfuf, aes(x = month, y = GPP, color =I("red"))) +
-  geom_line(data = seasonalfuf, aes(x = month, y = Jung_2011, color = I("blue"))) +
-  geom_line(data = seasonalfuf, aes(x = month, y = Jung_2017, color = I("green"))) +
-  geom_line(data= seasonalfuf, aes(x=month, y=BarnesFUF, color=I("purple")))+
+  geom_line(data = fuf_2007_monthly, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = fuf_2007_monthly, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = fuf_2007_monthly, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data= fuf_2007_monthly, aes(x=month, y=BarnesFUF, color=I("purple")))+
   xlab('month') +
   ylab('GPP')+
   ggtitle("US-Fuf")+
