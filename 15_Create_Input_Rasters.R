@@ -32,6 +32,11 @@ temp <- writeRaster(temp, filename="F:/Upscaling_Project/Gridded_Inputs/Hydro1k/
 
 writeRaster(LC_Resample, "F:/Upscaling_Project/Gridded_Inputs/LC_Resample.tif")
 
+swe <-stack("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_swe_2000_2016_AOI.tif")
+srad <-stack("D:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif")
+plot(srad)
+plot(swe)
+
 create_input_raster <- function(band1, month, monthno, year){
   filenameEVI <- paste0("F:/Upscaling_Project/Gridded_Inputs/Monthly_EVI/", month, "_", year, "_", "EVI.tif")
   EVI <- raster(filenameEVI)
@@ -40,7 +45,7 @@ create_input_raster <- function(band1, month, monthno, year){
   filenameTmin <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_tmin_2000_2016_AOI.tif"
   DEM <- "F:/Upscaling_Project/Gridded_Inputs/Hydro1k/SW_dem.tif"
   
-  Precip <- raster(filenamePrecip, band = band1)
+    Precip <- raster(filenamePrecip, band = band1)
   Tmax <- raster(filenameTmax, band = band1)
   Tmin <- raster(filenameTmin, band = band1)
   
