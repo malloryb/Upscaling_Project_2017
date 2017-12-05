@@ -187,7 +187,7 @@ library(lubridate)
 library(caret)
 library(randomForest)
 #From UC-Irvine Machine learning repository
-All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
+All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
 #Print first lines
 head(All_sites)
 #numcols <- c(3:16, 18, 23, 25:33, 34:35)
@@ -221,7 +221,7 @@ nacols <- function(df) {
 
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
 All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
-                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "tmed", "SPEI_1")]
+                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "tmax", "SPEI_1")]
 All_sites <- All_sites[complete.cases(All_sites),]
 All_sites$date <- as.Date(All_sites$date)
 nacols(All_sites)
@@ -286,7 +286,6 @@ cor(predA2, All_sites.test[,5])
 predtsA2 <- as.numeric(predictionstsA2)
 cor(predtsA2, All_sites.test[,5])
 
-tsmod$finalModel
 RFA1 <- model_rfA1$finalModel
 RFA2 <- model_rfA2$finalModel
 RFtsA1 <- model_tsA1$finalModel
@@ -296,6 +295,11 @@ varImpPlot(RFA1)
 varImpPlot(RFA2)
 varImpPlot(RFtsA1)
 varImpPlot(RFtsA2)
+
+saveRDS(RFA1, "F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_5.rds")
+saveRDS(RFA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFA2_12_5.rds")
+saveRDS(RFtsA1, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA1_12_5.rds")
+saveRDS(RFtsA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA2_12_5.rds")
 
 
 RFA1
@@ -336,16 +340,14 @@ qplot(predA2, All_sites.test[,5]) +
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   ggtitle("Random forest - A2 (A1 + water balance)")  
 
-saveRDS(RFA1, "F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
-saveRDS(RFA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFA2_12_2.rds")
 
 #Predict based on rasters
 library(dismo)
 library(raster)
 library(randomForest)
 library(caret)
-vp <- stack("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_vp_2000_2016_AOI.tif")
-srad <- stack("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif")
+vp <- stack("F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif")
+srad <- stack("F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif")
 SPEI <- stack("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif")
 plot(SPEI[[1:4]])
 plot(srad)
@@ -355,21 +357,18 @@ plot(vp[[1:10]])
 RF_SPEI_Analysis <- function(band1, month, monthno, year){
   #Read in files
   filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month,"_",year, ".tif")
-  filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
-  filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
   filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000_2013"
   MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
   MAT_resample <- stack("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
   names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
-  tmed <- mean(inputrast[[5:6]])
-  "tmed calculated"
-  inputrast <-(dropLayer(inputrast, 5:6))
+  inputrast <-(dropLayer(inputrast, 6))
   srad <- raster(filenameSrad, band = band1)
   vp <- raster(filenameVP)
   SPEI_1 <- raster(filenameSPEI, band=band1)
   print("filesloaded")
-
   #Process and resample Daymet variables
   srad[srad==-9999] <-NA
   swe[swe==-9999] <-NA
@@ -381,31 +380,45 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   print("resampling done")
   
   #Raster stack for prediction
-  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, SPEIreample, Sradresample, vpresample)
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmed","MAP", "MAT","SPEI_1", "srad", "vp"))
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEIresample"))
   
   #Predict and write out model A1
   sw <- extent(rast_stack)
   
-  #Predict and write out model A2 
-  #RFA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
-  #RFA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  #Read models
+  RFA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_5.rds")
+  RFA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA2_12_5.rds")
+  RFtsA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFtsA1_12_5.rds")
+  RFtsA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFtsA2_12_5.rds")
   
+  #Predict and write out model A1 
   #PredictA1
-  #rast_stackA1 <- dropLayer(rast_stack, 11)
-  #print("PredictA1")
-  #RFA1_predicted <- predict(rast_stackA1, RFA1, ext=sw)
- # print("PredictA2")
-  #RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
-
-  #outputfilenameA1 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/",month,"_",year,".tif", sep="")
-  #outputfilenameA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/",month,"_",year,".tif", sep="")
+  rast_stackA1 <- dropLayer(rast_stack, 10)
+  print("PredictA1")
+  RFA1_predicted <- predict(rast_stackA1, RFA1, ext=sw)
+  print("PredictA2")
+  RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
+  RFtsA1_predicted <- predict(rast_stackA1, RFtsA1, ext=sw)
+  print("PredictA2")
+  RFtsA2_predicted <- predict(rast_stack, RFtsA2, ext=sw)
   
-  #print(paste("writing out", outputfilenameA1))
-  #writeRaster(RFA1_predicted, outputfilenameA1, overwrite=TRUE)
+  outputfilenameA1 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/",month,"_",year,".tif", sep="")
+  outputfilenameA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/",month,"_",year,".tif", sep="")
+  outputfilenametsA1 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_ts_A1/",month,"_",year,".tif", sep="")
+  outputfilenametsA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_ts_A2/",month,"_",year,".tif", sep="")
   
-  #print(paste("writing out", outputfilenameA2))
-  #writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  print(paste("writing out", outputfilenameA1))
+  writeRaster(RFA1_predicted, outputfilenameA1, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenameA2))
+  writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenametsA1))
+  writeRaster(RFtsA1_predicted, outputfilenametsA1, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenametsA2))
+  writeRaster(RFtsA2_predicted, outputfilenametsA2, overwrite=TRUE)
   
   gc()
 }
