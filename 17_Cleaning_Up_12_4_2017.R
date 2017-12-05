@@ -183,7 +183,9 @@ str(All_sites2)
 write.csv(All_sites2, "F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_4.csv")
 
 #4) Run site-based RF with proper variables --------
-
+library(lubridate)
+library(caret)
+library(randomForest)
 #From UC-Irvine Machine learning repository
 All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_11_28.csv") 
 #Print first lines
@@ -196,9 +198,7 @@ highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
 highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
 #descrCor[,-highCorDescr]
 #add column names
-library(lubridate)
 str(All_sites)
-
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%d/%m/%Y")))
 All_sites$month <- as.factor(All_sites$month)
 #All_sites$IGBP_no <- as.factor(All_sites$IGBP_no)
@@ -219,38 +219,28 @@ nacols <- function(df) {
   colnames(df)[unlist(lapply(df, function(x) any(is.na(x))))]
 }
 
-#Normalize quantitative data 
-str(All_sites)
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
 All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
-                         "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "wb","NDVI", "tmed", "SPEI_1")]
+                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "tmed", "SPEI_1")]
 All_sites <- All_sites[complete.cases(All_sites),]
 All_sites$date <- as.Date(All_sites$date)
 nacols(All_sites)
 head(All_sites)
-All_sites_num  <- All_sites[c("elev", "GPP", "precip", "srad", "swe", "tmax", "tmin", "vp", "MAP", "MAT", "wb", "NDVI", "tmed", "SPEI_1")]
-descrCor <- cor(All_sites_num, use="pairwise.complete.obs")
-highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
-highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
-descrCor[,-highCorDescr]
 
 ?createTimeSlices
 
 
 #No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
-#All_normalized <- subset(All_normalized, site="us-fuf")
-#Machine Learning with "caret"
 #Timesilces
-mypartition <- createIrregularTimeSlices(All_sites$date, initialWindow=48, horizon=12, unit="month", fixedWindow=T)
-ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
-tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#mypartition <- createIrregularTimeSlices(All_sites$date, initialWindow=48, horizon=12, unit="month", fixedWindow=T)
+#ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
+#tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 #Split into training and testing data
 
 #Create index to split based on year
 index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
-
 
 #Subset training set
 All_sites.training <- All_sites[index,]
@@ -259,22 +249,14 @@ str(All_sites)
 #Overview of algorithms supported by caret function
 names(getModelInfo())
 head(All_sites)
-#Model using: month, precip, Tair, VPD, daylength, precip, srad, swe, tmax, tmin, vp, LST, NDVI
-#cols1 <- c(5, 7:18)
-#Model using: same as cols1 + site component
-#cols2<- c(3, 5, 7:18)
-#Model using: same as as cols1 except: VPD, srad, swe 
-#cols3<- c(5, 7:8, 10:11, 14:18)
-#Model using: same as cols1 except: Precip, Tair, VPD
-#cols4<- c(5, 10:18)
 #Model with all:
-colsA1 <- c(3:4, 7:8, 12:14, 16:18)
+colsA1 <- c(3:4, 7:13)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
 head(All_sites.training[,5:6])
 
-#Model using: precip, NDVI, tmax, tmin,month, elev, and wb
-colsA2 <- c(3:4, 7:16)
+#Model wtih all + SPEI_1
+colsA2 <- c(3:4, 7:14)
 head(All_sites.training)
 head(All_sites.training[,colsA2])
 head(All_sites.training[,5:6])
@@ -282,28 +264,38 @@ head(All_sites.training[,5:6])
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_ts <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
+model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 predictionsA1 <- predict(object=model_rfA1, All_sites.test[,colsA1])
 predictionsA2 <- predict(object=model_rfA2, All_sites.test[,colsA2])
-predictionstsmod <- predict(object=tsmod, All_sites.test[,colsA1])
+predictionstsA1 <- predict(object=model_tsA1, All_sites.test[,colsA1])
+predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
 table(predictionsA1)
 table(predictionsA2)
+table(predictionstsA1)
+table(predictionstsA2)
+
 predA1 <- as.numeric(predictionsA1)
-predtmod <- as.numeric(predictionstsmod)
+predtsA1 <- as.numeric(predictionstsA1)
 cor(predA1, All_sites.test[,5])
-cor(predtmod, All_sites.test[,5])
+cor(predtsA1, All_sites.test[,5])
 predA2 <- as.numeric(predictionsA2)
 cor(predA2, All_sites.test[,5])
+predtsA2 <- as.numeric(predictionstsA2)
+cor(predtsA2, All_sites.test[,5])
 
 tsmod$finalModel
 RFA1 <- model_rfA1$finalModel
 RFA2 <- model_rfA2$finalModel
+RFtsA1 <- model_tsA1$finalModel
+RFtsA2 <- model_tsA2$finalModel
 
 varImpPlot(RFA1)
 varImpPlot(RFA2)
+varImpPlot(RFtsA1)
+varImpPlot(RFtsA2)
 
 
 RFA1
@@ -354,25 +346,28 @@ library(randomForest)
 library(caret)
 vp <- stack("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_vp_2000_2016_AOI.tif")
 srad <- stack("F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif")
+SPEI <- stack("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif")
+plot(SPEI[[1:4]])
 plot(srad)
-plot(vp, zlim=0,1000)
+plot(vp[[1:10]])
 #Doing everything for 2007
 #Function where x is a list of filenames
-RF_Agu_Analysis <- function(band1, month, monthno, year){
+RF_SPEI_Analysis <- function(band1, month, monthno, year){
   #Read in files
   filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month,"_",year, ".tif")
   filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
-  filenameSwe <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_swe_2000_2016_AOI.tif"
   filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/Daymet/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
-  filenameWB <- paste0("F:/Upscaling_Project/Gridded_Inputs/Idaho_MET/","wb_",year,"_",monthno,".tif")
+  filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000_2013"
   MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
-  MAT_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  MAT_resample <- stack("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
   names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
+  tmed <- mean(inputrast[[5:6]])
+  "tmed calculated"
+  inputrast <-(dropLayer(inputrast, 5:6))
   srad <- raster(filenameSrad, band = band1)
-  swe <- raster(filenameSwe, band = band1)
-  wb <- raster(filenameWB)
   vp <- raster(filenameVP)
+  SPEI_1 <- raster(filenameSPEI, band=band1)
   print("filesloaded")
 
   #Process and resample Daymet variables
@@ -381,54 +376,53 @@ RF_Agu_Analysis <- function(band1, month, monthno, year){
   vp[vp==-9999] <-NA
   print("Subsetting done")
   Sradresample <- resample(srad, MAP_resample, method="bilinear")
-  Sweresample <- resample(swe, MAT_resample, method="bilinear")
+  SPEIresample <- resample(SPEI_1, MAT_resample, method="bilinear")
   vpresample <- resample(vp, MAT_resample, method="bilinear")
-  wbresample <- resample(wb, MAT_resample)
   print("resampling done")
   
   #Raster stack for prediction
-  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, Sweresample, wbresample, vpresample)
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin","MAP", "MAT","srad", "swe", "wb", "vp"))
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, SPEIreample, Sradresample, vpresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmed","MAP", "MAT","SPEI_1", "srad", "vp"))
   
   #Predict and write out model A1
   sw <- extent(rast_stack)
   
   #Predict and write out model A2 
-  RFA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
-  RFA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  #RFA1<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
+  #RFA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_2.rds")
   
   #PredictA1
-  rast_stackA1 <- dropLayer(rast_stack, 11)
-  print("PredictA1")
-  RFA1_predicted <- predict(rast_stackA1, RFA1, ext=sw)
-  print("PredictA2")
-  RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
+  #rast_stackA1 <- dropLayer(rast_stack, 11)
+  #print("PredictA1")
+  #RFA1_predicted <- predict(rast_stackA1, RFA1, ext=sw)
+ # print("PredictA2")
+  #RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
 
-  outputfilenameA1 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/",month,"_",year,".tif", sep="")
-  outputfilenameA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/",month,"_",year,".tif", sep="")
+  #outputfilenameA1 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/",month,"_",year,".tif", sep="")
+  #outputfilenameA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/",month,"_",year,".tif", sep="")
   
-  print(paste("writing out", outputfilenameA1))
-  writeRaster(RFA1_predicted, outputfilenameA1, overwrite=TRUE)
+  #print(paste("writing out", outputfilenameA1))
+  #writeRaster(RFA1_predicted, outputfilenameA1, overwrite=TRUE)
   
-  print(paste("writing out", outputfilenameA2))
-  writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  #print(paste("writing out", outputfilenameA2))
+  #writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
   
   gc()
 }
 
 
-RF_Agu_Analysis(band1=85, month="Jan", monthno=1, year=2007)
-RF_Agu_Analysis(band1=86, month="Feb", monthno=2, year=2007)
-RF_Agu_Analysis(band1=87, month="Mar", monthno=3, year=2007)
-RF_Agu_Analysis(band1=88, month="Apr", monthno=4, year=2007)
-RF_Agu_Analysis(band1=89, month="May", monthno=5, year=2007)
-RF_Agu_Analysis(band1=90, month="Jun", monthno=6, year=2007)
-RF_Agu_Analysis(band1=91, month="Jul", monthno=7, year=2007)
-RF_Agu_Analysis(band1=92, month="Aug", monthno=8, year=2007)
-RF_Agu_Analysis(band1=93, month="Sep", monthno=9, year=2007)
-RF_Agu_Analysis(band1=94, month="Oct", monthno=10, year=2007)
-RF_Agu_Analysis(band1=95, month="Nov", monthno=11, year=2007)
-RF_Agu_Analysis(band1=96, month="Dec", monthno=12, year=2007)
+RF_SPEI_Analysis(band1=85, month="Jan", monthno=1, year=2007)
+RF_SPEI_Analysis(band1=86, month="Feb", monthno=2, year=2007)
+RF_SPEI_Analysis(band1=87, month="Mar", monthno=3, year=2007)
+RF_SPEI_Analysis(band1=88, month="Apr", monthno=4, year=2007)
+RF_SPEI_Analysis(band1=89, month="May", monthno=5, year=2007)
+RF_SPEI_Analysis(band1=90, month="Jun", monthno=6, year=2007)
+RF_SPEI_Analysis(band1=91, month="Jul", monthno=7, year=2007)
+RF_SPEI_Analysis(band1=92, month="Aug", monthno=8, year=2007)
+RF_SPEI_Analysis(band1=93, month="Sep", monthno=9, year=2007)
+RF_SPEI_Analysis(band1=94, month="Oct", monthno=10, year=2007)
+RF_SPEI_Analysis(band1=95, month="Nov", monthno=11, year=2007)
+RF_SPEI_Analysis(band1=96, month="Dec", monthno=12, year=2007)
 
 #Read and stack them all up----------------
 Jan_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jan_2007.tif")
