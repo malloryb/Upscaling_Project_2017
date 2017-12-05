@@ -356,10 +356,11 @@ plot(vp[[1:10]])
 #Function where x is a list of filenames
 RF_SPEI_Analysis <- function(band1, month, monthno, year){
   #Read in files
-  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/RF_Input/",month,"_",year, ".tif")
+  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
   filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
   filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
-  filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000_2013"
+  filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  print(filename)
   MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
   MAT_resample <- stack("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
@@ -368,10 +369,9 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   srad <- raster(filenameSrad, band = band1)
   vp <- raster(filenameVP)
   SPEI_1 <- raster(filenameSPEI, band=band1)
-  print("filesloaded")
+  print("files loaded")
   #Process and resample Daymet variables
   srad[srad==-9999] <-NA
-  swe[swe==-9999] <-NA
   vp[vp==-9999] <-NA
   print("Subsetting done")
   Sradresample <- resample(srad, MAP_resample, method="bilinear")
@@ -381,7 +381,7 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   
   #Raster stack for prediction
   rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEIresample"))
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEI_1"))
   
   #Predict and write out model A1
   sw <- extent(rast_stack)
