@@ -490,13 +490,13 @@ RF_spring_Analysis <- function(band1, month, monthno, year){
 }
 RF_summer_Analysis <- function(band1, month, monthno, year){
   #Read in files
-  filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
-  filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
-  filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
-  filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
   print(filename)
-  MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
-  MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
   names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
   inputrast <-(dropLayer(inputrast, 6))
@@ -521,12 +521,12 @@ RF_summer_Analysis <- function(band1, month, monthno, year){
   sw <- extent(rast_stack)
   
   #Read models
-  RFA2<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
+  RFA2<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
   #Predict and write out model A1 
   #PredictA1
   RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
   
-  outputfilenameA2 <- paste("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_Seasonal/",month,"_",year,".tif", sep="")
+  outputfilenameA2 <- paste("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_Seasonal/",month,"_",year,".tif", sep="")
   
   print(paste("writing out", outputfilenameA2))
   writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
