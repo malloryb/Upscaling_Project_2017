@@ -187,6 +187,7 @@ library(lubridate)
 library(caret)
 library(randomForest)
 #From UC-Irvine Machine learning repository
+#Now 
 All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
 #Print first lines
 head(All_sites)
@@ -242,6 +243,9 @@ head(All_sites)
 index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 
+#Resample data to overrepresent high GPP observations
+prb <- ifelse(All_sites$GPP>4, 0.5, 0.5)
+smpl <- All_sites[sample(nrow(All_sites), 1000, prob=prb),]
 #Subset training set
 All_sites.training <- All_sites[index,]
 All_sites.test <- All_sites[-index,]
@@ -437,6 +441,16 @@ RF_SPEI_Analysis(band1=94, month="Oct", monthno=10, year=2007)
 RF_SPEI_Analysis(band1=95, month="Nov", monthno=11, year=2007)
 RF_SPEI_Analysis(band1=96, month="Dec", monthno=12, year=2007)
 
+Jun_2007A1 <- raster("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jun_2007.tif")
+Jun_2007A2 <- raster("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jun_2007.tif")
+Jun_2007tsA1 <- raster("D:/Upscaling_Project/Upscaled_GPP/AGU_ts_A1/Jun_2007.tif")
+Jun_2007tsA2 <- raster("D:/Upscaling_Project/Upscaled_GPP/AGU_ts_A2/Jun_2007.tif")
+plot(Jun_2007A1)
+plot(Jun_2007A2)
+plot(Jun_2007tsA1)
+plot(Jun_2007tsA2)
+Jun_2007 <- stack(Jun_2007A1, Jun_2007tsA1, Jun_2007A2, Jun_2007tsA2)
+plot(Jun_2007)
 #Read and stack them all up----------------
 Jan_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jan_2007.tif")
 Feb_2007A1 <- raster("F:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Feb_2007.tif")
