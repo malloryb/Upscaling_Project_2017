@@ -187,8 +187,8 @@ library(lubridate)
 library(caret)
 library(randomForest)
 #From UC-Irvine Machine learning repository
-#Now 
-All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
+#Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
+All_sites <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
 #Print first lines
 head(All_sites)
 #numcols <- c(3:16, 18, 23, 25:33, 34:35)
@@ -237,18 +237,20 @@ head(All_sites)
 #mypartition <- createIrregularTimeSlices(All_sites$date, initialWindow=48, horizon=12, unit="month", fixedWindow=T)
 #ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
 #tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#Subset by season
+Spring_sites <- subset(All_sites, month==3 | month==4 | month==5)
+Summer_sites <- subset(All_sites, month==6 | month==7 | month==8)
+Winter_sites <- subset(All_sites, month==9 | month==10| month==11 | month==12 | month==1 | month==2)
 #Split into training and testing data
 
 #Create index to split based on year
-index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
+index <- createDataPartition(Winter_sites$GPP, p=0.80, list=FALSE)
 index
 
 #Resample data to overrepresent high GPP observations
-prb <- ifelse(All_sites$GPP>4, 0.5, 0.5)
-smpl <- All_sites[sample(nrow(All_sites), 1000, prob=prb),]
 #Subset training set
-All_sites.training <- All_sites[index,]
-All_sites.test <- All_sites[-index,]
+All_sites.training <- Winter_sites[index,]
+All_sites.test <- Winter_sites[-index,]
 str(All_sites)
 #Overview of algorithms supported by caret function
 names(getModelInfo())
@@ -271,29 +273,33 @@ model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method=
 model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+springmodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+summermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+wintermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-predictionsA1 <- predict(object=model_rfA1, All_sites.test[,colsA1])
-predictionsA2 <- predict(object=model_rfA2, All_sites.test[,colsA2])
-predictionstsA1 <- predict(object=model_tsA1, All_sites.test[,colsA1])
-predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
-table(predictionsA1)
-table(predictionsA2)
-table(predictionstsA1)
-table(predictionstsA2)
+predictions_spring <- predict(object=model_rfA1, All_sites.test[,colsA1])
+prediction_summer <- predict(object=model_rfA2, All_sites.test[,colsA2])
+predictions_winter <- predict(object=model_tsA1, All_sites.test[,colsA1])
+#predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
+table(predictions_spring)
+table(predictions_summer)
+table(predictions_winter)
+#table(predictionstsA2)
 
-predA1 <- as.numeric(predictionsA1)
-predtsA1 <- as.numeric(predictionstsA1)
-cor(predA1, All_sites.test[,5])
-cor(predtsA1, All_sites.test[,5])
-predA2 <- as.numeric(predictionsA2)
-cor(predA2, All_sites.test[,5])
-predtsA2 <- as.numeric(predictionstsA2)
-cor(predtsA2, All_sites.test[,5])
+predspring <- as.numeric(predictions_spring)
+predsummer <- as.numeric(predictions_summer)
+predwinter <- as.numeric(predictions_winter)
+cor(predspring, All_sites.test[,5])
+cor(predsummer, All_sites.test[,5])
+#predA2 <- as.numeric(predictionsA2)
+cor(predwinter, All_sites.test[,5])
+#predtsA2 <- as.numeric(predictionstsA2)
+#cor(predtsA2, All_sites.test[,5])
 
-RFA1 <- model_rfA1$finalModel
-RFA2 <- model_rfA2$finalModel
-RFtsA1 <- model_tsA1$finalModel
-RFtsA2 <- model_tsA2$finalModel
+RFspring <- springmodel_A1$finalModel
+RFsummer <- summermodel_A1$finalModel
+RFwinter <- wintermodel_A1$finalModel
+#RFtsA2 <- model_tsA2$finalModel
 
 varImpPlot(RFA1)
 varImpPlot(RFA2)
