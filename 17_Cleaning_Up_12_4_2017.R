@@ -269,17 +269,29 @@ head(All_sites.training[,5:6])
 
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-springmodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-summermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-wintermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-predictions_spring <- predict(object=model_rfA1, All_sites.test[,colsA1])
-prediction_summer <- predict(object=model_rfA2, All_sites.test[,colsA2])
-predictions_winter <- predict(object=model_tsA1, All_sites.test[,colsA1])
+springmodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_spring <- predict(object=springmodel_A1, All_sites.test[,colsA1])
+
+springmodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_spring <- predict(object=springmodel_A2, All_sites.test[,colsA2])
+
+summermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_summer <- predict(object=summermodel_A1, All_sites.test[,colsA1])
+
+summermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_summer <- predict(object=summermodel_A2, All_sites.test[,colsA2])
+
+wintermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_winter <- predict(object=wintermodel_A1, All_sites.test[,colsA1])
+
+wintermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_winter <- predict(object=wintermodel_A2, All_sites.test[,colsA2])
+
 #predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
 table(predictions_spring)
 table(predictions_summer)
@@ -296,20 +308,24 @@ cor(predwinter, All_sites.test[,5])
 #predtsA2 <- as.numeric(predictionstsA2)
 #cor(predtsA2, All_sites.test[,5])
 
-RFspring <- springmodel_A1$finalModel
-RFsummer <- summermodel_A1$finalModel
-RFwinter <- wintermodel_A1$finalModel
+RFspring <- springmodel_A2$finalModel
+RFsummer <- summermodel_A2$finalModel
+RFwinter <- wintermodel_A2$finalModel
 #RFtsA2 <- model_tsA2$finalModel
 
-varImpPlot(RFA1)
-varImpPlot(RFA2)
-varImpPlot(RFtsA1)
-varImpPlot(RFtsA2)
+varImpPlot(RFspring)
+varImpPlot(RFsummer)
+varImpPlot(RFwinter)
 
-saveRDS(RFA1, "F:/Upscaling_Project/Upscaling_Project_2017/RFA1_12_5.rds")
-saveRDS(RFA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFA2_12_5.rds")
-saveRDS(RFtsA1, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA1_12_5.rds")
-saveRDS(RFtsA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA2_12_5.rds")
+#varImpPlot(RFA1)
+#varImpPlot(RFA2)
+#varImpPlot(RFtsA1)
+#varImpPlot(RFtsA2)
+
+saveRDS(RFspring, "D:/Upscaling_Project/Upscaling_Project_2017/RFspringA2_12_5.rds")
+saveRDS(RFsummer, "D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
+saveRDS(RFwinter, "D:/Upscaling_Project/Upscaling_Project_2017/RFwinterA2_12_5.rds")
+#saveRDS(RFtsA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA2_12_5.rds")
 
 
 RFA1
@@ -356,12 +372,6 @@ library(dismo)
 library(raster)
 library(randomForest)
 library(caret)
-vp <- stack("F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif")
-srad <- stack("F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif")
-SPEI <- stack("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif")
-plot(SPEI[[1:4]])
-plot(srad)
-plot(vp[[1:10]])
 #Doing everything for 2007
 #Function where x is a list of filenames
 RF_SPEI_Analysis <- function(band1, month, monthno, year){
@@ -433,19 +443,170 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   gc()
 }
 
+RF_spring_Analysis <- function(band1, month, monthno, year){
+  #Read in files
+  filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  print(filename)
+  MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  inputrast <- stack(filename)
+  names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
+  inputrast <-(dropLayer(inputrast, 6))
+  srad <- raster(filenameSrad, band = band1)
+  vp <- raster(filenameVP)
+  SPEI_1 <- raster(filenameSPEI, band=band1)
+  print("files loaded")
+  #Process and resample Daymet variables
+  srad[srad==-9999] <-NA
+  vp[vp==-9999] <-NA
+  print("Subsetting done")
+  Sradresample <- resample(srad, MAP_resample, method="bilinear")
+  SPEIresample <- resample(SPEI_1, MAT_resample, method="bilinear")
+  vpresample <- resample(vp, MAT_resample, method="bilinear")
+  print("resampling done")
+  
+  #Raster stack for prediction
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEI_1"))
+  
+  #Predict and write out model A1
+  sw <- extent(rast_stack)
+  
+  #Read models
+  RFA2<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RFspringA2_12_5.rds")
+    #Predict and write out model A1 
+  #PredictA1
+  RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
+  
+  outputfilenameA2 <- paste("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_Seasonal/",month,"_",year,".tif", sep="")
+  
+  print(paste("writing out", outputfilenameA2))
+  writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  
+  gc()
+}
+RF_summer_Analysis <- function(band1, month, monthno, year){
+  #Read in files
+  filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  print(filename)
+  MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  inputrast <- stack(filename)
+  names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
+  inputrast <-(dropLayer(inputrast, 6))
+  srad <- raster(filenameSrad, band = band1)
+  vp <- raster(filenameVP)
+  SPEI_1 <- raster(filenameSPEI, band=band1)
+  print("files loaded")
+  #Process and resample Daymet variables
+  srad[srad==-9999] <-NA
+  vp[vp==-9999] <-NA
+  print("Subsetting done")
+  Sradresample <- resample(srad, MAP_resample, method="bilinear")
+  SPEIresample <- resample(SPEI_1, MAT_resample, method="bilinear")
+  vpresample <- resample(vp, MAT_resample, method="bilinear")
+  print("resampling done")
+  
+  #Raster stack for prediction
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEI_1"))
+  
+  #Predict and write out model A1
+  sw <- extent(rast_stack)
+  
+  #Read models
+  RFA2<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
+  #Predict and write out model A1 
+  #PredictA1
+  RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
+  
+  outputfilenameA2 <- paste("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_Seasonal/",month,"_",year,".tif", sep="")
+  
+  print(paste("writing out", outputfilenameA2))
+  writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  
+  gc()
+}
+RF_winter_Analysis <- function(band1, month, monthno, year){
+  #Read in files
+  filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  print(filename)
+  MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  inputrast <- stack(filename)
+  names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
+  inputrast <-(dropLayer(inputrast, 6))
+  srad <- raster(filenameSrad, band = band1)
+  vp <- raster(filenameVP)
+  SPEI_1 <- raster(filenameSPEI, band=band1)
+  print("files loaded")
+  #Process and resample Daymet variables
+  srad[srad==-9999] <-NA
+  vp[vp==-9999] <-NA
+  print("Subsetting done")
+  Sradresample <- resample(srad, MAP_resample, method="bilinear")
+  SPEIresample <- resample(SPEI_1, MAT_resample, method="bilinear")
+  vpresample <- resample(vp, MAT_resample, method="bilinear")
+  print("resampling done")
+  
+  #Raster stack for prediction
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEI_1"))
+  
+  #Predict and write out model A1
+  sw <- extent(rast_stack)
+  
+  #Read models
+  RFA2<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RFwinterA2_12_5.rds")
+  #Predict and write out model A1 
+  #PredictA1
+  RFA2_predicted <- predict(rast_stack, RFA2, ext=sw)
+  
+  outputfilenameA2 <- paste("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_Seasonal/",month,"_",year,".tif", sep="")
+  
+  print(paste("writing out", outputfilenameA2))
+  writeRaster(RFA2_predicted, outputfilenameA2, overwrite=TRUE)
+  
+  gc()
+}
 
-RF_SPEI_Analysis(band1=85, month="Jan", monthno=1, year=2007)
-RF_SPEI_Analysis(band1=86, month="Feb", monthno=2, year=2007)
-RF_SPEI_Analysis(band1=87, month="Mar", monthno=3, year=2007)
-RF_SPEI_Analysis(band1=88, month="Apr", monthno=4, year=2007)
-RF_SPEI_Analysis(band1=89, month="May", monthno=5, year=2007)
-RF_SPEI_Analysis(band1=90, month="Jun", monthno=6, year=2007)
-RF_SPEI_Analysis(band1=91, month="Jul", monthno=7, year=2007)
-RF_SPEI_Analysis(band1=92, month="Aug", monthno=8, year=2007)
-RF_SPEI_Analysis(band1=93, month="Sep", monthno=9, year=2007)
-RF_SPEI_Analysis(band1=94, month="Oct", monthno=10, year=2007)
-RF_SPEI_Analysis(band1=95, month="Nov", monthno=11, year=2007)
-RF_SPEI_Analysis(band1=96, month="Dec", monthno=12, year=2007)
+
+
+RF_winter_Analysis(band1=85, month="Jan", monthno=1, year=2007)
+RF_winter_Analysis(band1=86, month="Feb", monthno=2, year=2007)
+RF_spring_Analysis(band1=87, month="Mar", monthno=3, year=2007)
+RF_spring_Analysis(band1=88, month="Apr", monthno=4, year=2007)
+RF_spring_Analysis(band1=89, month="May", monthno=5, year=2007)
+RF_summer_Analysis(band1=90, month="Jun", monthno=6, year=2007)
+RF_summer_Analysis(band1=91, month="Jul", monthno=7, year=2007)
+RF_summer_Analysis(band1=92, month="Aug", monthno=8, year=2007)
+RF_winter_Analysis(band1=93, month="Sep", monthno=9, year=2007)
+RF_winter_Analysis(band1=94, month="Oct", monthno=10, year=2007)
+RF_winter_Analysis(band1=95, month="Nov", monthno=11, year=2007)
+RF_winter_Analysis(band1=96, month="Dec", monthno=12, year=2007)
+
+
+RF_winter_Analysis(band1=156, month="Jan", monthno=1, year=2013)
+RF_winter_Analysis(band1=157, month="Feb", monthno=2, year=2013)
+RF_spring_Analysis(band1=158, month="Mar", monthno=3, year=2013)
+RF_spring_Analysis(band1=159, month="Apr", monthno=4, year=2013)
+RF_spring_Analysis(band1=160, month="May", monthno=5, year=2013)
+RF_summer_Analysis(band1=161, month="Jun", monthno=6, year=2013)
+RF_summer_Analysis(band1=162, month="Jul", monthno=7, year=2013)
+RF_summer_Analysis(band1=163, month="Aug", monthno=8, year=2013)
+RF_winter_Analysis(band1=164, month="Sep", monthno=9, year=2013)
+RF_winter_Analysis(band1=165, month="Oct", monthno=10, year=2013)
+RF_winter_Analysis(band1=167, month="Nov", monthno=11, year=2013)
+RF_winter_Analysis(band1=168, month="Dec", monthno=12, year=2013)
 
 Jun_2007A1 <- raster("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/Jun_2007.tif")
 Jun_2007A2 <- raster("D:/Upscaling_Project/Upscaled_GPP/AGU_Model_A2/Jun_2007.tif")
