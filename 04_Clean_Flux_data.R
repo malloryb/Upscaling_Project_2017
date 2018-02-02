@@ -1,7 +1,9 @@
 library(R.matlab)
 library(lubridate)
 library(plyr)
-setwd("C:/Users/rsstudent/Upscaling_Data/Biederman_Flux/")
+
+setwd("F:/Upscaling_Project/Biederman_Flux/")
+#setwd("C:/Users/rsstudent/Upscaling_Data/Biederman_Flux/")
 fluxlist <-list.files(pattern= "^.*\\.(mat)$")
 
 format_flux <- function(file){
