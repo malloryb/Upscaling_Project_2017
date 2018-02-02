@@ -27,9 +27,22 @@ format_flux <- function(file){
  df$monthyear <- paste(df$month, df$year, sep="-")
  #Get Monthly GPP (sum), monthly Reco(sum), NEP(sum), ET (sum), precip (sum), Tair, VPD, Rnet, Rsolar
  cleaned_df <- ddply(df, .(monthyear), summarize, GPP=sum(GEP, na.rm=TRUE), Reco=sum(Reco, na.rm=TRUE), ET=sum(ET, na.rm=TRUE), Precip=sum(Precip, na.rm=TRUE), Tair=mean(Tair, na.rm=TRUE), VPD=mean(VPD, na.rm=TRUE))
+ cleaned_df$date <- as.Date(paste("01-", cleaned_df$monthyear, sep=""), format= "%d-%b-%Y")
+ cleaned_df$site <- substr(filename, 1,6)
+ cleaned_df <- arrange(cleaned_df, date)
  write.csv(cleaned_df, file=filename)
  return(cleaned_df)}
 
-
+#CAREFUL this overwrites everything
 lapply(fluxlist, format_flux)
-?lapply
+
+#Append all .csv files into one big spreadsheet 
+
+library(dplyr)
+library(readr)
+
+df <- list.files(full.names = TRUE, pattern="*.csv$") %>% 
+  lapply(read_csv) %>% 
+  bind_rows 
+
+list.files(full.names = TRUE, pattern="*.csv$")
