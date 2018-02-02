@@ -16,7 +16,7 @@ format_flux <- function(file){
  names(df) <- c("year", "dohy", "NEP", "GEP", "Reco", "ET", "Precip", "Tair", "VPD", "Rnet", "Rsolar")
  df$datewy <- strptime(paste(df$dohy, df$year, sep="-"), format="%j-%Y")
  #Substract 7884000 because that's the number of seconds in 3 months
- df$date <- as.Date(df$datewy - 7884000)
+ df$date <- as.Date(df$datewy - 5256000)
  #A little funny because of differing #s of days in months but ok for now. 
  df[394:399,]
  #get rid of datewy, year, dohy columsn do avoid confusion
