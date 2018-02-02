@@ -45,4 +45,4 @@ df <- list.files(full.names = TRUE, pattern="*.csv$") %>%
   lapply(read_csv) %>% 
   bind_rows 
 
-list.files(full.names = TRUE, pattern="*.csv$")
+write.csv(df, "Fixed_flux_vars_2_2_2018.csv")
