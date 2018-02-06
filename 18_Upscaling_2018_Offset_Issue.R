@@ -26,6 +26,10 @@ MODIS_merge <-  read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/MODIS_
 #Check files, delete "X", and format date col for merge 
 str(Flux_merge)
 Flux_merge$date <- as.Date(Flux_merge$date, format="%m/%d/%Y")
+Flux_merge$site <- str_replace_all(Flux_merge$site, "us-soy", "us-so3")
+Flux_merge$site <- str_replace_all(Flux_merge$site, "us-sob", "us-so2")
+Flux_merge$site <- str_replace_all(Flux_merge$site, "us-son", "us-so4")
+Flux_merge$site <- str_replace_all(Flux_merge$site, "us-soo", "us-so2")
 Flux_merge$sitedate <- with(Flux_merge, paste(site,date, sep="-"))
 
 
@@ -38,14 +42,17 @@ Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
 
 MODIS_merge<- subset(MODIS_merge, select = -c(X))
 MODIS_merge$date <- as.Date(MODIS_merge$date, format="%Y-%m-%d")
-Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-ray", "mx-ray")
-Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-tes", "mx_tes")
+MODIS_merge$site <- str_replace_all(MODIS_merge$site, "us-ray", "mx-ray")
+MODIS_merge$site <- str_replace_all(MODIS_merge$site, "us-tes", "mx_tes")
 MODIS_merge$sitedate <- with(MODIS_merge, paste(site,date, sep="-"))
 str(MODIS_merge)
 
 levels(unlist(as.factor(Daymet_merge$site)))
-levels(unlist(Flux_merge$site))
-levels(unlist(MODIS_merge$site))
+levels(unlist(as.factor(Flux_merge$site)))
+levels(unlist(as.factor(MODIS_merge$site)))
+head(Daymet_merge)
+head(Flux_merge)
+head(MODIS_merge)
 #Merge! And clean up merged mess. Final merged file should have same number
 #of observations as the "flux_merge" file since we should have complete records
 #For both daymet and MODIS - 2197 obs for all
