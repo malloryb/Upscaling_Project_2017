@@ -1,0 +1,82 @@
+#Fixing the offset issue (water year starting on Nov 1st vs. Oct 1st) and re-running the site-level analysis
+#Created 2/2/2018
+#To-do's
+#1) Merge daymet files with fixed flux files
+#2) Merge item #1) with EVI data and LST data
+#3) Merge item #2) with Hydro 1k data
+#4) Calculate water balance using 'spei' package for site-based RF (X)
+#5) Calculate spei for site-based RF
+#6) Run site-based RF with proper input variables
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(stringr)
+#1) Merge daymet files with fixed flux files----------------------
+#Read all three big .csv files and merge by date
+
+#Flux
+Flux_merge <- read.csv("D:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_2_2_2018.csv")
+#Daymet
+Daymet_merge <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Daymet_monthly_all.csv") 
+#MODIS
+MODIS_merge <-  read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/MODIS_3km_monthly.csv")
+
+#Check files, delete "X", and format date col for merge 
+str(Flux_merge)
+Flux_merge$date <- as.Date(Flux_merge$date, format="%m/%d/%Y")
+Flux_merge$sitedate <- with(Flux_merge, paste(site,date, sep="-"))
+
+
+#Replace sites "us-ray" and "us-tex" with their proper name (they are from mexiflux not ameriflux)
+Daymet_merge<- subset(Daymet_merge, select = -c(X))
+Daymet_merge$date <- as.Date(Daymet_merge$date, format="%Y-%m-%d")
+Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-ray", "mx-ray")
+Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-tes", "mx_tes")
+Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
+
+MODIS_merge<- subset(MODIS_merge, select = -c(X))
+MODIS_merge$date <- as.Date(MODIS_merge$date, format="%Y-%m-%d")
+Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-ray", "mx-ray")
+Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-tes", "mx_tes")
+MODIS_merge$sitedate <- with(MODIS_merge, paste(site,date, sep="-"))
+str(MODIS_merge)
+
+levels(unlist(as.factor(Daymet_merge$site)))
+levels(unlist(Flux_merge$site))
+levels(unlist(MODIS_merge$site))
+#Merge! And clean up merged mess. Final merged file should have same number
+#of observations as the "flux_merge" file since we should have complete records
+#For both daymet and MODIS - 2197 obs for all
+Flux_daymet <- merge(Flux_merge, Daymet_merge, by="sitedate", all.x=T)
+Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate", all.x=T)
+
+str(Flux_daymet)
+str(Merged_all)
+
+#Troubleshoot NA's
+
+#Cleanup
+#Delete extraneous columns
+Merged_all <- subset(Merged_all, select = -c(sitedate, date.x, site.x, date.y, site.y))
+#Get month
+Merged_all$month <- substr(Merged_all$date, 6,7)
+#Format_Date
+Merged_all$date <- as.Date(Merged_all$date)
+Merged_all$IGBP <- NA
+
+str$Merged_all
+#Add IGBP column based on lookup table------------------ not working yet 
+IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Veg_Type_Lookup.csv")
+str(IGBP_lookup)
+
+All_inc_IGBP <- merge(Merged_all, IGBP_lookup, by="site", all.x=T)
+str(All_inc_IGBP)
+All_inc_IGBP <- subset(All_inc_IGBP, select = -c(IGBP.x))
+ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
+str(ALL_inc_IGPB)
+
+write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_7_12_2017.csv")
+
+
