@@ -63,8 +63,6 @@ Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate", all.x=T)
 str(Flux_daymet)
 str(Merged_all)
 
-#Troubleshoot NA's
-
 #Cleanup
 #Delete extraneous columns
 Merged_all <- subset(Merged_all, select = -c(sitedate, date.x, site.x, date.y, site.y))
@@ -73,18 +71,19 @@ Merged_all$month <- substr(Merged_all$date, 6,7)
 #Format_Date
 Merged_all$date <- as.Date(Merged_all$date)
 Merged_all$IGBP <- NA
-
 str$Merged_all
 #Add IGBP column based on lookup table------------------ not working yet 
-IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Veg_Type_Lookup.csv")
+IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Veg_Type_Lookup_2018.csv")
 str(IGBP_lookup)
-
+IGBP_lookup
 All_inc_IGBP <- merge(Merged_all, IGBP_lookup, by="site", all.x=T)
 str(All_inc_IGBP)
 All_inc_IGBP <- subset(All_inc_IGBP, select = -c(IGBP.x))
 ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
 str(ALL_inc_IGPB)
 
-write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_7_12_2017.csv")
+write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_6_2018.csv")
+
+#Merge SPEI --------------------------------------------
 
 
