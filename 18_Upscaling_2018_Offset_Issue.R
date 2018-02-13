@@ -85,5 +85,27 @@ str(ALL_inc_IGPB)
 write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_6_2018.csv")
 
 #Merge SPEI --------------------------------------------
+#For now, we should be able to just merge the dataset with the other parts of the big spreadsheet from before
 
+Old_csv <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv")
+New_csv <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_6_2018.csv")
 
+str(New_csv)
+New_csv$site_mo <- paste(New_csv$site, paste("0", New_csv$month, sep=""),  sep="_")
+
+str(Old_csv)
+Old_csv$site_mo <- paste(Old_csv$site, paste("0", Old_csv$month, sep=""), sep="_")
+Old_csv_sub <- Old_csv[,c("date", "Latitude", "Longitude", "SPEI_1", "elev", "IGBP_no", "SPEI_3", "SPEI_6", "SPEI_9", "SPEI_IGBP", "CCP", "MAT", "MAP", "site_mo")]
+
+str(New_csv)  
+str(Old_csv_sub)
+
+ggplot(New_csv, aes(x='date', y='GPP', color='site', group='site')) +
+geom_line()  
+
+qplot(New_csv$date, New_csv$GPP)
+
+ggplot(pd.melt(New_csv, id_vars=['site']), aes(x='date', y='GPP', color='site')) +
+geom_line()
+
+??pd.melt
