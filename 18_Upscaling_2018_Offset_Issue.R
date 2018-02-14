@@ -96,6 +96,9 @@ New_csv$site_mo <- paste(New_csv$site, paste("0", New_csv$month, sep=""),  sep="
 str(Old_csv)
 Old_csv$site_mo <- paste(Old_csv$site, paste("0", Old_csv$month, sep=""), sep="_")
 Old_csv_sub <- Old_csv[,c("date", "Latitude", "Longitude", "SPEI_1", "elev", "IGBP_no", "SPEI_3", "SPEI_6", "SPEI_9", "SPEI_IGBP", "CCP", "MAT", "MAP", "site_mo")]
+merge(New_csv, Old_csv_sub, by="site_mo", all.x=T)
+
+
 
 str(New_csv)  
 str(Old_csv_sub)
