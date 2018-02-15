@@ -51,7 +51,6 @@ str(Daymet_for_SPEI)
 Daymet_for_SPEI$site
 #split 
 X <- split(Daymet_for_SPEI, Daymet_for_SPEI$site)
-
 A  <- X[[1]]
 B  <- X[[2]]
 C  <- X[[3]]
@@ -94,9 +93,11 @@ SPEI_calc <- function(A){
   spei_all <- cbind(spei1, spei3, spei6, spei9, spei12)
   spei_all$date <- format(date_decimal(spei_all$time), "%m-%d-%Y")
   spei_all$date <- as.Date(spei_all$date, format="%m-%d-%Y")
-  spei_all$date <- floor_date((spei_all$date +1), unit="month")
+  spei_all$date <- floor_date((spei_all$date +1), unit="day")
   spei_all$month <- month(spei_all$date)
-  return(spei_all)
+  final <- cbind(A, spei_all)
+  print(final)
+    return(final)
 }
 
 #Apply
@@ -195,7 +196,9 @@ XX$PET <- thornthwaite(XX$tmed, XX$Latitude[1], na.rm=TRUE)
 XX$BAL <- XX$precip - XX$PET
 XX$spei1 <-spei(XX[,'BAL'],1) 
 
-#Combine
+#Combine back together 
+
+
 
 
 #Adding other important variables
