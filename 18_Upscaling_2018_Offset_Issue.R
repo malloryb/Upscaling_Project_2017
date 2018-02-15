@@ -98,6 +98,8 @@ SPEI_calc <- function(A){
   spei12 <-(spei(A[,'BAL'], 12)$fitted)
   spei12 <-data.frame(spei12 = c(spei12), time = c(time(spei12))) 
   print("bind everything together")
+  A$PET <- as.numeric(A$PET)
+  A$BAL <- as.numeric(A$BAL)
   spei_all <- cbind(spei1, spei3, spei6, spei9, spei12)
   spei_all$date <- format(date_decimal(spei_all$time), "%m-%d-%Y")
   spei_all$date <- as.Date(spei_all$date, format="%m-%d-%Y")
@@ -118,6 +120,10 @@ str(l.df)
 #Apply & combine in one
 Daymet <- do.call("rbind", lapply(l.df, SPEI_calc))
 str(All)
+str(All$PET)
+typeof(All$PET)
+head(All$PET)
+head(All$BAL)
 str(Daymet_merge)
 
 
