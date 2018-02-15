@@ -118,14 +118,7 @@ SPEI_calc <- function(A){
 l.df <- lapply(ls(pattern="df[0-9]+"), function(x) get(x))
 str(l.df)
 #Apply & combine in one
-Daymet <- do.call("rbind", lapply(l.df, SPEI_calc))
-str(All)
-str(All$PET)
-typeof(All$PET)
-head(All$PET)
-head(All$BAL)
-str(Daymet_merge)
-
+Daymet_merge <- do.call("rbind", lapply(l.df, SPEI_calc))
 
 MODIS_merge<- subset(MODIS_merge, select = -c(X))
 MODIS_merge$date <- as.Date(MODIS_merge$date, format="%Y-%m-%d")
@@ -146,19 +139,16 @@ head(MODIS_merge)
 #For both daymet and MODIS - 2197 obs for all
 Flux_daymet <- merge(Flux_merge, Daymet_merge, by="sitedate", all.x=T)
 Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate", all.x=T)
-
 str(Flux_daymet)
 str(Merged_all)
 
 #Cleanup
 #Delete extraneous columns
 Merged_all <- subset(Merged_all, select = -c(sitedate, date.x, site.x, date.y, site.y))
-#Get month
-Merged_all$month <- substr(Merged_all$date, 6,7)
 #Format_Date
 Merged_all$date <- as.Date(Merged_all$date)
 Merged_all$IGBP <- NA
-str$Merged_all
+str(Merged_all)
 #Add IGBP column based on lookup table------------------ not working yet 
 IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(IGBP_lookup)
@@ -169,9 +159,8 @@ All_inc_IGBP <- subset(All_inc_IGBP, select = -c(IGBP.x))
 ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
 str(ALL_inc_IGPB)
 
-#Need to get tmed
-ALL_inc_IGPB$tmed <- ((ALL_inc_IGPB$tmax + ALL_inc_IGPB$tmin)/2)
-write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_14_2018.csv")
+#Write out .csv file
+write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv")
 
 #Calculate 1-month SPEI --------------------------------------------
 #1 Calculate water balance using 'spei' package for site-based RF------
