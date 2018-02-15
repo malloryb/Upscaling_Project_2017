@@ -162,3 +162,193 @@ str(ALL_inc_IGPB)
 #Write out .csv file
 write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv")
 
+#Get random forest models (this code could be cleaned up significantly) 
+#Run site-based RF with proper variables --------
+library(lubridate)
+library(caret)
+library(randomForest)
+
+#From UC-Irvine Machine learning repository
+#Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
+All_sites <- read.csv("E:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
+#Print first lines
+head(All_sites)
+#numcols <- c(3:16, 18, 23, 25:33, 34:35)
+#Allsites_sum <- All_sites[,numcols]
+#head(Allsites_sum)
+descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
+highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
+#descrCor[,-highCorDescr]
+#add column names
+str(All_sites)
+All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%d/%m/%Y")))
+All_sites$month <- as.factor(All_sites$month)
+#All_sites$IGBP_no <- as.factor(All_sites$IGBP_no)
+#3. Prepare your data----------------------
+#Normalization makes data easier for the RF algorithm to learn
+#Two types of normalization: 
+#example normalization (normalize each case individually)
+#feature normalization (adjust each feature in the same way across all cases)
+#Normalization a good idea when one attribute has a wide range of values compared to others
+
+#User-defined normalization function
+normalize <- function(x) {
+  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
+}
+
+#Function to see if any cols have NAs. Now that I'm not standardizing GPP anymore having issues w/ NAs
+nacols <- function(df) {
+  colnames(df)[unlist(lapply(df, function(x) any(is.na(x))))]
+}
+
+#All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
+All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
+                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "tmax", "SPEI_1")]
+All_sites <- All_sites[complete.cases(All_sites),]
+All_sites$date <- as.Date(All_sites$date)
+nacols(All_sites)
+head(All_sites)
+
+?createTimeSlices
+
+#No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
+#Here's where we can split
+#Timesilces
+#mypartition <- createIrregularTimeSlices(All_sites$date, initialWindow=48, horizon=12, unit="month", fixedWindow=T)
+#ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
+#tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#Subset by season
+Spring_sites <- subset(All_sites, month==3 | month==4 | month==5)
+Summer_sites <- subset(All_sites, month==6 | month==7 | month==8)
+Winter_sites <- subset(All_sites, month==9 | month==10| month==11 | month==12 | month==1 | month==2)
+#Split into training and testing data
+
+#Create index to split based on year
+index <- createDataPartition(Summer_sites$GPP, p=0.80, list=FALSE)
+index
+
+#Resample data to overrepresent high GPP observations
+#Subset training set
+All_sites.training <- Summer_sites[index,]
+All_sites.test <- Summer_sites[-index,]
+str(All_sites)
+#Overview of algorithms supported by caret function
+names(getModelInfo())
+head(All_sites)
+#Model with all:
+colsA1 <- c(3:4, 7:13)
+head(All_sites.training)
+head(All_sites.training[,colsA1])
+head(All_sites.training[,5:6])
+
+#Model wtih all + SPEI_1
+colsA2 <- c(3:4, 7:14)
+head(All_sites.training)
+head(All_sites.training[,colsA2])
+head(All_sites.training[,5:6])
+
+#Train a model (trying both KNN and random forest)
+#Each of these takes awhile: approx 10 mins
+#model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+#springmodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#predictions_spring <- predict(object=springmodel_A1, All_sites.test[,colsA1])
+myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
+springmodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='nnet', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_spring <- predict(object=springmodel_A2, All_sites.test[,colsA2])
+
+#summermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='nnet', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#predictions_summer <- predict(object=summermodel_A1, All_sites.test[,colsA1])
+
+summermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_summer <- predict(object=summermodel_A2, All_sites.test[,colsA2])
+
+#wintermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+#predictions_winter <- predict(object=wintermodel_A1, All_sites.test[,colsA1])
+
+wintermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='nnet', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predictions_winter <- predict(object=wintermodel_A2, All_sites.test[,colsA2])
+
+#predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
+table(predictions_spring)
+table(predictions_summer)
+table(predictions_winter)
+#table(predictionstsA2)
+
+predspring <- as.numeric(predictions_spring)
+predsummer <- as.numeric(predictions_summer)
+predwinter <- as.numeric(predictions_winter)
+cor(predspring, All_sites.test[,5])
+cor(predsummer, All_sites.test[,5])
+#predA2 <- as.numeric(predictionsA2)
+cor(predwinter, All_sites.test[,5])
+#predtsA2 <- as.numeric(predictionstsA2)
+#cor(predtsA2, All_sites.test[,5])
+
+RFspring <- springmodel_A2$finalModel
+RFsummer <- summermodel_A2$finalModel
+RFwinter <- wintermodel_A2$finalModel
+#RFtsA2 <- model_tsA2$finalModel
+
+varImpPlot(RFspring)
+varImpPlot(RFsummer)
+varImpPlot(RFwinter)
+RFsummer
+#varImpPlot(RFA1)
+#varImpPlot(RFA2)
+#varImpPlot(RFtsA1)
+#varImpPlot(RFtsA2)
+
+saveRDS(RFspring, "F:/Upscaling_Project/Upscaling_Project_2017/RFspringA2_12_6.rds")
+saveRDS(RFsummer, "F:/Upscaling_Project/Upscaling_Project_2017/RFssummerA2_12_6.rds")
+
+saveRDS(RFsummer, "D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
+saveRDS(RFsummer, "D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
+saveRDS(RFwinter, "D:/Upscaling_Project/Upscaling_Project_2017/RFwinterA2_12_5.rds")
+#saveRDS(RFtsA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA2_12_5.rds")
+
+
+RFA1
+RFA2
+lb1 <- paste("R^2 == ", "0.70")
+RMSE1 <- paste("RMSE==", "0.76")
+lb2 <- paste("R^2 == ", "0.78")
+RMSE2 <- paste("RMSE==", "0.37")
+
+#Plot predicted vs. measured
+#Model A1
+qplot(predsummer, All_sites.test[,5]) + 
+  geom_point(shape=19, colour="tomato2", size=3)+
+  geom_abline(intercept = 0, slope = 1)+
+  xlim(0,7.5)+
+  ylim(0,7.5)+
+  xlab("Flux monthly GPP")+
+  ylab("Predicted monthly GPP")+
+  theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
+  annotate("text", label = lb1, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
+  annotate("text", label = RMSE1, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
+  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("Random forest - A1")  
+
+#Model A2 
+qplot(predA2, All_sites.test[,5]) + 
+  geom_point(shape=19, colour="tomato2", size=3)+
+  geom_abline(intercept = 0, slope = 1)+
+  xlim(0,7.5)+
+  ylim(0,7.5)+
+  xlab("Flux monthly GPP")+
+  ylab("Predicted monthly GPP")+
+  theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
+  annotate("text", label = lb2, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
+  annotate("text", label = RMSE2, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
+  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("Random forest - A2 (A1 + water balance)")  
+
+
+
