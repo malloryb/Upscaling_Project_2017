@@ -78,7 +78,11 @@ XX<- X[[24]]
 
 #SPEI_calc_function
 
+
 SPEI_calc <- function(A){
+  A <- A[order(A$date),]
+  A$PET <- thornthwaite(A$tmed, A$Latitude[1], na.rm=TRUE)
+  A$BAL <- A$precip - A$PET
   spei1 <- (spei(A[,'BAL'], 1)$fitted)
   spei1 <- data.frame(spei1 = c(spei1), time=c(time(spei1))) 
   spei3 <- (spei(A[,'BAL'], 3)$fitted)
@@ -101,8 +105,7 @@ SPEI_calc <- function(A){
 }
 
 #Apply
-A$PET <- thornthwaite(A$tmed, A$Latitude[1], na.rm=TRUE)
-A$BAL <- A$precip - A$PET
+
 SPEI_calc(A)
 
 B$PET <- thornthwaite(B$tmed, B$Latitude[1], na.rm=TRUE)
