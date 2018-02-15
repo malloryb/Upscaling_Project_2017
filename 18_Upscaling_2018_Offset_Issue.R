@@ -107,12 +107,14 @@ SPEI_calc <- function(A){
   final <- cbind(A, spei_all)
   final <- final[-c(16,18,20,22,24,25)]
   print(head(final))
+  print(nrow(A))
+  print(nrow(final))
   return(final)
 }
 
-#Get list of dataframes using pattern (thank you stack overflow!)
+#Get list of dataframes using pattern (thank you stack overflow!: https://stackoverflow.com/questions/14954399/put-multiple-data-frames-into-list-smart-way)
 l.df <- lapply(ls(pattern="df[1-24]+"), function(x) get(x))
-
+str(l.df)
 #Apply
 All <- do.call("rbind", lapply(l.df, SPEI_calc))
 str(All)
