@@ -51,33 +51,34 @@ str(Daymet_for_SPEI)
 Daymet_for_SPEI$site
 #split 
 X <- split(Daymet_for_SPEI, Daymet_for_SPEI$site)
-A  <- X[[1]]
-B  <- X[[2]]
-C  <- X[[3]]
-D  <- X[[4]]
-E  <- X[[5]]
-FF  <- X[[6]]
-G  <- X[[7]]
-H  <- X[[8]]
-I  <- X[[9]]
-J  <- X[[10]]
-K  <- X[[11]]
-L  <- X[[12]]
-M  <- X[[13]]
-N  <- X[[14]]
-O  <- X[[15]]
-P  <- X[[16]]
-Q  <- X[[17]]
-R  <- X[[18]]
-S  <- X[[19]]
-TT  <- X[[20]]
-U  <- X[[21]]
-V<- X[[22]]
-W<- X[[23]]
-XX<- X[[24]]
+df1  <- X[[1]]
+df2  <- X[[2]]
+df3  <- X[[3]]
+df4  <- X[[4]]
+df5  <- X[[5]]
+df6  <- X[[6]]
+df7  <- X[[7]]
+df8  <- X[[8]]
+df9  <- X[[9]]
+df10 <- X[[10]]
+df11 <- X[[11]]
+df12 <- X[[12]]
+df13 <- X[[13]]
+df14 <- X[[14]]
+df15 <- X[[15]]
+df16 <- X[[16]]
+df17 <- X[[17]]
+df18 <- X[[18]]
+df19 <- X[[19]]
+df20 <- X[[20]]
+df21 <- X[[21]]
+df22 <- X[[22]]
+df23 <- X[[23]]
+df24 <- X[[24]]
+
+
 
 #SPEI_calc_function
-
 
 SPEI_calc <- function(A){
   A <- A[order(A$date),]
@@ -109,6 +110,10 @@ SPEI_calc <- function(A){
   print(head(final))
   return(final)
 }
+
+#Get list of dataframes using pattern (thank you stack overflow!)
+l.df <- lapply(ls(pattern="df[1-24]+"), function(x) get(x))
+
 
 #Apply
 
