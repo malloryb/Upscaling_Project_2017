@@ -113,7 +113,7 @@ SPEI_calc <- function(A){
 }
 
 #Get list of dataframes using pattern (thank you stack overflow!: https://stackoverflow.com/questions/14954399/put-multiple-data-frames-into-list-smart-way)
-l.df <- lapply(ls(pattern="df[1-24]+"), function(x) get(x))
+l.df <- lapply(ls(pattern="df[0-9]+"), function(x) get(x))
 str(l.df)
 #Apply
 All <- do.call("rbind", lapply(l.df, SPEI_calc))
