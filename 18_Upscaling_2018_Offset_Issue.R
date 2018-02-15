@@ -116,8 +116,9 @@ SPEI_calc <- function(A){
 l.df <- lapply(ls(pattern="df[0-9]+"), function(x) get(x))
 str(l.df)
 #Apply & combine in one
-All <- do.call("rbind", lapply(l.df, SPEI_calc))
+Daymet <- do.call("rbind", lapply(l.df, SPEI_calc))
 str(All)
+str(Daymet_merge)
 
 
 MODIS_merge<- subset(MODIS_merge, select = -c(X))
