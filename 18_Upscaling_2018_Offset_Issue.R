@@ -35,10 +35,174 @@ Flux_merge$sitedate <- with(Flux_merge, paste(site,date, sep="-"))
 
 #Replace sites "us-ray" and "us-tex" with their proper name (they are from mexiflux not ameriflux)
 Daymet_merge<- subset(Daymet_merge, select = -c(X))
+Daymet_merge$tmed <- ((Daymet_merge$tmax + Daymet_merge$tmin)/2)
 Daymet_merge$date <- as.Date(Daymet_merge$date, format="%Y-%m-%d")
 Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-ray", "mx-ray")
 Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-tes", "mx-tes")
 Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
+
+#Set latitudes by site
+str(Daymet_merge)
+IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+IGBP_lookup <- IGBP_lookup[,c("site", "lat")]
+Lat_merge <- plyr::rename(IGBP_lookup, c("site"="site", "lat"="Latitude"))
+Daymet_for_SPEI <- merge(Daymet_merge, Lat_merge, by="site", all.x=T)
+str(Daymet_for_SPEI)
+Daymet_for_SPEI$site
+#split 
+X <- split(Daymet_for_SPEI, Daymet_for_SPEI$site)
+
+A  <- X[[1]]
+B  <- X[[2]]
+C  <- X[[3]]
+D  <- X[[4]]
+E  <- X[[5]]
+FF  <- X[[6]]
+G  <- X[[7]]
+H  <- X[[8]]
+I  <- X[[9]]
+J  <- X[[10]]
+K  <- X[[11]]
+L  <- X[[12]]
+M  <- X[[13]]
+N  <- X[[14]]
+O  <- X[[15]]
+P  <- X[[16]]
+Q  <- X[[17]]
+R  <- X[[18]]
+S  <- X[[19]]
+TT  <- X[[20]]
+U  <- X[[21]]
+V<- X[[22]]
+W<- X[[23]]
+XX<- X[[24]]
+
+#SPEI_calc_function
+
+SPEI_calc <- function(A){
+  spei1 <- (spei(A[,'BAL'], 1)$fitted)
+  spei1 <- data.frame(spei1 = c(spei1), time=c(time(spei1))) 
+  spei3 <- (spei(A[,'BAL'], 3)$fitted)
+  spei3 <- data.frame(spei3 = c(spei3), time = c(time(spei3))) 
+  spei6 <- (spei(A[,'BAL'], 6)$fitted)
+  spei6 <- data.frame(spei6 = c(spei6), time = c(time(spei6))) 
+  spei9 <- (spei(A[,'BAL'], 9)$fitted)
+  spei9 <- data.frame(spei9 = c(spei9), time = c(time(spei9))) 
+  spei12 <-(spei(A[,'BAL'], 12)$fitted)
+  spei12 <-data.frame(spei12 = c(spei12), time = c(time(spei12))) 
+  print("bind everything together")
+  spei_all <- cbind(spei1, spei3, spei6, spei9, spei12)
+  spei_all$date <- format(date_decimal(spei_all$time), "%m-%d-%Y")
+  spei_all$date <- as.Date(spei_all$date, format="%m-%d-%Y")
+  spei_all$date <- floor_date((spei_all$date +1), unit="month")
+  spei_all$month <- month(spei_all$date)
+  return(spei_all)
+}
+
+#Apply
+A$PET <- thornthwaite(A$tmed, A$Latitude[1], na.rm=TRUE)
+A$BAL <- A$precip - A$PET
+SPEI_calc(A)
+
+B$PET <- thornthwaite(B$tmed, B$Latitude[1], na.rm=TRUE)
+B$BAL <- B$precip - B$PET
+B$spei1$ <-spei(B[,'BAL'],1, na.rm=TRUE)
+C$PET <- thornthwaite(C$tmed, C$Latitude[1], na.rm=TRUE)
+C$BAL <- C$precip - C$PET
+C$spei1 <-spei(C[,'BAL'],1) 
+
+D$PET <- thornthwaite(D$tmed, D$Latitude[1], na.rm=TRUE)
+D$BAL <- D$precip - D$PET
+D$spei1 <-spei(D[,'BAL'],1) 
+
+E$PET <- thornthwaite(E$tmed, E$Latitude[1], na.rm=TRUE)
+E$BAL <- E$precip - E$PET
+E$spei1 <-spei(E[,'BAL'],1) 
+
+FF$PET <- thornthwaite(FF$tmed, FF$Latitude[1], na.rm=TRUE)
+FF$BAL <- FF$precip - FF$PET
+FF$spei1 <-spei(FF[,'BAL'],1) 
+
+G$PET <- thornthwaite(G$tmed, G$Latitude[1], na.rm=TRUE)
+GBAL <- G$precip - G$PET
+G$spei1 <-spei(GG[,'BAL'],1) 
+
+H$PET <- thornthwaite(H$tmed, H$Latitude[1], na.rm=TRUE)
+H$BAL <- H$precip - H$PET
+H$spei1 <-spei(H[,'BAL'],1) 
+
+I$PET <- thornthwaite(H$tmed, H$Latitude[1], na.rm=TRUE)
+I$BAL <- I$precip - I$PET
+I$spei1 <-spei(I[,'BAL'],1) 
+
+J$PET <- thornthwaite(J$tmed, J$Latitude[1], na.rm=TRUE)
+J$BAL <- J$precip - J$PET
+J$spei1 <-spei(J[,'BAL'],1) 
+
+K$PET <- thornthwaite(K$tmed, K$Latitude[1], na.rm=TRUE)
+K$BAL <- K$precip - K$PET
+K$spei1 <-spei(K[,'BAL'],1) 
+
+L$PET <- thornthwaite(L$tmed, L$Latitude[1], na.rm=TRUE)
+L$BAL <- L$precip - L$PET
+L$spei1 <-spei(L[,'BAL'],1) 
+
+M$PET <- thornthwaite(M$tmed, M$Latitude[1], na.rm=TRUE)
+M$BAL <- M$precip - M$PET
+M$spei1 <-spei(M[,'BAL'],1) 
+
+N$PET <- thornthwaite(N$tmed, N$Latitude[1], na.rm=TRUE)
+N$BAL <- N$precip - N$PET
+N$spei1 <-spei(N[,'BAL'],1) 
+
+O$PET <- thornthwaite(O$tmed, O$Latitude[1], na.rm=TRUE)
+O$BAL <- O$precip - O$PET
+O$spei1 <-spei(O[,'BAL'],1) 
+
+P$PET <- thornthwaite(P$tmed, P$Latitude[1], na.rm=TRUE)
+P$BAL <- P$precip - P$PET
+P$spei1 <-spei(P[,'BAL'],1) 
+
+Q$PET <- thornthwaite(Q$tmed, Q$Latitude[1], na.rm=TRUE)
+Q$BAL <- Q$precip - Q$PET
+Q$spei1 <-spei(Q[,'BAL'],1) 
+
+R$PET <- thornthwaite(R$tmed, R$Latitude[1], na.rm=TRUE)
+R$BAL <- R$precip - R$PET
+R$spei1 <-spei(R[,'BAL'],1) 
+
+S$PET <- thornthwaite(S$tmed, S$Latitude[1], na.rm=TRUE)
+S$BAL <- S$precip - S$PET
+S$spei1 <-spei(S[,'BAL'],1) 
+
+TT$PET <- thornthwaite(TT$tmed, TT$Latitude[1], na.rm=TRUE)
+TT$BAL <- TT$precip - TT$PET
+TT$spei1 <-spei(TT[,'BAL'],1) 
+
+U$PET <- thornthwaite(U$tmed, U$Latitude[1], na.rm=TRUE)
+U$BAL <- U$precip - U$PET
+U$spei1 <-spei(U[,'BAL'],1) 
+
+V$PET <- thornthwaite(V$tmed, V$Latitude[1], na.rm=TRUE)
+V$BAL <- V$precip - V$PET
+V$spei1 <-spei(V[,'BAL'],1) 
+
+W$PET <- thornthwaite(W$tmed, W$Latitude[1], na.rm=TRUE)
+W$BAL <- W$precip - W$PET
+W$spei1 <-spei(W[,'BAL'],1) 
+
+XX$PET <- thornthwaite(XX$tmed, XX$Latitude[1], na.rm=TRUE)
+XX$BAL <- XX$precip - XX$PET
+XX$spei1 <-spei(XX[,'BAL'],1) 
+
+#Combine
+
+
+#Adding other important variables
+All_inc_IGBP <- subset(All_inc_IGBP, select = -c(IGBP.x))
+ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
+str(ALL_inc_IGPB)
+
 
 MODIS_merge<- subset(MODIS_merge, select = -c(X))
 MODIS_merge$date <- as.Date(MODIS_merge$date, format="%Y-%m-%d")
@@ -73,7 +237,7 @@ Merged_all$date <- as.Date(Merged_all$date)
 Merged_all$IGBP <- NA
 str$Merged_all
 #Add IGBP column based on lookup table------------------ not working yet 
-IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Veg_Type_Lookup_2018.csv")
+IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(IGBP_lookup)
 IGBP_lookup
 All_inc_IGBP <- merge(Merged_all, IGBP_lookup, by="site", all.x=T)
@@ -82,27 +246,144 @@ All_inc_IGBP <- subset(All_inc_IGBP, select = -c(IGBP.x))
 ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
 str(ALL_inc_IGPB)
 
-write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_6_2018.csv")
+#Need to get tmed
+ALL_inc_IGPB$tmed <- ((ALL_inc_IGPB$tmax + ALL_inc_IGPB$tmin)/2)
+write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_14_2018.csv")
 
-#Merge SPEI --------------------------------------------
-#For now, we should be able to just merge the dataset with the other parts of the big spreadsheet from before
+#Calculate 1-month SPEI --------------------------------------------
+#1 Calculate water balance using 'spei' package for site-based RF------
 
-Old_csv <- read.csv("D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv")
-New_csv <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_6_2018.csv")
-str(New_csv)
+library(SPEI)
+Allsites <- rename(Allsites, c("lat"="Latitude", "long"="Longitude"))
+#probably should do 'split-apply-combine'
+Allsites$site
+#split 
 
-#Merge MAT, MAP, lat, and long by site
-Old_csv_sub <- Old_csv[,c("site", "Latitude", "Longitude", "elev",  "MAT", "MAP")]
-New_csv_all <- merge(New_csv, Old_csv_sub, by="site")
-match(New_csv$site, Old_csv_sub$site)
-str(New_csv_all)
-ggplot(New_csv, aes(x='date', y='GPP', color='site', group='site')) +
-geom_line()  
+X <- split(Allsites, Allsites$site)
 
+A  <- X[[1]]
+B  <- X[[2]]
+C  <- X[[3]]
+D  <- X[[4]]
+E  <- X[[5]]
+FF  <- X[[6]]
+G  <- X[[7]]
+H  <- X[[8]]
+I  <- X[[9]]
+J  <- X[[10]]
+K  <- X[[11]]
+L  <- X[[12]]
+M  <- X[[13]]
+N  <- X[[14]]
+O  <- X[[15]]
+P  <- X[[16]]
+Q  <- X[[17]]
+R  <- X[[18]]
+S  <- X[[19]]
+TT  <- X[[20]]
+U  <- X[[21]]
+V<- X[[22]]
+W<- X[[23]]
+XX<- X[[24]]
 
-qplot(New_csv$date, New_csv$GPP)
+#Apply
 
-ggplot(pd.melt(New_csv, id_vars=['site']), aes(x='date', y='GPP', color='site')) +
-geom_line()
+A$PET <- thornthwaite(A$tmed, A$Latitude[1], na.rm=TRUE)
+A$BAL <- A$precip - A$PET
+A$spei1 <-spei(A[,'BAL'],1, na.rm=TRUE) 
 
-??pd.melt
+B$PET <- thornthwaite(B$tmed, B$Latitude[1], na.rm=TRUE)
+B$BAL <- B$precip - B$PET
+B$spei1$ <-spei(B[,'BAL'],1, na.rm=TRUE)
+C$PET <- thornthwaite(C$tmed, C$Latitude[1], na.rm=TRUE)
+C$BAL <- C$precip - C$PET
+C$spei1 <-spei(C[,'BAL'],1) 
+
+D$PET <- thornthwaite(D$tmed, D$Latitude[1], na.rm=TRUE)
+D$BAL <- D$precip - D$PET
+D$spei1 <-spei(D[,'BAL'],1) 
+
+E$PET <- thornthwaite(E$tmed, E$Latitude[1], na.rm=TRUE)
+E$BAL <- E$precip - E$PET
+E$spei1 <-spei(E[,'BAL'],1) 
+
+FF$PET <- thornthwaite(FF$tmed, FF$Latitude[1], na.rm=TRUE)
+FF$BAL <- FF$precip - FF$PET
+FF$spei1 <-spei(FF[,'BAL'],1) 
+
+G$PET <- thornthwaite(G$tmed, G$Latitude[1], na.rm=TRUE)
+GBAL <- G$precip - G$PET
+G$spei1 <-spei(GG[,'BAL'],1) 
+
+H$PET <- thornthwaite(H$tmed, H$Latitude[1], na.rm=TRUE)
+H$BAL <- H$precip - H$PET
+H$spei1 <-spei(H[,'BAL'],1) 
+
+I$PET <- thornthwaite(H$tmed, H$Latitude[1], na.rm=TRUE)
+I$BAL <- I$precip - I$PET
+I$spei1 <-spei(I[,'BAL'],1) 
+
+J$PET <- thornthwaite(J$tmed, J$Latitude[1], na.rm=TRUE)
+J$BAL <- J$precip - J$PET
+J$spei1 <-spei(J[,'BAL'],1) 
+
+K$PET <- thornthwaite(K$tmed, K$Latitude[1], na.rm=TRUE)
+K$BAL <- K$precip - K$PET
+K$spei1 <-spei(K[,'BAL'],1) 
+
+L$PET <- thornthwaite(L$tmed, L$Latitude[1], na.rm=TRUE)
+L$BAL <- L$precip - L$PET
+L$spei1 <-spei(L[,'BAL'],1) 
+
+M$PET <- thornthwaite(M$tmed, M$Latitude[1], na.rm=TRUE)
+M$BAL <- M$precip - M$PET
+M$spei1 <-spei(M[,'BAL'],1) 
+
+N$PET <- thornthwaite(N$tmed, N$Latitude[1], na.rm=TRUE)
+N$BAL <- N$precip - N$PET
+N$spei1 <-spei(N[,'BAL'],1) 
+
+O$PET <- thornthwaite(O$tmed, O$Latitude[1], na.rm=TRUE)
+O$BAL <- O$precip - O$PET
+O$spei1 <-spei(O[,'BAL'],1) 
+
+P$PET <- thornthwaite(P$tmed, P$Latitude[1], na.rm=TRUE)
+P$BAL <- P$precip - P$PET
+P$spei1 <-spei(P[,'BAL'],1) 
+
+Q$PET <- thornthwaite(Q$tmed, Q$Latitude[1], na.rm=TRUE)
+Q$BAL <- Q$precip - Q$PET
+Q$spei1 <-spei(Q[,'BAL'],1) 
+
+R$PET <- thornthwaite(R$tmed, R$Latitude[1], na.rm=TRUE)
+R$BAL <- R$precip - R$PET
+R$spei1 <-spei(R[,'BAL'],1) 
+
+S$PET <- thornthwaite(S$tmed, S$Latitude[1], na.rm=TRUE)
+S$BAL <- S$precip - S$PET
+S$spei1 <-spei(S[,'BAL'],1) 
+
+TT$PET <- thornthwaite(TT$tmed, TT$Latitude[1], na.rm=TRUE)
+TT$BAL <- TT$precip - TT$PET
+TT$spei1 <-spei(TT[,'BAL'],1) 
+
+U$PET <- thornthwaite(U$tmed, U$Latitude[1], na.rm=TRUE)
+U$BAL <- U$precip - U$PET
+U$spei1 <-spei(U[,'BAL'],1) 
+
+V$PET <- thornthwaite(V$tmed, V$Latitude[1], na.rm=TRUE)
+V$BAL <- V$precip - V$PET
+V$spei1 <-spei(V[,'BAL'],1) 
+
+W$PET <- thornthwaite(W$tmed, W$Latitude[1], na.rm=TRUE)
+W$BAL <- W$precip - W$PET
+W$spei1 <-spei(W[,'BAL'],1) 
+
+XX$PET <- thornthwaite(XX$tmed, XX$Latitude[1], na.rm=TRUE)
+XX$BAL <- XX$precip - XX$PET
+XX$spei1 <-spei(XX[,'BAL'],1) 
+
+All_sites2 <- rbind(A,B,C,D,E,FF,G,H,I,J,K,L,M,N,O,P,Q,R,S,TT,U,V,W,XX)
+str(All_sites2)
+write.csv(All_sites2, "D:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_2_14.csv")
+
