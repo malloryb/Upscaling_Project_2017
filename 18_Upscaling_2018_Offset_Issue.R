@@ -40,16 +40,18 @@ Daymet_merge$date <- as.Date(Daymet_merge$date, format="%Y-%m-%d")
 Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-ray", "mx-ray")
 Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-tes", "mx-tes")
 Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
+unique(Daymet_merge$site)
 
 #Set latitudes by site
 str(Daymet_merge)
 IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 IGBP_lookup <- IGBP_lookup[,c("site", "lat")]
 Lat_merge <- plyr::rename(IGBP_lookup, c("site"="site", "lat"="Latitude"))
-Daymet_for_SPEI <- merge(Daymet_merge, Lat_merge, by="site", all.x=T)
+Daymet_for_SPEI <- merge(Daymet_merge, Lat_merge, by="site")
 str(Daymet_for_SPEI)
-Daymet_for_SPEI$site
+unique(Daymet_for_SPEI$site)
 #split 
+#More sites in here than in the lookup file - so should be lots of blanks re: Latitude 
 X <- split(Daymet_for_SPEI, Daymet_for_SPEI$site)
 df1  <- X[[1]]
 df2  <- X[[2]]
@@ -77,13 +79,14 @@ df23 <- X[[23]]
 df24 <- X[[24]]
 
 
-
 #SPEI_calc_function
-
 SPEI_calc <- function(A){
   A <- A[order(A$date),]
+  print(A$site[1])
+  print("calculate water balance")
   A$PET <- thornthwaite(A$tmed, A$Latitude[1], na.rm=TRUE)
   A$BAL <- A$precip - A$PET
+  print("calculate spei")
   spei1 <- (spei(A[,'BAL'], 1)$fitted)
   spei1 <- data.frame(spei1 = c(spei1), time=c(time(spei1))) 
   spei3 <- (spei(A[,'BAL'], 3)$fitted)
@@ -97,15 +100,11 @@ SPEI_calc <- function(A){
   print("bind everything together")
   spei_all <- cbind(spei1, spei3, spei6, spei9, spei12)
   spei_all$date <- format(date_decimal(spei_all$time), "%m-%d-%Y")
-  print(spei_all$date[1])
   spei_all$date <- as.Date(spei_all$date, format="%m-%d-%Y")
-  print(spei_all$date[1])
   spei_all$date <- floor_date((spei_all$date +1), "month")
-  print(spei_all$date[1])
   spei_all$month <- month(spei_all$date)
   #columns to get rid of in the final thing: 16, 18, 20, 22, 24 (all caled "time") and the second "date (postion=25)
   final <- cbind(A, spei_all)
-  print(head(final))
   final <- final[-c(16,18,20,22,24,25)]
   print(head(final))
   return(final)
@@ -114,12 +113,11 @@ SPEI_calc <- function(A){
 #Get list of dataframes using pattern (thank you stack overflow!)
 l.df <- lapply(ls(pattern="df[1-24]+"), function(x) get(x))
 
-
 #Apply
-
-SPEI_calc(A)
-
-B$PET <- thornthwaite(B$tmed, B$Latitude[1], na.rm=TRUE)
+All <- do.call("rbind", lapply(l.df, SPEI_calc))
+str(All)
+SPEI_calc(df4)
+df3$PET <- thornthwaite(df$tmed, B$Latitude[1], na.rm=TRUE)
 B$BAL <- B$precip - B$PET
 B$spei1$ <-spei(B[,'BAL'],1, na.rm=TRUE)
 C$PET <- thornthwaite(C$tmed, C$Latitude[1], na.rm=TRUE)
