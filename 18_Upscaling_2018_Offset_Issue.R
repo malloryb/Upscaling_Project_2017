@@ -96,12 +96,18 @@ SPEI_calc <- function(A){
   print("bind everything together")
   spei_all <- cbind(spei1, spei3, spei6, spei9, spei12)
   spei_all$date <- format(date_decimal(spei_all$time), "%m-%d-%Y")
+  print(spei_all$date[1])
   spei_all$date <- as.Date(spei_all$date, format="%m-%d-%Y")
-  spei_all$date <- floor_date((spei_all$date +1), unit="day")
+  print(spei_all$date[1])
+  spei_all$date <- floor_date((spei_all$date +1), "month")
+  print(spei_all$date[1])
   spei_all$month <- month(spei_all$date)
+  #columns to get rid of in the final thing: 16, 18, 20, 22, 24 (all caled "time") and the second "date (postion=25)
   final <- cbind(A, spei_all)
-  print(final)
-    return(final)
+  print(head(final))
+  final <- final[-c(16,18,20,22,24,25)]
+  print(head(final))
+  return(final)
 }
 
 #Apply
