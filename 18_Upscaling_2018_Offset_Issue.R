@@ -170,21 +170,15 @@ library(randomForest)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("E:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
 #Print first lines
 head(All_sites)
-#numcols <- c(3:16, 18, 23, 25:33, 34:35)
-#Allsites_sum <- All_sites[,numcols]
-#head(Allsites_sum)
-descrCor <- cor(Allsites_sum, use="pairwise.complete.obs")
-highCorr <- sum(abs(descrCor[upper.tri(descrCor)] > .999))
-highCorDescr <- findCorrelation(descrCor, cutoff=0.75)
-#descrCor[,-highCorDescr]
 #add column names
 str(All_sites)
-All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%d/%m/%Y")))
+All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
 All_sites$month <- as.factor(All_sites$month)
-#All_sites$IGBP_no <- as.factor(All_sites$IGBP_no)
+All_sites$precip <- as.numeric(All_sites$precip)
+All_sites$swe <- as.numeric(All_sites$swe)
 #3. Prepare your data----------------------
 #Normalization makes data easier for the RF algorithm to learn
 #Two types of normalization: 
@@ -202,16 +196,22 @@ nacols <- function(df) {
   colnames(df)[unlist(lapply(df, function(x) any(is.na(x))))]
 }
 
+
+nacols(All_sites)
+All_sites
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
-All_sites <- All_sites[c("date", "site", "elev", "month", "GPP", "year",
-                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "tmax", "SPEI_1")]
+All_sites <- All_sites[c("GPP", "date", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
+                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
+
 All_sites <- All_sites[complete.cases(All_sites),]
+apply(All_sites, 2, function(x) any(is.nan(x)))
+apply(All_sites, 2, function(x) any(is.na(x)))
+apply(All_sites, 2, function(x) any(is.infinite(x)))
+
 All_sites$date <- as.Date(All_sites$date)
 nacols(All_sites)
 head(All_sites)
-
-?createTimeSlices
-
+str(All_sites)
 #No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
 #Timesilces
@@ -219,28 +219,33 @@ head(All_sites)
 #ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
 #tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 #Subset by season
-Spring_sites <- subset(All_sites, month==3 | month==4 | month==5)
-Summer_sites <- subset(All_sites, month==6 | month==7 | month==8)
-Winter_sites <- subset(All_sites, month==9 | month==10| month==11 | month==12 | month==1 | month==2)
+#Spring_sites <- subset(All_sites, month==3 | month==4 | month==5)
+#Summer_sites <- subset(All_sites, month==6 | month==7 | month==8)
+#Winter_sites <- subset(All_sites, month==9 | month==10| month==11 | month==12 | month==1 | month==2)
+
+
 #Split into training and testing data
 
 #Create index to split based on year
-index <- createDataPartition(Summer_sites$GPP, p=0.80, list=FALSE)
+index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 
 #Resample data to overrepresent high GPP observations
 #Subset training set
-All_sites.training <- Summer_sites[index,]
-All_sites.test <- Summer_sites[-index,]
+All_sites.training <- All_sites[index,]
+All_sites.test <- All_sites[-index,]
 str(All_sites)
+str(All_sites.training)
+str(All_sites.test)
 #Overview of algorithms supported by caret function
 names(getModelInfo())
 head(All_sites)
 #Model with all:
-colsA1 <- c(3:4, 7:13)
+
+colsA1 <- c(4:5, 7:23)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
-head(All_sites.training[,5:6])
+head(All_sites.training[,1:2])
 
 #Model wtih all + SPEI_1
 colsA2 <- c(3:4, 7:14)
@@ -250,7 +255,13 @@ head(All_sites.training[,5:6])
 
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-#model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+predict_rfA1 <- predict(object=model_rfA1, All_sites.test[,colsA1])
+table(predict_rfA1)
+pred_rfA1 <- as.numeric(predict_rfA1)
+cor(pred_rfA1, All_sites.test[,1])
+RFA1 <- model_rfA1$finalModel
+varImpPlot(RFA1)
 #model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 #model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 #model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
@@ -273,6 +284,7 @@ predictions_summer <- predict(object=summermodel_A2, All_sites.test[,colsA2])
 wintermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='nnet', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 predictions_winter <- predict(object=wintermodel_A2, All_sites.test[,colsA2])
 
+table(predictions_rf_A1)
 #predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
 table(predictions_spring)
 table(predictions_summer)
