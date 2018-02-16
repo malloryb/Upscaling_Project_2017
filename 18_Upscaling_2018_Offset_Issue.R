@@ -218,11 +218,6 @@ str(All_sites)
 #mypartition <- createIrregularTimeSlices(All_sites$date, initialWindow=48, horizon=12, unit="month", fixedWindow=T)
 #ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
 #tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-#Subset by season
-#Spring_sites <- subset(All_sites, month==3 | month==4 | month==5)
-#Summer_sites <- subset(All_sites, month==6 | month==7 | month==8)
-#Winter_sites <- subset(All_sites, month==9 | month==10| month==11 | month==12 | month==1 | month==2)
-
 
 #Split into training and testing data
 
@@ -241,7 +236,6 @@ str(All_sites.test)
 names(getModelInfo())
 head(All_sites)
 #Model with all:
-
 colsA1 <- c(4:5, 7:23)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
@@ -256,7 +250,24 @@ head(All_sites.training[,5:6])
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-predict_rfA1 <- predict(object=model_rfA1, All_sites.test[,colsA1])
+model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+model_rfA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_tsA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+predict_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
+predict_tsA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
+
+predict_rfA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
+predict_tsA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
+
+predict_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
+predict_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
+
+
 table(predict_rfA1)
 pred_rfA1 <- as.numeric(predict_rfA1)
 cor(pred_rfA1, All_sites.test[,1])
@@ -264,7 +275,8 @@ RFA1 <- model_rfA1$finalModel
 varImpPlot(RFA1)
 #model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 #model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-#model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 #springmodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 #predictions_spring <- predict(object=springmodel_A1, All_sites.test[,colsA1])
