@@ -239,6 +239,7 @@ head(All_sites)
 colsA1 <- c(4:5, 7:23)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
+str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
 
 #Model wtih all + SPEI_1
@@ -249,13 +250,15 @@ head(All_sites.training[,5:6])
 
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
+
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-model_rfA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_rfA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 predict_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
@@ -268,72 +271,34 @@ predict_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
 predict_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
 
 
-table(predict_rfA1)
-pred_rfA1 <- as.numeric(predict_rfA1)
 cor(pred_rfA1, All_sites.test[,1])
-RFA1 <- model_rfA1$finalModel
-varImpPlot(RFA1)
-#model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-#model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+cor(pred_tsA1, All_sites.test[,1])
+cor(pred_rfA2, All_sites.test[,1])
+cor(pred_tsA2, All_sites.test[,1])
+cor(pred_rfA3, All_sites.test[,1])
+cor(pred_tsA3, All_sites.test[,1])
 
-model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+RF_F1 <- model_rfA1$finalModel
+RF_T1 <- model_tsA1$finalModel
+RF_F2 <- model_rfA2$finalModel
+RF_T2 <- model_tsA2$finalModel
+RF_F3 <- model_rfA3$finalModel
+RF_T3 <- model_tsA3$finalModel
 
-#springmodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="cv", number=5, classProbs=TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-#predictions_spring <- predict(object=springmodel_A1, All_sites.test[,colsA1])
-myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
-springmodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='nnet', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-predictions_spring <- predict(object=springmodel_A2, All_sites.test[,colsA2])
+varImpPlot(RF_F1)
+varImpPlot(RF_T1)
+varImpPlot(RF_F2)
+varImpPlot(RF_T2)
+varImpPlot(RF_F3)
+varImpPlot(RF_T3)
 
-#summermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='nnet', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-#predictions_summer <- predict(object=summermodel_A1, All_sites.test[,colsA1])
 
-summermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='rf', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-predictions_summer <- predict(object=summermodel_A2, All_sites.test[,colsA2])
-
-#wintermodel_A1 <- train(All_sites.training[,colsA1], All_sites.training[,5], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-#predictions_winter <- predict(object=wintermodel_A1, All_sites.test[,colsA1])
-
-wintermodel_A2 <- train(All_sites.training[,colsA2], All_sites.training[,5], method='nnet', linout=TRUE, preProcess=c('center', 'scale'), trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-predictions_winter <- predict(object=wintermodel_A2, All_sites.test[,colsA2])
-
-table(predictions_rf_A1)
-#predictionstsA2 <- predict(object=model_tsA2, All_sites.test[,colsA2])
-table(predictions_spring)
-table(predictions_summer)
-table(predictions_winter)
-#table(predictionstsA2)
-
-predspring <- as.numeric(predictions_spring)
-predsummer <- as.numeric(predictions_summer)
-predwinter <- as.numeric(predictions_winter)
-cor(predspring, All_sites.test[,5])
-cor(predsummer, All_sites.test[,5])
-#predA2 <- as.numeric(predictionsA2)
-cor(predwinter, All_sites.test[,5])
-#predtsA2 <- as.numeric(predictionstsA2)
-#cor(predtsA2, All_sites.test[,5])
-
-RFspring <- springmodel_A2$finalModel
-RFsummer <- summermodel_A2$finalModel
-RFwinter <- wintermodel_A2$finalModel
-#RFtsA2 <- model_tsA2$finalModel
-
-varImpPlot(RFspring)
-varImpPlot(RFsummer)
-varImpPlot(RFwinter)
-RFsummer
-#varImpPlot(RFA1)
-#varImpPlot(RFA2)
-#varImpPlot(RFtsA1)
-#varImpPlot(RFtsA2)
-
-saveRDS(RFspring, "F:/Upscaling_Project/Upscaling_Project_2017/RFspringA2_12_6.rds")
-saveRDS(RFsummer, "F:/Upscaling_Project/Upscaling_Project_2017/RFssummerA2_12_6.rds")
-
-saveRDS(RFsummer, "D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
-saveRDS(RFsummer, "D:/Upscaling_Project/Upscaling_Project_2017/RFsummerA2_12_5.rds")
-saveRDS(RFwinter, "D:/Upscaling_Project/Upscaling_Project_2017/RFwinterA2_12_5.rds")
-#saveRDS(RFtsA2, "F:/Upscaling_Project/Upscaling_Project_2017/RFtsA2_12_5.rds")
+saveRDS(RF_F1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F1_2_16.rds")
+saveRDS(RF_T1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T1_2_16.rds")
+saveRDS(RF_F2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F2_2_16.rds")
+saveRDS(RF_T2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T2_2_16.rds")
+saveRDS(RF_F3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
+saveRDS(RF_T3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
 
 
 RFA1
