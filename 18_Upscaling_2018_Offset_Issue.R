@@ -197,14 +197,17 @@ nacols <- function(df) {
   colnames(df)[unlist(lapply(df, function(x) any(is.na(x))))]
 }
 
-
+str(All_sites)
+str(All_sites)
 nacols(All_sites)
 All_sites
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
-All_sites <- All_sites[c("GPP", "date", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
+All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
                          "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
 
+str(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
+str(All_sites)
 apply(All_sites, 2, function(x) any(is.nan(x)))
 apply(All_sites, 2, function(x) any(is.na(x)))
 apply(All_sites, 2, function(x) any(is.infinite(x)))
@@ -226,25 +229,25 @@ str(All_sites)
 index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 
-str(All_sites.training)
-str(All_sites.training[complete.cases(All_sites.training), ])
-apply(All_sites.training, 2, function(x) any(is.nan(x)))
-apply(All_sites.training, 2, function(x) any(is.na(x)))
-apply(All_sites.training, 2, function(x) any(is.infinite(x)))
 
 #Resample data to overrepresent high GPP observations
 #Subset training set
 All_sites.training <- All_sites[index,]
 All_sites.test <- All_sites[-index,]
 str(All_sites)
+
+apply(All_sites.training, 2, function(x) any(is.nan(x)))
+apply(All_sites.training, 2, function(x) any(is.na(x)))
+apply(All_sites.training, 2, function(x) any(is.infinite(x)))
+
 str(All_sites.training)
 str(All_sites.test)
 #Overview of algorithms supported by caret function
-
 names(getModelInfo())
+
 head(All_sites)
 #Model with all:
-colsA1 <- c(4:22)
+colsA1 <- c(3, 5:23)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
@@ -263,6 +266,8 @@ All_sites.training[!complete.cases(All_sites.training),]
 #Each of these takes awhile: approx 10 mins
 myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
 
+
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5, classProbs = TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
