@@ -170,10 +170,10 @@ library(randomForest)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
 #Print first lines
 head(All_sites)
-#add column names
+#Fix column names and add numeric columns
 str(All_sites)
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
 All_sites$month <- as.factor(All_sites$month)
@@ -241,7 +241,6 @@ head(All_sites.training)
 head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
-
 #Model wtih all + SPEI_1
 colsA2 <- c(3:4, 7:14)
 head(All_sites.training)
