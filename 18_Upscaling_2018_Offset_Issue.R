@@ -236,12 +236,19 @@ All_sites.training <- All_sites[index,]
 All_sites.test <- All_sites[-index,]
 str(All_sites)
 
+All_sites.trianing <- preProcess(All_sites.training, method = c("center", "scale"))
 apply(All_sites.training, 2, function(x) any(is.nan(x)))
 apply(All_sites.training, 2, function(x) any(is.na(x)))
 apply(All_sites.training, 2, function(x) any(is.infinite(x)))
 
+is.na(All_sites) <- do.call(cbind,lapply(All_sites, is.infinite))
+
+
 str(All_sites.training)
 str(All_sites.test)
+mean(All_sites.training$spei3)
+
+any(is.na(All_sites.training$spei3))
 #Overview of algorithms supported by caret function
 names(getModelInfo())
 
@@ -252,6 +259,9 @@ head(All_sites.training)
 head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
+
+All_sites.training$spei3
+All_sites.test$spei3
 
 str(All_sites.training)
 #Model wtih all + SPEI_1
@@ -266,6 +276,8 @@ All_sites.training[!complete.cases(All_sites.training),]
 #Each of these takes awhile: approx 10 mins
 myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
 
+
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
