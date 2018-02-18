@@ -175,8 +175,9 @@ All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling
 head(All_sites)
 #Fix column names and add numeric columns
 str(All_sites)
+All_sites$elev <- as.numeric(All_sites$elev)
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
-All_sites$month <- as.factor(All_sites$month)
+All_sites$month <- as.numeric(All_sites$month)
 All_sites$precip <- as.numeric(All_sites$precip)
 All_sites$swe <- as.numeric(All_sites$swe)
 #3. Prepare your data----------------------
@@ -201,7 +202,7 @@ nacols(All_sites)
 All_sites
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
 All_sites <- All_sites[c("GPP", "date", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
-                         "precip", "srad", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
+                         "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
 
 All_sites <- All_sites[complete.cases(All_sites),]
 apply(All_sites, 2, function(x) any(is.nan(x)))
@@ -225,6 +226,12 @@ str(All_sites)
 index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 
+str(All_sites.training)
+str(All_sites.training[complete.cases(All_sites.training), ])
+apply(All_sites.training, 2, function(x) any(is.nan(x)))
+apply(All_sites.training, 2, function(x) any(is.na(x)))
+apply(All_sites.training, 2, function(x) any(is.infinite(x)))
+
 #Resample data to overrepresent high GPP observations
 #Subset training set
 All_sites.training <- All_sites[index,]
@@ -233,27 +240,35 @@ str(All_sites)
 str(All_sites.training)
 str(All_sites.test)
 #Overview of algorithms supported by caret function
+
 names(getModelInfo())
 head(All_sites)
 #Model with all:
-colsA1 <- c(4:5, 7:23)
+colsA1 <- c(4:22)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
+
+str(All_sites.training)
 #Model wtih all + SPEI_1
 colsA2 <- c(3:4, 7:14)
 head(All_sites.training)
 head(All_sites.training[,colsA2])
 head(All_sites.training[,5:6])
 
+All_sites.training[!complete.cases(All_sites.training),]
+
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
 myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
 
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5, classProbs = TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
