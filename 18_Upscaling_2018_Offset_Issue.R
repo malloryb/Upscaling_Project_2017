@@ -170,7 +170,7 @@ library(randomForest)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
 #Print first lines
 head(All_sites)
 #Fix column names and add numeric columns
@@ -204,7 +204,7 @@ All_sites
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
 All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
                          "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
-
+All_sites$spei3[400:420]
 str(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
 str(All_sites)
@@ -212,6 +212,14 @@ apply(All_sites, 2, function(x) any(is.nan(x)))
 apply(All_sites, 2, function(x) any(is.na(x)))
 apply(All_sites, 2, function(x) any(is.infinite(x)))
 
+sd(All_sites$spei3)
+str(All_sites)
+is.finite(All_sites$spei3)
+head(All_sites$spei3)
+tail(All_sites$spei3)
+summary(All_sites$spei3)
+mean(All_sites$spei3, na.rm=TRUE)
+sd(All_sites$spei6)
 All_sites$date <- as.Date(All_sites$date)
 nacols(All_sites)
 head(All_sites)
@@ -260,6 +268,10 @@ head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
 
+z <- is.infinite(All_sites.test$spei3)
+z <- is.infinite(All_sites.training$spei3)
+
+length(z[z==TRUE])
 All_sites.training$spei3
 All_sites.test$spei3
 
