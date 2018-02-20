@@ -160,7 +160,7 @@ ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
 str(ALL_inc_IGPB)
 
 #Write out .csv file
-write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv")
+#write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv")
 
 #Get random forest models (this code could be cleaned up significantly) 
 #Run site-based RF with proper variables --------
@@ -177,9 +177,10 @@ head(All_sites)
 str(All_sites)
 All_sites$elev <- as.numeric(All_sites$elev)
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
-All_sites$month <- as.numeric(All_sites$month)
+All_sites$month <- as.factor(All_sites$month)
 All_sites$precip <- as.numeric(All_sites$precip)
 All_sites$swe <- as.numeric(All_sites$swe)
+
 #3. Prepare your data----------------------
 #Normalization makes data easier for the RF algorithm to learn
 #Two types of normalization: 
@@ -198,32 +199,23 @@ nacols <- function(df) {
 }
 
 str(All_sites)
-str(All_sites)
-nacols(All_sites)
-All_sites
 #All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
 All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
                          "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
-All_sites$spei3[400:420]
-str(All_sites)
-All_sites <- All_sites[complete.cases(All_sites),]
-str(All_sites)
-apply(All_sites, 2, function(x) any(is.nan(x)))
-apply(All_sites, 2, function(x) any(is.na(x)))
-apply(All_sites, 2, function(x) any(is.infinite(x)))
 
-sd(All_sites$spei3)
+#408th (row 409) value for All_Sites$spei3 is "Inf" for some reason, and so is the 1495th value. Going to replace it with the average of the two surrounding values: 0.495
+which(sapply(All_sites$spei3, is.infinite))
+
+All_sites$spei3[408:410]
+All_sites$spei3[409] <- 0.495
+All_sites$spei3[1494:1496]
+All_sites$spei3[1495] <- -1.0609
+
+summary(All_sites)
+All_sites <- All_sites[complete.cases(All_sites),]
+summary(All_sites)
 str(All_sites)
-is.finite(All_sites$spei3)
-head(All_sites$spei3)
-tail(All_sites$spei3)
-summary(All_sites$spei3)
-mean(All_sites$spei3, na.rm=TRUE)
-sd(All_sites$spei6)
-All_sites$date <- as.Date(All_sites$date)
-nacols(All_sites)
-head(All_sites)
-str(All_sites)
+
 #No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
 #Timesilces
@@ -244,19 +236,11 @@ All_sites.training <- All_sites[index,]
 All_sites.test <- All_sites[-index,]
 str(All_sites)
 
-All_sites.trianing <- preProcess(All_sites.training, method = c("center", "scale"))
-apply(All_sites.training, 2, function(x) any(is.nan(x)))
-apply(All_sites.training, 2, function(x) any(is.na(x)))
-apply(All_sites.training, 2, function(x) any(is.infinite(x)))
-
-is.na(All_sites) <- do.call(cbind,lapply(All_sites, is.infinite))
-
+#All_sites.trianing <- preProcess(All_sites.training, method = c("center", "scale"))
 
 str(All_sites.training)
 str(All_sites.test)
-mean(All_sites.training$spei3)
 
-any(is.na(All_sites.training$spei3))
 #Overview of algorithms supported by caret function
 names(getModelInfo())
 
@@ -268,19 +252,20 @@ head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
 
-z <- is.infinite(All_sites.test$spei3)
-z <- is.infinite(All_sites.training$spei3)
-
-length(z[z==TRUE])
-All_sites.training$spei3
-All_sites.test$spei3
-
 str(All_sites.training)
-#Model wtih all + SPEI_1
-colsA2 <- c(3:4, 7:14)
+#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, spei12, PET, tmax, elev, tmin, precip, spei1
+colsA2 <- c(3, 5:7, 10:11, 13:19, 23)
 head(All_sites.training)
 head(All_sites.training[,colsA2])
 head(All_sites.training[,5:6])
+
+
+#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, tmax, elev, tmin, precip, spei1
+colsA3 <- c(3, 5:7, 10:11, 14:19)
+head(All_sites.training)
+head(All_sites.training[,colsA3])
+head(All_sites.training[,5:6])
+
 
 All_sites.training[!complete.cases(All_sites.training),]
 
@@ -288,31 +273,23 @@ All_sites.training[!complete.cases(All_sites.training),]
 #Each of these takes awhile: approx 10 mins
 myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
 
-
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5, classProbs = TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="cv", number=5), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-model_rfA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA2 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_rfA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_tsA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-predict_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
-predict_tsA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
+pred_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
+pred_tsA1 <- as.numeric(predict(object=model_tsA1, All_sites.test[,colsA1]))
 
-predict_rfA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
-predict_tsA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
+pred_rfA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
+pred_tsA2 <- as.numeric(predict(object=model_tsA2, All_sites.test[,colsA2]))
 
-predict_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
-predict_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
+pred_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
+pred_tsA3 <- as.numeric(predict(object=model_tsA3, All_sites.test[,colsA3]))
 
 
 cor(pred_rfA1, All_sites.test[,1])
@@ -322,12 +299,22 @@ cor(pred_tsA2, All_sites.test[,1])
 cor(pred_rfA3, All_sites.test[,1])
 cor(pred_tsA3, All_sites.test[,1])
 
+
+postResample(pred=pred_rfA1, obs=All_sites.test[,1])
+postResample(pred=pred_tsA1, obs=All_sites.test[,1])
+postResample(pred=pred_rfA2, obs=All_sites.test[,1])
+postResample(pred=pred_tsA2, obs=All_sites.test[,1])
+postResample(pred=pred_rfA3, obs=All_sites.test[,1])
+postResample(pred=pred_tsA3, obs=All_sites.test[,1])
+
+
 RF_F1 <- model_rfA1$finalModel
 RF_T1 <- model_tsA1$finalModel
 RF_F2 <- model_rfA2$finalModel
 RF_T2 <- model_tsA2$finalModel
 RF_F3 <- model_rfA3$finalModel
 RF_T3 <- model_tsA3$finalModel
+
 
 varImpPlot(RF_F1)
 varImpPlot(RF_T1)
