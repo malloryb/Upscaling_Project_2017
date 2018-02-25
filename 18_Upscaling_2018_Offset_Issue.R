@@ -167,10 +167,27 @@ str(ALL_inc_IGPB)
 library(lubridate)
 library(caret)
 library(randomForest)
+library(dplyr)
+library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+#Checking on SPEI
+SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
+SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
+SPEI_Check$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
+SPEI_Check$site_year <- do.call(paste, c(SPEI_Check[c("site", "year")], sep = "_")) 
+str(SPEI_Check)
+
+SPEI_cors <- ddply(SPEI_Check, .(site_year), summarize,
+        spei1mean = mean(spei1,na.rm=TRUE), spei1max= spei1[which.max( abs(spei1))], spei1min=spei1[which.min( abs(spei1))], 
+        spei1med=median_hilow(spei1, na.rm=TRUE), spei12 = first(spei12))
+cor(SPEI_cors$spei12, SPEI_cors$spei1mean, use="complete.obs")
+cor(SPEI_cors$spei12, SPEI_cors$spei1max, use="complete.obs")
+cor(SPEI_cors$spei12, SPEI_cors$spei1min, use="complete.obs")
+cor(SPEI_cors$spei12, SPEI_cors$spei1med, use="complete.obs")
+
 #Print first lines
 head(All_sites)
 #Fix column names and add numeric columns
