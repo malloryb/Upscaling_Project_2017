@@ -47,7 +47,7 @@ name_my_rows <- function(df){
 }
 
 d.list <- lapply(d.list, name_my_rows)
-
+#where all the files with Jung 2011 and Jung 2017 get written out. But where do they get merged? 
 write.csv(d.list[1], "us_aud.csv")
 write.csv(d.list[2], "us_cop.csv")
 write.csv(d.list[3], "us_fuf.csv")
