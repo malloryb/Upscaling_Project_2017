@@ -70,7 +70,6 @@ write.csv(MODIS_monthly_means, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/
 #1. formats date
 #2. Gets monthly statistics
 #3. writes out results into data frame with sitename column
-
 setwd("C:/Users/Mallory/odrive/UA_Google_Drive/Daymet/")
 Daymet_list <- list.files(pattern="*.csv")
 fname <- basename(Daymet_list[1])
@@ -89,10 +88,16 @@ format_daymet <- function(x){
                          tmax=mean(tmax..deg.c., na.rm=TRUE), tmin=mean(tmin..deg.c., na.rm=TRUE), vp=mean(vp..Pa., na.rm=TRUE))
   Monthly_means <- rename(Monthly_means, replace = c("my"="date"))
   Monthly_means$site <- fname
+  
   return(as.data.frame(Monthly_means))
   
 }
 
+test <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Daymet/us-aud.csv")
+test$tmed <- (tmax + tmin/2)
+FF$PET <- thornthwaite(FF$tmed, FF$Latitude[1], na.rm=TRUE)
+FF$BAL <- FF$precip - FF$PET
+FF$spei1 <-spei(FF[,'BAL'],1) 
 
 daymet_tmp <- lapply(Daymet_list, format_daymet)
 daymet <- do.call(rbind, daymet_tmp)
