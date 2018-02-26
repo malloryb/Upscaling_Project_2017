@@ -389,8 +389,10 @@ qplot(predA2, All_sites.test[,5]) +
 
 
 
-##Running RF models on gridded data subsets 
-
+##Running RF models on gridded data subsets --------------------------
+library(caret)
+library(randomForest)
+#Create extents 
 RF_SPEI_Analysis <- function(band1, month, monthno, year){
   #Read in files
   filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
@@ -403,7 +405,7 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
   names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
-  inputrast <-(dropLayer(inputrast, 6))
+  #inputrast <-(dropLayer(inputrast, 6))
   srad <- raster(filenameSrad, band = band1)
   vp <- raster(filenameVP)
   dayl <- raster(filenameSrad)
@@ -420,14 +422,14 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   print("resampling done")
   
   #Raster stack for prediction
-  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEI_1", "dayl"))
-  
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample, daylresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "spei1", "daylength"))
+  print("raster stacked")
   #Predict and write out model A1
   sw <- extent(rast_stack)
-  
+  print(sw)
   #Trying to just do a radius around a point
-  SRMpoint <- cbind(-110.86, 31.82)
+  SRMpoint <- cbind(-110.866, 31.821)
   radius <- .5 # radius in kilometersmeters
   # define the plot edges based upon the plot radius. 
   
@@ -440,39 +442,37 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   e <- extent(xMinus, xPlus, yMinus, yPlus)
   srm <- crop(rast_stack,e)
   srm <- extent(srm)
-  
+  print("subset points")
+  print(srm)
   #Read models
   RFF3<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
   RFT3<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
-  
+  print(varImp(RFF3))
+  print(names(rast_stack))
   #Predict and write out model A1 
   #PredictA1
-  RFF3_predicted <- predict(rast_stack, RFF3, ext=sw)
+  RFF3_predicted <- predict(rast_stack, RFF3, ext=srm)
+  #RFF3_predicted <- predict(rast_stack, RFF3, ext=sw)
   print("PredictF3")
-  RFF3_predicted <- predict(rast_stack, RFT3, ext=sw)
+  RFT3_predicted <- predict(rast_stack, RFT3, ext=srm)
   print("PredictT3")
   
-  outputfilenameF3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,".tif", sep="")
-  outputfilenameT3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,".tif", sep="")
+  outputfilenameF3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"srm.tif", sep="")
+  outputfilenameT3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"srm.tif", sep="")
 
   print(paste("writing out", outputfilenameF3))
   writeRaster(RFF3_predicted, outputfilenameF3, overwrite=TRUE)
   
-  print(paste("writing out", outputfilenameT2))
+  print(paste("writing out", outputfilenameT3))
   writeRaster(RFT3_predicted, outputfilenameT3, overwrite=TRUE)
   
-  print(paste("writing out", outputfilenametsA1))
-  writeRaster(RFtsA1_predicted, outputfilenametsA1, overwrite=TRUE)
-  
-  print(paste("writing out", outputfilenametsA2))
-  writeRaster(RFtsA2_predicted, outputfilenametsA2, overwrite=TRUE)
   
   gc()
 }
 
 
 
-RF_winter_Analysis(band1=85, month="Jan", monthno=1, year=2007)
+RF_SPEI_Analysis(band1=85, month="Jan", monthno=1, year=2007)
 RF_winter_Analysis(band1=86, month="Feb", monthno=2, year=2007)
 RF_spring_Analysis(band1=87, month="Mar", monthno=3, year=2007)
 RF_spring_Analysis(band1=88, month="Apr", monthno=4, year=2007)
