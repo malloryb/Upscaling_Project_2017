@@ -389,3 +389,101 @@ qplot(predA2, All_sites.test[,5]) +
 
 
 
+##Running RF models on gridded data subsets 
+
+RF_SPEI_Analysis <- function(band1, month, monthno, year){
+  #Read in files
+  filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameDayl <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
+  filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  print(filename)
+  MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  inputrast <- stack(filename)
+  names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
+  inputrast <-(dropLayer(inputrast, 6))
+  srad <- raster(filenameSrad, band = band1)
+  vp <- raster(filenameVP)
+  dayl <- raster(filenameSrad)
+  SPEI_1 <- raster(filenameSPEI, band=band1)
+  print("files loaded")
+  #Process and resample Daymet variables
+  srad[srad==-9999] <-NA
+  vp[vp==-9999] <-NA
+  print("Subsetting done")
+  Sradresample <- resample(srad, MAP_resample, method="bilinear")
+  SPEIresample <- resample(SPEI_1, MAT_resample, method="bilinear")
+  vpresample <- resample(vp, MAT_resample, method="bilinear")
+  daylresample <- resample(dayl, MAT_resample, method="bilinear")
+  print("resampling done")
+  
+  #Raster stack for prediction
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","MAP", "MAT","srad", "vp", "SPEI_1", "dayl"))
+  
+  #Predict and write out model A1
+  sw <- extent(rast_stack)
+  
+  #Trying to just do a radius around a point
+  SRMpoint <- cbind(-110.86, 31.82)
+  radius <- .5 # radius in kilometersmeters
+  # define the plot edges based upon the plot radius. 
+  
+  yPlus <- SRMpoint[1,2]+radius
+  xPlus <- SRMpoint[1,1]+radius
+  yMinus <- SRMpoint[1,2]-radius
+  xMinus <- SRMpoint[1,1]-radius
+  
+  
+  e <- extent(xMinus, xPlus, yMinus, yPlus)
+  srm <- crop(rast_stack,e)
+  srm <- extent(srm)
+  
+  #Read models
+  RFF3<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
+  RFT3<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
+  
+  #Predict and write out model A1 
+  #PredictA1
+  RFF3_predicted <- predict(rast_stack, RFF3, ext=sw)
+  print("PredictF3")
+  RFF3_predicted <- predict(rast_stack, RFT3, ext=sw)
+  print("PredictT3")
+  
+  outputfilenameF3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,".tif", sep="")
+  outputfilenameT3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,".tif", sep="")
+
+  print(paste("writing out", outputfilenameF3))
+  writeRaster(RFF3_predicted, outputfilenameF3, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenameT2))
+  writeRaster(RFT3_predicted, outputfilenameT3, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenametsA1))
+  writeRaster(RFtsA1_predicted, outputfilenametsA1, overwrite=TRUE)
+  
+  print(paste("writing out", outputfilenametsA2))
+  writeRaster(RFtsA2_predicted, outputfilenametsA2, overwrite=TRUE)
+  
+  gc()
+}
+
+
+
+RF_winter_Analysis(band1=85, month="Jan", monthno=1, year=2007)
+RF_winter_Analysis(band1=86, month="Feb", monthno=2, year=2007)
+RF_spring_Analysis(band1=87, month="Mar", monthno=3, year=2007)
+RF_spring_Analysis(band1=88, month="Apr", monthno=4, year=2007)
+RF_spring_Analysis(band1=89, month="May", monthno=5, year=2007)
+RF_summer_Analysis(band1=90, month="Jun", monthno=6, year=2007)
+RF_summer_Analysis(band1=91, month="Jul", monthno=7, year=2007)
+RF_summer_Analysis(band1=92, month="Aug", monthno=8, year=2007)
+RF_winter_Analysis(band1=93, month="Sep", monthno=9, year=2007)
+RF_winter_Analysis(band1=94, month="Oct", monthno=10, year=2007)
+RF_winter_Analysis(band1=95, month="Nov", monthno=11, year=2007)
+RF_winter_Analysis(band1=96, month="Dec", monthno=12, year=2007)
+
+library(raster)
+
