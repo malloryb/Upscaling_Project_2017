@@ -393,13 +393,14 @@ qplot(predA2, All_sites.test[,5]) +
 library(caret)
 library(randomForest)
 #Create extents 
-RF_SPEI_Analysis <- function(band1, month, monthno, year){
+RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
   #Read in files
   filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
   filenameDayl <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
   filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
   filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
   filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  filenamespei12 <- "D:/SPEIBase/spei12.nc"
   print(filename)
   MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
   MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
@@ -408,8 +409,10 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   #inputrast <-(dropLayer(inputrast, 6))
   srad <- raster(filenameSrad, band = band1)
   vp <- raster(filenameVP)
-  dayl <- raster(filenameSrad)
+  dayl <- raster(filenameDayl)
   SPEI_1 <- raster(filenameSPEI, band=band1)
+  spei12 <- brick(filenamespei12)
+  spei12 <- raster(spei12, band=bandsp)
   print("files loaded")
   #Process and resample Daymet variables
   srad[srad==-9999] <-NA
@@ -417,13 +420,14 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
   print("Subsetting done")
   Sradresample <- resample(srad, MAP_resample, method="bilinear")
   SPEIresample <- resample(SPEI_1, MAT_resample, method="bilinear")
+  spei12resample <- resample(spei12, MAT_resample, method="bilinear")
   vpresample <- resample(vp, MAT_resample, method="bilinear")
   daylresample <- resample(dayl, MAT_resample, method="bilinear")
   print("resampling done")
   
   #Raster stack for prediction
-  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample, daylresample)
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "spei1", "daylength"))
+  rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample, daylresample, spei12resample)
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "spei1", "daylength", "spei12"))
   print("raster stacked")
   #Predict and write out model A1
   sw <- extent(rast_stack)
@@ -472,7 +476,7 @@ RF_SPEI_Analysis <- function(band1, month, monthno, year){
 
 
 
-RF_SPEI_Analysis(band1=85, month="Jan", monthno=1, year=2007)
+RF_SPEI_Analysis(band1=85, bandsp=1273, month="Jan", monthno=1, year=2007)
 RF_winter_Analysis(band1=86, month="Feb", monthno=2, year=2007)
 RF_spring_Analysis(band1=87, month="Mar", monthno=3, year=2007)
 RF_spring_Analysis(band1=88, month="Apr", monthno=4, year=2007)
@@ -487,3 +491,15 @@ RF_winter_Analysis(band1=96, month="Dec", monthno=12, year=2007)
 
 library(raster)
 
+
+#Reading SPEIbase netcdf file
+library(ncdf4)
+library(raster)
+library(reshape2)
+library(dplyr)
+library(chron)
+library(lattice)
+library(RColorBrewer)
+
+spei12 <- brick("D:/SPEIBase/spei12.nc")
+spei12[[1273]] 
