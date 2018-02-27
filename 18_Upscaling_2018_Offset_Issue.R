@@ -455,6 +455,7 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   rast_stack <- stack(inputrast, MAP_resample, MAT_resample, Sradresample, vpresample, SPEIresample, daylresample, spei12resample)
   names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "spei1", "daylength", "spei12"))
   print("raster stacked")
+  
   #Predict and write out model A1
   sw <- extent(rast_stack)
   print(sw)
@@ -497,16 +498,13 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   WJSpoint<- cbind(-105.862,	34.426)
   WKGpoint <- cbind(-109.942,	31.737)
   
-  
   audex <- create_extent(AUDpoint)
   aud <- crop(rast_stack,audex)
   aud <- extent(aud)
   
-  
   copex <- create_extent(COPpoint)
   cop <- crop(rast_stack,copex)
   cop <- extent(cop)
-  
   
   fufex <- create_extent(FUFpoint)
   fuf <- crop(rast_stack,fufex)
@@ -529,7 +527,6 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   scc <- crop(rast_stack,sccex)
   scc <- extent(scc)
   
-  
   scfex <- create_extent(SCFpoint)
   scf <- crop(rast_stack,scfex)
   scf <- extent(scf)
@@ -538,12 +535,9 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   scw <- crop(rast_stack,scwex)
   scw <- extent(scw)
   
-  
-  
   segex <- create_extent(SEGpoint)
   seg <- crop(rast_stack,segex)
   seg <- extent(seg)
-  
   
   senex <- create_extent(SENpoint)
   sen <- crop(rast_stack,senex)
@@ -553,17 +547,14 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   ses <- crop(rast_stack,sesex)
   ses <- extent(ses)
   
-  
   so4ex <- create_extent(SO4point)
   so4 <- crop(rast_stack,so4ex)
   so4 <- extent(so4)
-  
   
   so2ex <- create_extent(SO2point)
   so2 <- crop(rast_stack,so2ex)
   so2 <- extent(so2)
   
-
   so3ex <- create_extent(SO3point)
   so3 <- crop(rast_stack,so3ex)
   so3 <- extent(so3)
@@ -612,18 +603,27 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
   RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
   
+  
   #For each site: 4 .tifs written out - write function and lapply over list of extents? Or at least function to apply models and write them out
-  Apply_RF <- function(site){
+  Apply_RF <- function(site, sname, env= parent.frame()){
+    print(ls())
+    print(month)
+    print(year)
     #Function needs to apply to a site and 
-    RFF3_predicted <- predict(rast_stack, RFF3, ext=site)
+    RFF3_predicted <- predict(rast_stack, RFF3, ext=srm)
+    plot(RFF3_predicted)
     RFT3_predicted <- predict(rast_stack, RFT3, ext=site)
     RFF4_predicted <- predict(rast_stack, RFF4, ext=site)
-    RFT4_predicted <- predict(rast_stack, RFTF, ext=site)
+    RFT4_predicted <- predict(rast_stack, RFT4, ext=site)
     
-    outputfilenameF3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"_", site, ".tif", sep="")
-    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", site, ".tif", sep="")
-    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", site, ".tif", sep="")
-    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", site, ".tif", sep="")
+    print(month)
+    print(year)
+    print(site)
+    
+    outputfilenameF3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"_", sname, ".tif", sep="")
+    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", sname, ".tif", sep="")
+    outputfilenameF4 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_F4/",month,"_",year,"_", sname, ".tif", sep="")
+    outputfilenameT4 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T4/",month,"_",year,"_", sname, ".tif", sep="")
     
     print(paste("writing out", outputfilenameF3))
     writeRaster(RFF3_predicted, outputfilenameF3, overwrite=TRUE)
@@ -638,12 +638,37 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
     writeRaster(RFT4_predicted, outputfilenameT4, overwrite=TRUE)
     
   }
-  
-  
-Apply_RF(srm)
+
+Apply_RF(aud, "us_aud")
+Apply_RF(cop, "us_cop")
+Apply_RF(fuf, "us_fuf")
+Apply_RF(lpa, "us_lpa")
+Apply_RF(mpj, "us_mpj")  
+Apply_RF(ray, "us_ray")  
+Apply_RF(scc, "us_scc")
+Apply_RF(scf, "us_scf")
+Apply_RF(scw, "us_scw")
+Apply_RF(seg, "us_seg")
+Apply_RF(sen, "us_sen")
+Apply_RF(ses, "us_ses")  
+Apply_RF(so4, "us_so4")  
+Apply_RF(so2, "us_so2")
+Apply_RF(so3, "us_so3")
+Apply_RF(src, "us_src")
+Apply_RF(srg, "us_srg")
+Apply_RF(srm, "us_srm")
+Apply_RF(tes, "us_tes")  
+Apply_RF(vcm, "us_vcm")  
+Apply_RF(vcp, "us_vcp")
+Apply_RF(whs, "us_whs")
+Apply_RF(wks, "us_wks")
+Apply_RF(wkg, "us_wkg")
 
   gc()
 }
+
+
+
 
 
 
