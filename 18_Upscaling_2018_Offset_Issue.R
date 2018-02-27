@@ -172,7 +172,7 @@ library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
 #Checking on SPEI
 SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
 SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
@@ -283,6 +283,14 @@ head(All_sites.training)
 head(All_sites.training[,colsA3])
 head(All_sites.training[,5:6])
 
+#Model same as A2 but without PET 
+colsA4 <- c(3, 5:7, 10:11, 14:19, 23)
+head(All_sites.training)
+head(All_sites.training[,colsA4])
+head(All_sites.training[,5:6])
+
+
+
 
 All_sites.training[!complete.cases(All_sites.training),]
 
@@ -299,6 +307,9 @@ model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method=
 model_rfA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
+model_rfA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_tsA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
 pred_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
 pred_tsA1 <- as.numeric(predict(object=model_tsA1, All_sites.test[,colsA1]))
 
@@ -308,6 +319,9 @@ pred_tsA2 <- as.numeric(predict(object=model_tsA2, All_sites.test[,colsA2]))
 pred_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
 pred_tsA3 <- as.numeric(predict(object=model_tsA3, All_sites.test[,colsA3]))
 
+pred_rfA4 <- as.numeric(predict(object=model_rfA4, All_sites.test[,colsA4]))
+pred_tsA4 <- as.numeric(predict(object=model_tsA4, All_sites.test[,colsA4]))
+
 
 cor(pred_rfA1, All_sites.test[,1])
 cor(pred_tsA1, All_sites.test[,1])
@@ -315,6 +329,8 @@ cor(pred_rfA2, All_sites.test[,1])
 cor(pred_tsA2, All_sites.test[,1])
 cor(pred_rfA3, All_sites.test[,1])
 cor(pred_tsA3, All_sites.test[,1])
+cor(pred_rfA4, All_sites.test[,1])
+cor(pred_tsA4, All_sites.test[,1])
 
 
 postResample(pred=pred_rfA1, obs=All_sites.test[,1])
@@ -324,6 +340,9 @@ postResample(pred=pred_tsA2, obs=All_sites.test[,1])
 postResample(pred=pred_rfA3, obs=All_sites.test[,1])
 postResample(pred=pred_tsA3, obs=All_sites.test[,1])
 
+postResample(pred=pred_rfA4, obs=All_sites.test[,1])
+postResample(pred=pred_tsA4, obs=All_sites.test[,1])
+
 
 RF_F1 <- model_rfA1$finalModel
 RF_T1 <- model_tsA1$finalModel
@@ -331,6 +350,8 @@ RF_F2 <- model_rfA2$finalModel
 RF_T2 <- model_tsA2$finalModel
 RF_F3 <- model_rfA3$finalModel
 RF_T3 <- model_tsA3$finalModel
+RF_F4 <- model_rfA4$finalModel
+RF_T4 <- model_tsA4$finalModel
 
 
 varImpPlot(RF_F1)
@@ -340,6 +361,8 @@ varImpPlot(RF_T2)
 varImpPlot(RF_F3)
 varImpPlot(RF_T3)
 
+varImpPlot(RF_F4)
+varImpPlot(RF_T4)
 
 saveRDS(RF_F1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F1_2_16.rds")
 saveRDS(RF_T1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T1_2_16.rds")
@@ -347,6 +370,8 @@ saveRDS(RF_F2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F2_2_16.rds")
 saveRDS(RF_T2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T2_2_16.rds")
 saveRDS(RF_F3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
 saveRDS(RF_T3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
+saveRDS(RF_F4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
+saveRDS(RF_T4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
 
 
 RFA1
@@ -433,10 +458,23 @@ RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
   #Predict and write out model A1
   sw <- extent(rast_stack)
   print(sw)
+  
+  create_extent <- function(x){
+    radius <- 0.5 # radius in kilometers
+    yPlus <- x[1,2]+ radius
+    xPlus <- x[1,1]+ radius
+    yMinus <- x[1,2] - radius
+    yPlus <- x[1,1] - radius
+    e <- extent(xMinus, xPlus, yMinus, yPlus)
+    return(e)
+          }
   #Trying to just do a radius around a point
   SRMpoint <- cbind(-110.866, 31.821)
   FUFpoint <- cbind(-111.762,	35.089)
   WKGpoint <- cbind(-109.942,	31.737)
+  
+  ext <- crop(rast_stack,srmex)
+  srm <- extent(srm)
   
   radius <- .5 # radius in kilometersmeters
   # define the plot edges based upon the plot radius. 
