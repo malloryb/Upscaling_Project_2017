@@ -392,27 +392,28 @@ qplot(predA2, All_sites.test[,5]) +
 ##Running RF models on gridded data subsets --------------------------
 library(caret)
 library(randomForest)
+raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif", band=93)
 #Create extents 
 RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
   #Read in files
-  filename <- paste0("D:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
-  filenameDayl <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
-  filenameSrad <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
-  filenameVP <- "D:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
-  filenameSPEI <- "D:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
-  filenamespei12 <- "D:/SPEIBase/spei12.nc"
+  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameDayl <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
+  filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  filenamespei12 <- "F:/SPEIBase/spei12.nc"
   print(filename)
-  MAP_resample <- raster("D:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
-  MAT_resample <- stack("D:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
   names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
   #inputrast <-(dropLayer(inputrast, 6))
   srad <- raster(filenameSrad, band = band1)
-  vp <- raster(filenameVP)
+  vp <- raster(filenameVP, band= band1)
   dayl <- raster(filenameDayl)
   SPEI_1 <- raster(filenameSPEI, band=band1)
   spei12 <- brick(filenamespei12)
-  spei12 <- raster(spei12, band=bandsp)
+  spei12 <- spei12[[bandsp]]
   print("files loaded")
   #Process and resample Daymet variables
   srad[srad==-9999] <-NA
@@ -434,24 +435,47 @@ RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
   print(sw)
   #Trying to just do a radius around a point
   SRMpoint <- cbind(-110.866, 31.821)
+  FUFpoint <- cbind(-111.762,	35.089)
+  WKGpoint <- cbind(-109.942,	31.737)
+  
   radius <- .5 # radius in kilometersmeters
   # define the plot edges based upon the plot radius. 
+  SRMyPlus <- SRMpoint[1,2]+radius
+  SRMxPlus <- SRMpoint[1,1]+radius
+  SRMyMinus <- SRMpoint[1,2]-radius
+  SRMxMinus <- SRMpoint[1,1]-radius
   
-  yPlus <- SRMpoint[1,2]+radius
-  xPlus <- SRMpoint[1,1]+radius
-  yMinus <- SRMpoint[1,2]-radius
-  xMinus <- SRMpoint[1,1]-radius
+  FUFyPlus <- FUFpoint[1,2]+radius
+  FUFxPlus <- FUFpoint[1,1]+radius
+  FUFyMinus <- FUFpoint[1,2]-radius
+  FUFxMinus <- FUFpoint[1,1]-radius
+  
+  WKGyPlus <- WKGpoint[1,2]+radius
+  WKGxPlus <- WKGpoint[1,1]+radius
+  WKGyMinus <- WKGpoint[1,2]-radius
+  WKGxMinus <- WKGpoint[1,1]-radius
   
   
-  e <- extent(xMinus, xPlus, yMinus, yPlus)
-  srm <- crop(rast_stack,e)
+  srmex <- extent(SRMxMinus, SRMxPlus, SRMyMinus, SRMyPlus)
+  srm <- crop(rast_stack,srmex)
   srm <- extent(srm)
+  
+  fufex <- extent(FUFxMinus, FUFxPlus, FUFyMinus, FUFyPlus)
+  fuf <- crop(rast_stack,srmex)
+  fuf <- extent(srm)
+  
+  wkgex <- extent(WKGxMinus, WKGxPlus, WKGyMinus, WKGyPlus)
+  wkg <- crop(rast_stack,wkgex)
+  wkg <- extent(wkg)
+  
   print("subset points")
-  print(srm)
   #Read models
-  RFF3<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
-  RFT3<- readRDS("D:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
-  print(varImp(RFF3))
+  RFF3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
+  RFT3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
+  RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F2_2_16.rds")
+  RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T2_2_16.rds")
+  
+  print(varImp(RFT2))
   print(names(rast_stack))
   #Predict and write out model A1 
   #PredictA1
@@ -461,8 +485,8 @@ RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
   RFT3_predicted <- predict(rast_stack, RFT3, ext=srm)
   print("PredictT3")
   
-  outputfilenameF3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"srm.tif", sep="")
-  outputfilenameT3 <- paste("D:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"srm.tif", sep="")
+  outputfilenameF3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"srm.tif", sep="")
+  outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"srm.tif", sep="")
 
   print(paste("writing out", outputfilenameF3))
   writeRaster(RFF3_predicted, outputfilenameF3, overwrite=TRUE)
@@ -501,5 +525,5 @@ library(chron)
 library(lattice)
 library(RColorBrewer)
 
-spei12 <- brick("D:/SPEIBase/spei12.nc")
+spei12 <- brick("F:/SPEIBase/spei12.nc")
 spei12[[1273]] 
