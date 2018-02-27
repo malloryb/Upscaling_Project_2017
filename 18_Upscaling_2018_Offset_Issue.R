@@ -419,7 +419,7 @@ library(caret)
 library(randomForest)
 raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif", band=93)
 #Create extents 
-RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
+RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   #Read in files
   filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
   filenameDayl <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
@@ -497,43 +497,157 @@ RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
   WJSpoint<- cbind(-105.862,	34.426)
   WKGpoint <- cbind(-109.942,	31.737)
   
-  srrmex <- create_extent(SRMpoint)
+  
+  audex <- create_extent(AUDpoint)
+  aud <- crop(rast_stack,audex)
+  aud <- extent(aud)
+  
+  
+  copex <- create_extent(COPpoint)
+  cop <- crop(rast_stack,copex)
+  cop <- extent(cop)
+  
+  
+  fufex <- create_extent(FUFpoint)
+  fuf <- crop(rast_stack,fufex)
+  fuf <- extent(fuf)
+  
+  lpaex <- create_extent(LPApoint)
+  lpa <- crop(rast_stack,lpaex)
+  lpa <- extent(lpa)
+  
+  mpjex <- create_extent(MPJpoint)
+  mpj <- crop(rast_stack,mpjex)
+  mpj <- extent(mpj)
+  
+  rayex <- create_extent(RAYpoint)
+  ray <- crop(rast_stack,rayex)
+  ray <- extent(ray)
+  
+  
+  sccex <- create_extent(SCCpoint)
+  scc <- crop(rast_stack,sccex)
+  scc <- extent(scc)
+  
+  
+  scfex <- create_extent(SCFpoint)
+  scf <- crop(rast_stack,scfex)
+  scf <- extent(scf)
+  
+  scwex <- create_extent(SCWpoint)
+  scw <- crop(rast_stack,scwex)
+  scw <- extent(scw)
+  
+  
+  
+  segex <- create_extent(SEGpoint)
+  seg <- crop(rast_stack,segex)
+  seg <- extent(seg)
+  
+  
+  senex <- create_extent(SENpoint)
+  sen <- crop(rast_stack,senex)
+  sen <- extent(sen)
+  
+  sesex <- create_extent(SESpoint)
+  ses <- crop(rast_stack,sesex)
+  ses <- extent(ses)
+  
+  
+  so4ex <- create_extent(SO4point)
+  so4 <- crop(rast_stack,so4ex)
+  so4 <- extent(so4)
+  
+  
+  so2ex <- create_extent(SO2point)
+  so2 <- crop(rast_stack,so2ex)
+  so2 <- extent(so2)
+  
+
+  so3ex <- create_extent(SO3point)
+  so3 <- crop(rast_stack,so3ex)
+  so3 <- extent(so3)
+  
+  srcex <- create_extent(SRCpoint)
+  src <- crop(rast_stack,srcex)
+  src <- extent(src)
+  
+  srgex <- create_extent(SRGpoint)
+  srg <- crop(rast_stack,srgex)
+  srg <- extent(srg)
+  
+  srmex <- create_extent(SRMpoint)
   srm <- crop(rast_stack,srmex)
   srm <- extent(srm)
   
+  tesex <- create_extent(TESpoint)
+  tes <- crop(rast_stack,tesex)
+  tes <- extent(tes)
+  
+  vcmex <- create_extent(VCMpoint)
+  vcm <- crop(rast_stack,vcmex)
+  vcm <- extent(vcm)
+
+  vcpex <- create_extent(VCPpoint)
+  vcp <- crop(rast_stack,vcpex)
+  vcp <- extent(vcp)
+  
+  whsex <- create_extent(WHSpoint)
+  whs <- crop(rast_stack,whsex)
+  whs <- extent(whs)
+  
+  wjsex <- create_extent(WJSpoint)
+  wjs <- crop(rast_stack,wjsex)
+  wjs <- extent(wjs)
+  
+  wkgex <- create_extent(WKGpoint)
+  wkg <- crop(rast_stack,wkgex)
+  wkg <- extent(wkg)
+  
   print("subset points")
+  
   #Read models
   RFF3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
   RFT3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
   RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
   RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
   
-  print(varImp(RFT2))
-  print(names(rast_stack))
-  #Predict and write out model A1 
-  #PredictA1
-  RFF3_predicted <- predict(rast_stack, RFF3, ext=srm)
-  #RFF3_predicted <- predict(rast_stack, RFF3, ext=sw)
-  print("PredictF3")
-  RFT3_predicted <- predict(rast_stack, RFT3, ext=srm)
-  print("PredictT3")
+  #For each site: 4 .tifs written out - write function and lapply over list of extents? Or at least function to apply models and write them out
+  Apply_RF <- function(site){
+    #Function needs to apply to a site and 
+    RFF3_predicted <- predict(rast_stack, RFF3, ext=site)
+    RFT3_predicted <- predict(rast_stack, RFT3, ext=site)
+    RFF4_predicted <- predict(rast_stack, RFF4, ext=site)
+    RFT4_predicted <- predict(rast_stack, RFTF, ext=site)
+    
+    outputfilenameF3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"_", site, ".tif", sep="")
+    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", site, ".tif", sep="")
+    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", site, ".tif", sep="")
+    outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"_", site, ".tif", sep="")
+    
+    print(paste("writing out", outputfilenameF3))
+    writeRaster(RFF3_predicted, outputfilenameF3, overwrite=TRUE)
+    
+    print(paste("writing out", outputfilenameT3))
+    writeRaster(RFT3_predicted, outputfilenameT3, overwrite=TRUE)
+    
+    print(paste("writing out", outputfilenameF4))
+    writeRaster(RFF4_predicted, outputfilenameF4, overwrite=TRUE)
+    
+    print(paste("writing out", outputfilenameT4))
+    writeRaster(RFT4_predicted, outputfilenameT4, overwrite=TRUE)
+    
+  }
   
-  outputfilenameF3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_F3/",month,"_",year,"srm.tif", sep="")
-  outputfilenameT3 <- paste("F:/Upscaling_Project/Upscaled_GPP/RF_T3/",month,"_",year,"srm.tif", sep="")
+  
+Apply_RF(srm)
 
-  print(paste("writing out", outputfilenameF3))
-  writeRaster(RFF3_predicted, outputfilenameF3, overwrite=TRUE)
-  
-  print(paste("writing out", outputfilenameT3))
-  writeRaster(RFT3_predicted, outputfilenameT3, overwrite=TRUE)
-  
-  
   gc()
 }
 
 
 
-RF_SPEI_Analysis(band1=85, bandsp=1273, month="Jan", monthno=1, year=2007)
+RF_Val_Analysis(band1=85, bandsp=1273, month="Jan", monthno=1, year=2007)
 RF_winter_Analysis(band1=86, month="Feb", monthno=2, year=2007)
 RF_spring_Analysis(band1=87, month="Mar", monthno=3, year=2007)
 RF_spring_Analysis(band1=88, month="Apr", monthno=4, year=2007)
