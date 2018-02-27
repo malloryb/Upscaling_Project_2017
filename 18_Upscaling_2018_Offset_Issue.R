@@ -464,54 +464,49 @@ RF_SPEI_Analysis <- function(band1, bandsp, month, monthno, year){
     yPlus <- x[1,2]+ radius
     xPlus <- x[1,1]+ radius
     yMinus <- x[1,2] - radius
-    yPlus <- x[1,1] - radius
+    xMinus <- x[1,1] - radius
     e <- extent(xMinus, xPlus, yMinus, yPlus)
     return(e)
-          }
+     }
+  
   #Trying to just do a radius around a point
-  SRMpoint <- cbind(-110.866, 31.821)
+  AUDpoint <- cbind(-110.509, 31.591)
+  COPpoint <- cbind(-109.66, 38.162)
   FUFpoint <- cbind(-111.762,	35.089)
+  LPApoint <- cbind(-110.438, 24.1293)
+  MPJpoint <- cbind(-106.239,	34.43828)
+  #MX site
+  RAYpoint <- cbind(-110.537,	29.741)
+  SCCpoint<- cbind(-116.45,	33.61)
+  SCFpoint<- cbind(-116.45,	33.808)
+  SCWpoint<- cbind(-116.455,	33.605)
+  SEGpoint<- cbind(-106.7,	34.360)
+  SENpoint<- cbind(-106.68,	34.358)
+  SESpoint <- cbind(-106.745,	34.335)
+  SO4point<- cbind(-116.6406,	33.385)
+  SO2point<- cbind(-116.6228,	33.374)
+  SO3point<- cbind(-116.6226,	33.377)
+  SRCpoint<- cbind(-110.8395,	31.908)
+  SRGpoint <- cbind(-110.828,	31.789)
+  SRMpoint <- cbind(-110.866, 31.821)
+  #MX Site
+  TESpoint<- cbind(-109.298,	27.8446)
+  VCMpoint<- cbind(-106.532,	35.888)
+  VCPpoint<- cbind(-106.597,	35.864)
+  WHSpoint<- cbind(-110.052,	31.744)
+  WJSpoint<- cbind(-105.862,	34.426)
   WKGpoint <- cbind(-109.942,	31.737)
   
-  ext <- crop(rast_stack,srmex)
-  srm <- extent(srm)
-  
-  radius <- .5 # radius in kilometersmeters
-  # define the plot edges based upon the plot radius. 
-  SRMyPlus <- SRMpoint[1,2]+radius
-  SRMxPlus <- SRMpoint[1,1]+radius
-  SRMyMinus <- SRMpoint[1,2]-radius
-  SRMxMinus <- SRMpoint[1,1]-radius
-  
-  FUFyPlus <- FUFpoint[1,2]+radius
-  FUFxPlus <- FUFpoint[1,1]+radius
-  FUFyMinus <- FUFpoint[1,2]-radius
-  FUFxMinus <- FUFpoint[1,1]-radius
-  
-  WKGyPlus <- WKGpoint[1,2]+radius
-  WKGxPlus <- WKGpoint[1,1]+radius
-  WKGyMinus <- WKGpoint[1,2]-radius
-  WKGxMinus <- WKGpoint[1,1]-radius
-  
-  
-  srmex <- extent(SRMxMinus, SRMxPlus, SRMyMinus, SRMyPlus)
+  srrmex <- create_extent(SRMpoint)
   srm <- crop(rast_stack,srmex)
   srm <- extent(srm)
-  
-  fufex <- extent(FUFxMinus, FUFxPlus, FUFyMinus, FUFyPlus)
-  fuf <- crop(rast_stack,srmex)
-  fuf <- extent(srm)
-  
-  wkgex <- extent(WKGxMinus, WKGxPlus, WKGyMinus, WKGyPlus)
-  wkg <- crop(rast_stack,wkgex)
-  wkg <- extent(wkg)
   
   print("subset points")
   #Read models
   RFF3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
   RFT3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
-  RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F2_2_16.rds")
-  RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T2_2_16.rds")
+  RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
+  RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
   
   print(varImp(RFT2))
   print(names(rast_stack))
