@@ -9,7 +9,7 @@ library(RColorBrewer)
 #"Using this as a template:
 #http://geog.uoregon.edu/GeogR/topics/netCDF_read_ncdf4.html
 #http://geog.uoregon.edu/GeogR/topics/netCDF_dataframe.html
-setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/FluxCom_Monthly/")
+setwd("C:/Users/rsstudent/Documents/Fluxcom_2017/")
 #retrieve a list of nc files in folder
 flist <- list.files(path="GPP_Reichstein", pattern= "^.*\\.(nc|NC|Nc|Nc)$")
 tlist <- flist[1:2]
