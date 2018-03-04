@@ -704,25 +704,20 @@ spei12[[1273]]
 
 #Need to merge flux and input files-------------------------------------------------------------
 #Plan: Merge new flux files (sums) with Jung 2017 files (extracted yesterday)
-myDB <- do.call("rbind", lapply(myFiles, function(x) {
-  dat <- read.csv(x, skip=2)
-  dat$fileName <- tools::file_path_sans_ext(basename(x))
-  dat
-}))
+Jung_files <- list.files("F:/Upscaling_Project/Jung_Comps/", pattern="*_*.csv$")
 
-lapply(myFiles, function(x){
+myDb <- lapply(Jung_files, function(x){
   dat <- read.csv(x, skip=2)
-  dat$fileName <- tools::file_path_sans_ext(basename(filepath))
-  dat
+  names(dat) <- paste(c("month_year", "Jung_GPP"))
+  dat$month_year <- as.character(dat$month_year)
+  dat$fileName <- tools::file_path_sans_ext(basename(x))
+  head(dat)
 })
 
+Jung_2017 <- do.call(rbind,myDb)
 
-myFiles <- list.files("F:/Upscaling_Project/Biederman_Flux/", pattern="*_*.csv$")
+Flux_files <- read.csv("F:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
 
-wkg_file <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Merge_Fixed/us_cop.csv", )
-wkg_file
 
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
 
-head(All_sites)
 
