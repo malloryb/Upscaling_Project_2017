@@ -174,6 +174,7 @@ library(plyr)
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
 All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
 str(All_sites)
+head(All_sites)
 #Checking on SPEI
 SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
 SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
@@ -228,7 +229,7 @@ which(sapply(All_sites$spei3, is.infinite))
 All_sites$spei3[265:267]
 All_sites$spei3[266] <- 0.908
 All_sites$spei3[1447:1449]
-All_sites$spei3[1495] <- -1.0609
+All_sites$spei3[1448] <- -1.0609
 
 
 summary(All_sites)
@@ -292,6 +293,7 @@ head(All_sites.training)
 head(All_sites.training[,colsA4])
 head(All_sites.training[,5:6])
 
+#this doesn't seem to be working
 All_sites.training[!complete.cases(All_sites.training),]
 
 #Train a model (trying both KNN and random forest)
@@ -304,13 +306,7 @@ model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method=
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
-model_rfA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-model_rfA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-pred_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
+ pred_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
 pred_tsA1 <- as.numeric(predict(object=model_tsA1, All_sites.test[,colsA1]))
 
 pred_rfA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
@@ -337,11 +333,11 @@ postResample(pred=pred_rfA1, obs=All_sites.test[,1])
 postResample(pred=pred_tsA1, obs=All_sites.test[,1])
 postResample(pred=pred_rfA2, obs=All_sites.test[,1])
 postResample(pred=pred_tsA2, obs=All_sites.test[,1])
-postResample(pred=pred_rfA3, obs=All_sites.test[,1])
-postResample(pred=pred_tsA3, obs=All_sites.test[,1])
+caret::postResample(pred=pred_rfA3, obs=All_sites.test[,1])
+caret::postResample(pred=pred_tsA3, obs=All_sites.test[,1])
 
-postResample(pred=pred_rfA4, obs=All_sites.test[,1])
-postResample(pred=pred_tsA4, obs=All_sites.test[,1])
+caret::postResample(pred=pred_rfA4, obs=All_sites.test[,1])
+caret::postResample(pred=pred_tsA4, obs=All_sites.test[,1])
 
 
 RF_F1 <- model_rfA1$finalModel
@@ -368,10 +364,10 @@ saveRDS(RF_F1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F1_2_16.rds")
 saveRDS(RF_T1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T1_2_16.rds")
 saveRDS(RF_F2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F2_2_16.rds")
 saveRDS(RF_T2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T2_2_16.rds")
-saveRDS(RF_F3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
-saveRDS(RF_T3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
-saveRDS(RF_F4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
-saveRDS(RF_T4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
+saveRDS(RF_F3, "D:/Upscaling_Project/Upscaling_Project_2017/RF_F3_3_3.rds")
+saveRDS(RF_T3, "D:/Upscaling_Project/Upscaling_Project_2017/RF_T3_3_3.rds")
+saveRDS(RF_F4, "D:/Upscaling_Project/Upscaling_Project_2017/RF_F4_3_3.rds")
+saveRDS(RF_T4, "D:/Upscaling_Project/Upscaling_Project_2017/RF_T4_3_3.rds")
 
 
 RFA1
