@@ -1,8 +1,8 @@
 library(R.matlab)
 library(lubridate)
 library(plyr)
-
-setwd("F:/Upscaling_Project/Biederman_Flux/")
+getwd()
+setwd("D:/Upscaling_Project/Biederman_Flux/")
 #setwd("C:/Users/rsstudent/Upscaling_Data/Biederman_Flux/")
 fluxlist <-list.files(pattern= "^.*\\.(mat)$")
 
@@ -26,7 +26,7 @@ format_flux <- function(file){
  df$year <- year(df$date)
  df$monthyear <- paste(df$month, df$year, sep="-")
  #Get Monthly GPP (sum), monthly Reco(sum), NEP(sum), ET (sum), precip (sum), Tair, VPD, Rnet, Rsolar
- cleaned_df <- ddply(df, .(monthyear), summarize, GPP=sum(GEP, na.rm=TRUE), Reco=sum(Reco, na.rm=TRUE), ET=sum(ET, na.rm=TRUE), Precip=sum(Precip, na.rm=TRUE), Tair=mean(Tair, na.rm=TRUE), VPD=mean(VPD, na.rm=TRUE))
+ cleaned_df <- ddply(df, .(monthyear), summarize, GPP=mean(GEP, na.rm=TRUE), Reco=mean(Reco, na.rm=TRUE), ET=mean(ET, na.rm=TRUE), Precip=sum(Precip, na.rm=TRUE), Tair=mean(Tair, na.rm=TRUE), VPD=mean(VPD, na.rm=TRUE))
  cleaned_df$date <- as.Date(paste("01-", cleaned_df$monthyear, sep=""), format= "%d-%b-%Y")
  cleaned_df$site <- substr(filename, 1,6)
  cleaned_df <- arrange(cleaned_df, date)
