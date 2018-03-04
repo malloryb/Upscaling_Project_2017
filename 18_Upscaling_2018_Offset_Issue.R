@@ -172,7 +172,8 @@ library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+str(All_sites)
 #Checking on SPEI
 SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
 SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
@@ -288,9 +289,6 @@ colsA4 <- c(3, 5:7, 10:11, 14:19, 23)
 head(All_sites.training)
 head(All_sites.training[,colsA4])
 head(All_sites.training[,5:6])
-
-
-
 
 All_sites.training[!complete.cases(All_sites.training),]
 
@@ -610,7 +608,7 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
     print(month)
     print(year)
     #Function needs to apply to a site and 
-    RFF3_predicted <- predict(rast_stack, RFF3, ext=srm)
+    RFF3_predicted <- predict(rast_stack, RFF3, ext=site)
     plot(RFF3_predicted)
     RFT3_predicted <- predict(rast_stack, RFT3, ext=site)
     RFF4_predicted <- predict(rast_stack, RFF4, ext=site)
@@ -699,3 +697,30 @@ library(RColorBrewer)
 
 spei12 <- brick("F:/SPEIBase/spei12.nc")
 spei12[[1273]] 
+
+#Need to merge flux and input files-------------------------------------------------------------
+myDB <- do.call("rbind", lapply(myFiles, function(x) {
+  dat <- read.csv(x, skip=2)
+  dat$fileName <- tools::file_path_sans_ext(basename(x))
+  dat
+}))
+
+lapply(myFiles, function(x){
+  dat <- read.csv(x, skip=2)
+  dat$fileName <- tools::file_path_sans_ext(basename(filepath))
+  dat
+})
+
+
+myFiles <- list.files("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Merge_Fixed/", pattern="*_*.csv$")
+
+wkg_file <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Merge_Fixed/us_cop.csv", )
+wkg_file
+
+head(wkg_file)
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+
+head(All_sites)
+
+ggplot(All_sites, aes(x=date, y=GPP, group="site"))+
+          geom_line()
