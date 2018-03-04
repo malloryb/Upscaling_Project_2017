@@ -703,6 +703,7 @@ spei12 <- brick("F:/SPEIBase/spei12.nc")
 spei12[[1273]] 
 
 #Need to merge flux and input files-------------------------------------------------------------
+#Plan: Merge new flux files (sums) with Jung 2017 files (extracted yesterday)
 myDB <- do.call("rbind", lapply(myFiles, function(x) {
   dat <- read.csv(x, skip=2)
   dat$fileName <- tools::file_path_sans_ext(basename(x))
@@ -716,15 +717,12 @@ lapply(myFiles, function(x){
 })
 
 
-myFiles <- list.files("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Merge_Fixed/", pattern="*_*.csv$")
+myFiles <- list.files("F:/Upscaling_Project/Biederman_Flux/", pattern="*_*.csv$")
 
 wkg_file <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Flux_Plus_Jung/Merge_Fixed/us_cop.csv", )
 wkg_file
 
-head(wkg_file)
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
 
 head(All_sites)
 
-ggplot(All_sites, aes(x=date, y=GPP, group="site"))+
-          geom_line()
