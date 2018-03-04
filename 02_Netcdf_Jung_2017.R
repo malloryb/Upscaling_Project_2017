@@ -11,7 +11,7 @@ library(RColorBrewer)
 #http://geog.uoregon.edu/GeogR/topics/netCDF_dataframe.html
 setwd("C:/Users/rsstudent/Documents/Fluxcom_2017/")
 #retrieve a list of nc files in folder
-flist <- list.files(path="GPP_Reichstein", pattern= "^.*\\.(nc|NC|Nc|Nc)$")
+flist <- list.files(path=, pattern= "^.*.GPP.*\\.(nc|NC|Nc|Nc)$")
 tlist <- flist[1:2]
 nc <- nc_open(paste0(flist[4]))
 
@@ -30,7 +30,7 @@ print(nc)
 setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/FluxCom_Monthly/GPP_Reichstein/")
 
 #User-defined function to process all .ncdf files (thesese files are monthly) in a given list
- 
+
 process_nc1 <- function(f){
     nc_tmp <- nc_open(f)
     #store values from variables and attributes
@@ -72,16 +72,17 @@ process_nc1 <- function(f){
   #reshape vector into 2592000x360 (months) matrix using matrix() function and verify dimensions
   gpp_mat <- matrix(gpp_vec_long, nrow=nlon*nlat, ncol=nt)
   dim(gpp_mat)
-  lonlat <- as.matrix(expand.grid(lon,lat))
+  lonlat <- as.matrix(expand.grid(nc_lon,nc_lat))
   print(gpp_mat)
   gpp_df <- data.frame(cbind(lonlat, gpp_mat))
 return(gpp_df)
 }
-
-#This step takes awhile
+#This step takes awhile - just looks like a ton of NAs going by....
 tmp <- lapply(flist, process_nc1) %>% bind_cols()
 str(tmp)
+#This step got rid of 26 columns
 data <- tmp[!duplicated(as.list(tmp))]
+
 str(data)
 
 colnames(data) <- c("lon", "lat","Jan_1980", "Feb_1980","Mar_1980","Apr_1980","May_1980","Jun_1980",
