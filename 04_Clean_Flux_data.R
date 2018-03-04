@@ -37,7 +37,6 @@ format_flux <- function(file){
 lapply(fluxlist, format_flux)
 
 #Append all .csv files into one big spreadsheet 
-
 library(dplyr)
 library(readr)
 
@@ -45,4 +44,4 @@ df <- list.files(full.names = TRUE, pattern="*.csv$") %>%
   lapply(read_csv) %>% 
   bind_rows 
 
-write.csv(df, "Fixed_flux_vars_2_2_2018.csv")
+write.csv(df, "Fixed_flux_vars_3_2_2018.csv")
