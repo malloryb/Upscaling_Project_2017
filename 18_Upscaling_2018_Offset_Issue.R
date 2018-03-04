@@ -13,11 +13,12 @@ library(dplyr)
 library(lubridate)
 library(tidyverse)
 library(stringr)
+library(SPEI)
 #1) Merge daymet files with fixed flux files----------------------
 #Read all three big .csv files and merge by date
 
 #Flux
-Flux_merge <- read.csv("D:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_2_2_2018.csv")
+Flux_merge <- read.csv("D:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
 #Daymet
 Daymet_merge <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Daymet_monthly_all.csv") 
 #MODIS
@@ -25,7 +26,7 @@ MODIS_merge <-  read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/MODIS_
 
 #Check files, delete "X", and format date col for merge 
 str(Flux_merge)
-Flux_merge$date <- as.Date(Flux_merge$date, format="%m/%d/%Y")
+Flux_merge$date <- as.Date(Flux_merge$date, format="%Y-%m-%d")
 Flux_merge$site <- str_replace_all(Flux_merge$site, "us-soy", "us-so3")
 Flux_merge$site <- str_replace_all(Flux_merge$site, "us-sob", "us-so2")
 Flux_merge$site <- str_replace_all(Flux_merge$site, "us-son", "us-so4")
@@ -77,7 +78,6 @@ df21 <- X[[21]]
 df22 <- X[[22]]
 df23 <- X[[23]]
 df24 <- X[[24]]
-
 
 #SPEI_calc_function
 SPEI_calc <- function(A){
@@ -160,7 +160,7 @@ ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
 str(ALL_inc_IGPB)
 
 #Write out .csv file
-#write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv")
+#write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv")
 
 #Get random forest models (this code could be cleaned up significantly) 
 #Run site-based RF with proper variables --------
@@ -172,7 +172,7 @@ library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_2_15_2018.csv") 
+All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
 str(All_sites)
 #Checking on SPEI
 SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
@@ -222,12 +222,14 @@ All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "s
                          "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
 
 #408th (row 409) value for All_Sites$spei3 is "Inf" for some reason, and so is the 1495th value. Going to replace it with the average of the two surrounding values: 0.495
+#Why are they in different spots? at 266 and 1448 this time
 which(sapply(All_sites$spei3, is.infinite))
 
-All_sites$spei3[408:410]
-All_sites$spei3[409] <- 0.495
-All_sites$spei3[1494:1496]
+All_sites$spei3[265:267]
+All_sites$spei3[266] <- 0.908
+All_sites$spei3[1447:1449]
 All_sites$spei3[1495] <- -1.0609
+
 
 summary(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
@@ -278,8 +280,8 @@ head(All_sites.training[,colsA2])
 head(All_sites.training[,5:6])
 
 
-#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, tmax, elev, tmin, precip, spei1
-colsA3 <- c(3, 5:7, 10:11, 14:19)
+#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, tmax, elev, tmin, precip)
+colsA3 <- c(3, 5:7, 10:11, 14:18)
 head(All_sites.training)
 head(All_sites.training[,colsA3])
 head(All_sites.training[,5:6])
