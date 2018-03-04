@@ -61,7 +61,6 @@ us_wjs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-105.75 & Jung_2017$lat==34.
 us_wkg<- bind_rows(subset(Jung_2017, Jung_2017$lon==-109.75 & Jung_2017$lat==31.75))
 
 
-setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/Upscaling_Data/")
 
 d.list <- list(us_aud, us_cop, us_fuf, us_lpa, us_mpj, us_ray, us_scc, us_scf, us_scw, us_seg, us_sen, us_ses, us_so2, us_so4,
                us_so3, us_src, us_srg, us_srm, us_tes, us_vcp, us_vcm, us_whs, us_wjs, us_wkg)
@@ -106,6 +105,11 @@ write.csv(d.list[21], "us_vcm.csv")
 write.csv(d.list[22], "us_whs.csv")
 write.csv(d.list[23], "us_wjs.csv")
 write.csv(d.list[24], "us_wkg.csv")
+
+
+d.list <- list(us_aud, us_cop, us_fuf, us_lpa, us_mpj, us_ray, us_scc, us_scf, us_scw, us_seg, us_sen, us_ses, us_so2, us_so4,
+               us_so3, us_src, us_srg, us_srm, us_tes, us_vcp, us_vcm, us_whs, us_wjs, us_wkg)
+
 
 
 
