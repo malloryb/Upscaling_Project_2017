@@ -706,18 +706,45 @@ spei12[[1273]]
 #Plan: Merge new flux files (sums) with Jung 2017 files (extracted yesterday)
 Jung_files <- list.files("F:/Upscaling_Project/Jung_Comps/", pattern="*_*.csv$")
 
+#Function to read all files in list and apply necessary corrections
 myDb <- lapply(Jung_files, function(x){
   dat <- read.csv(x, skip=2)
-  names(dat) <- paste(c("month_year", "Jung_GPP"))
-  dat$month_year <- as.character(dat$month_year)
-  dat$fileName <- tools::file_path_sans_ext(basename(x))
-  head(dat)
+  names(dat) <- paste(c("monthyear", "Jung_GPP"))
+  dat$monthyear <- as.character(dat$monthyear)
+  dat$site <- tools::file_path_sans_ext(basename(x))
+  return(dat)
 })
 
+str(myDb)
+
+#Rbind dataframes to gether
 Jung_2017 <- do.call(rbind,myDb)
 
 Flux_files <- read.csv("F:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
+#Merge by "site_date" column
+str(Flux_files)
+Flux_files$site <- str_replace_all(Flux_files$site, "us-soy", "us-so3")
+Flux_files$site <- str_replace_all(Flux_files$site, "us-sob", "us-so2")
+Flux_files$site <- str_replace_all(Flux_files$site, "us-son", "us-so4")
+Flux_files$site <- str_replace_all(Flux_files$site, "us-soo", "us-so2")
+Flux_files$monthyear <- (gsub('([[:punct:]])|\\-','_',Flux_files$monthyear))
+Flux_files$site <- (gsub('([[:punct:]])|\\-','_',Flux_files$site))
+Flux_files$site <- as.factor(Flux_files$site)
+Flux_files$sitedate <- paste(Flux_files$monthyear, Flux_files$site, sep="_")
+
+str(Jung_2017)
+Jung_2017$site <- str_replace_all(Jung_2017$site, "us_soy", "us_so3")
+Jung_2017$site <- str_replace_all(Jung_2017$site, "us_sob", "us_so2")
+Jung_2017$site <- str_replace_all(Jung_2017$site, "us_son", "us_so4")
+Jung_2017$site <- as.factor(Jung_2017$site)
+Jung_2017$sitedate <- paste(Jung_2017$monthyear, Jung_2017$site, sep="_")
 
 
-
-
+levels(Jung_2017$site)
+levels(Flux_files$site)
+#Merged file
+Merged_Jung_Comp <- merge(Flux_files, Jung_2017, by="sitedate", all.x=T)
+#Delete columns: site.y, X, X1, monthyear.y
+drops <- c("site.y", "X", "X1", "monthyear.y")
+Merged_Jung_Comp <- Merged_Jung_Comp[, !(names(Merged_Jung_Comp) %in% drops)]
+write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
