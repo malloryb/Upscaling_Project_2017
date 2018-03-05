@@ -706,6 +706,7 @@ spei12[[1273]]
 library(ggplot2)
 library(lubridate)
 library(plyr)
+library(plotrix)
 #Plan: Merge new flux files (sums) with Jung 2017 files (extracted yesterday)
 Jung_files <- list.files("F:/Upscaling_Project/Jung_Comps/", pattern="*_*.csv$")
 
@@ -754,7 +755,7 @@ write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.c
 
 #Graphing comps----------------------------------------
 #Need to create some graphs now:
-Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
 Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
@@ -764,20 +765,33 @@ Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
 #Split - apply - combine 
 out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
 str(out)
+Merged_Jung_Comp
 
 seasonal_func <- function(x){
-  df <- ddply(x, .(month, site.x), summarize, Jung_GPP=mean(Jung_GPP, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+  print(summary(x))
+  df <- ddply(x, .(month, site.x), summarize, Jung_GPP=mean(Jung_GPP, na.rm=TRUE),  Jung_SE=sd(Jung_GPP, na.rm=TRUE), GPP_se=sd(GPP, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+  print(summary(df))
   return(df)
 }
 
 seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
 str(seasonal_to_plot)
 seasonal_to_plot
+names(seasonal_to_plot)[names(seasonal_to_plot) == 'site.x'] <- 'site'
+
+#going to have to create a plotting function to plot all of these separately (and write out)
+test <- (split(seasonal_to_plot, seasonal_to_plot$site))[[1]]
+
+#Need to add: 
+#standard error
+#Title
+#correlattion on graph
+
 
 q <- ggplot() +
-  geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2011, color = I("blue"))) +
-  geom_line(data = seasonal, aes(x = month, y = Jung_2017, color = I("green"))) +
+  geom_line(data = test, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = test, aes(x = month, y = Jung_GPP, color = I("blue"))) +
   xlab('month') +
-  ylab('GPP')
+  ylab('GPP')+
+  theme_bw()
 
