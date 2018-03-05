@@ -755,8 +755,12 @@ write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.c
 
 #Graphing comps----------------------------------------
 #Need to create some graphs now:
+library(ggthemes)
+
 Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
+Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
+summary(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
 Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
 Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
@@ -764,21 +768,21 @@ Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
 #Delete all files after 2013 (Fluxcom only goes through 2013)
 Merged_Jung_Comp<-Merged_Jung_Comp[!(Merged_Jung_Comp$year > 2013 | Merged_Jung_Comp$year < 1999),]
 new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
+new_DF
 summary(Merged_Jung_Comp)
 
-summary(Merged_Jung_Comp$Jung_GPP)
-
+sd(Merged_Jung_Comp$Jung_GPP)
 #Need both interannual and seasonal graphs and correlations
 #First let's make the graphs comparing seasonal cycles 
 #Split - apply - combine 
 out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
 str(out)
-Merged_Jung_Comp
 seasonal_func <- function(x){
-  df <- ddply(x, .(month, site.x), summarize, Jung_GPP=mean(Jung_GPP, na.rm=TRUE),  Jung_SE=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP)), GPP_se=sd(GPP, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+  df <- ddply(x, .(month, site.x), summarize, Jung_se=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP[!is.na(Jung_GPP)])) , Jung_GPP=mean(Jung_GPP, na.rm=TRUE), GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])) , GPP=mean(GPP, na.rm=TRUE))
   return(df)
 }
 
+lapply(out, seasonal_func)
 seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
 str(seasonal_to_plot)
 seasonal_to_plot
@@ -792,11 +796,12 @@ test <- (split(seasonal_to_plot, seasonal_to_plot$site))[[1]]
 #Title
 #correlattion on graph
 
-
+#require ggplot, ggtheme
 q <- ggplot() +
-  geom_line(data = test, aes(x = month, y = GPP, color =I("red"))) +
-  geom_line(data = test, aes(x = month, y = Jung_GPP, color = I("blue"))) +
+  ggtitle(test$site)+
+  geom_line(data = test, aes(x = month, y = GPP, color =I("red")), size=2) +
+  geom_line(data = test, aes(x = month, y = Jung_GPP, color = I("blue")), size=2) +
   xlab('month') +
   ylab('GPP')+
-  theme_bw()
+  theme_classic()
 
