@@ -789,19 +789,87 @@ seasonal_to_plot
 names(seasonal_to_plot)[names(seasonal_to_plot) == 'site.x'] <- 'site'
 
 #going to have to create a plotting function to plot all of these separately (and write out)
-test <- (split(seasonal_to_plot, seasonal_to_plot$site))[[1]]
+#write out plot
+#write out correlation?
+#plot graph 
 
-#Need to add: 
-#standard error
-#Title
-#correlattion on graph
+plot_seasonal_cycle <- function(x){
+  require("ggplot2")
+  require("ggthemes")
+  require("scales")
+  r <- as.character(round(cor(x$GPP, x$Jung_GPP), 3))
+  lbl <- paste("r =", r)
+  q <- ggplot() +
+    ggtitle(x$site)+
+    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
+    geom_line(data = x, aes(x = month, y = Jung_GPP, color = I("blue")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
+    annotate("text", label = lbl, parse=FALSE, x = 1, y = 4, size = 5, colour = "Black")+
+    geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP-Jung_se,ymax=Jung_GPP+Jung_se),colour="blue")+
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_classic()+
+    theme(legend.position = c(0, 0))
+  plot(q)
+}
 
-#require ggplot, ggtheme
-q <- ggplot() +
-  ggtitle(test$site)+
-  geom_line(data = test, aes(x = month, y = GPP, color =I("red")), size=2) +
-  geom_line(data = test, aes(x = month, y = Jung_GPP, color = I("blue")), size=2) +
-  xlab('month') +
-  ylab('GPP')+
-  theme_classic()
+list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
+lapply(list_seasons, plot_seasonal_cycle)
+
+#IAV correlations
+Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+str(Merged_Jung_Comp)
+Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
+summary(Merged_Jung_Comp)
+Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
+Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
+Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
+
+#Delete all files after 2013 (Fluxcom only goes through 2013)
+Merged_Jung_Comp<-Merged_Jung_Comp[!(Merged_Jung_Comp$year > 2013 | Merged_Jung_Comp$year < 1999),]
+new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
+new_DF
+summary(Merged_Jung_Comp)
+#get IAV (by site...)
+#ddply to get annual sums of GPP (IAV)
+out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
+str(out)
+summer <- subset(Merged_Jung_Comp, month==6 | month==7 | month==8)
+summer_out <- split(summer, summer$site.x)
+spring <- subset(Merged_Jung_Comp, month==3 | month==4 | month==5)
+spring_out <- split(spring, spring$site.x)
+fall <- subset(Merged_Jung_Comp, month==9 | month==10 | month==11)
+fall_out <- split(fall, fall$site.x)
+winter <- subset(Merged_Jung_Comp, month==12 | month==1 | month==2)
+winter_out <- split(winter, winter$site.x)
+
+IAV_func <- function(x){
+  df <- ddply(x, .(year, site.x), summarize, Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
+  return(df)
+}
+
+IAV_to_plot <- do.call(rbind, lapply(out, IAV_func))
+str(IAV_to_plot)
+summer <- do.call(rbind, lapply(summer_out, IAV_func))
+spring <- do.call(rbind, lapply(spring_out, IAV_func))
+winter <- do.call(rbind, lapply(winter_out, IAV_func))
+fall <- do.call(rbind, lapply(fall_out, IAV_func))
+
+#ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
+
+
+require(plyr)a
+corfunc <- function(xx)
+{
+  return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP)))
+}
+
+ddply(IAV_to_plot, .(site.x), corfunc)
+ddply(spring, .(site.x), corfunc)
+ddply(winter, .(site.x), corfunc)
+ddply(fall, .(site.x), corfunc)
+ddply(summer, .(site.x), corfunc)
+
+
 
