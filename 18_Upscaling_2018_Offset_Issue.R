@@ -764,17 +764,18 @@ Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
 #Delete all files after 2013 (Fluxcom only goes through 2013)
 Merged_Jung_Comp<-Merged_Jung_Comp[!(Merged_Jung_Comp$year > 2013 | Merged_Jung_Comp$year < 1999),]
 new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
+summary(Merged_Jung_Comp)
+
+summary(Merged_Jung_Comp$Jung_GPP)
+
 #Need both interannual and seasonal graphs and correlations
 #First let's make the graphs comparing seasonal cycles 
 #Split - apply - combine 
 out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
 str(out)
 Merged_Jung_Comp
-
 seasonal_func <- function(x){
-  print(summary(x))
-  df <- ddply(x, .(month, site.x), summarize, Jung_GPP=mean(Jung_GPP, na.rm=TRUE),  Jung_SE=sd(Jung_GPP, na.rm=TRUE), GPP_se=sd(GPP, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
-  print(summary(df))
+  df <- ddply(x, .(month, site.x), summarize, Jung_GPP=mean(Jung_GPP, na.rm=TRUE),  Jung_SE=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP)), GPP_se=sd(GPP, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
   return(df)
 }
 
