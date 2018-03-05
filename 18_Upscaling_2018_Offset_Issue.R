@@ -706,7 +706,7 @@ spei12[[1273]]
 library(ggplot2)
 library(lubridate)
 library(plyr)
-library(plotrix)
+library(stringr)
 #Plan: Merge new flux files (sums) with Jung 2017 files (extracted yesterday)
 Jung_files <- list.files("F:/Upscaling_Project/Jung_Comps/", pattern="*_*.csv$")
 
@@ -760,6 +760,10 @@ str(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
 Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
 Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
+
+#Delete all files after 2013 (Fluxcom only goes through 2013)
+Merged_Jung_Comp<-Merged_Jung_Comp[!(Merged_Jung_Comp$year > 2013 | Merged_Jung_Comp$year < 1999),]
+new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
 #Need both interannual and seasonal graphs and correlations
 #First let's make the graphs comparing seasonal cycles 
 #Split - apply - combine 
