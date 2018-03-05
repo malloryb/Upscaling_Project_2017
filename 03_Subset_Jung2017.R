@@ -1,7 +1,7 @@
 library(reshape2)
 
 #Jung_2017
-Jung_2017 <- read.csv("C:/Users/rsstudent/Documents/Fluxcom_2017/RF_GPP_2000_to_2013.csv")
+Jung_2017 <- read.csv("C:/Users/rsstudent/Documents/Fluxcom_2017/RF_GPP_1999_to_2013.csv")
 #Jung_2011
 Jung_2011 <- read.csv("C:/Users/rsstudent/Upscaling_Data/Jung_2011/MR_GPP_all.csv")
 names(Jung_2011) <- gsub("\\.", "_", names(Jung_2011))
