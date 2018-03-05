@@ -703,6 +703,9 @@ spei12 <- brick("F:/SPEIBase/spei12.nc")
 spei12[[1273]] 
 
 #Need to merge flux and input files-------------------------------------------------------------
+library(ggplot2)
+library(lubridate)
+library(plyr)
 #Plan: Merge new flux files (sums) with Jung 2017 files (extracted yesterday)
 Jung_files <- list.files("F:/Upscaling_Project/Jung_Comps/", pattern="*_*.csv$")
 
@@ -748,3 +751,33 @@ Merged_Jung_Comp <- merge(Flux_files, Jung_2017, by="sitedate", all.x=T)
 drops <- c("site.y", "X", "X1", "monthyear.y")
 Merged_Jung_Comp <- Merged_Jung_Comp[, !(names(Merged_Jung_Comp) %in% drops)]
 write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+
+#Graphing comps----------------------------------------
+#Need to create some graphs now:
+Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+str(Merged_Jung_Comp)
+Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
+Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
+Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
+#Need both interannual and seasonal graphs and correlations
+#First let's make the graphs comparing seasonal cycles 
+#Split - apply - combine 
+out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
+str(out)
+
+seasonal_func <- function(x){
+  df <- ddply(x, .(month, site.x), summarize, Jung_GPP=mean(Jung_GPP, na.rm=TRUE), GPP=mean(GPP, na.rm=TRUE))
+  return(df)
+}
+
+seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
+str(seasonal_to_plot)
+seasonal_to_plot
+
+q <- ggplot() +
+  geom_line(data = seasonal, aes(x = month, y = GPP, color =I("red"))) +
+  geom_line(data = seasonal, aes(x = month, y = Jung_2011, color = I("blue"))) +
+  geom_line(data = seasonal, aes(x = month, y = Jung_2017, color = I("green"))) +
+  xlab('month') +
+  ylab('GPP')
+
