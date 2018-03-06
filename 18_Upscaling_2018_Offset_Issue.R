@@ -897,7 +897,7 @@ levels(Sites$site)
 Sites$site <- str_replace_all(Sites$site, "-", "_")
 levels(RMSSD_to_plot$site)
 
-merge(RMSSD_to_plot, Sites, by="site")
+merged_to_plot <- merge(RMSSD_to_plot, Sites, by="site")
 RMSSD_to_plot$diff <- (RMSSD_to_plot$RMSSDGPP - RMSSD_to_plot$RMSSDJungGPP)
 RMMSD_to_plot
 #Using GGPLOT, plot the Base World Map
@@ -906,9 +906,10 @@ mapWorld <- borders("world", regions=c("Mexico", "USA"), colour="gray50", fill="
 mp <- ggplot() +   mapWorld
 ?borders
 str(RMSSD_to_plot)
+summary(RMSSD_to_plot)
 
-mp_plot <- mp+ geom_point(aes(x=RMSSD_to_plot$long, y=RMSSD_to_plot$lat, colour=RMSSD_to_plot$diff), position= position_jitter(w=0.3, h=0.3), size=2.5)+
-  scale_color_gradientn(colours=rainbow(2), name="RMSSDflux - RMSSDJung")+
+mp_plot <- mp+ geom_point(aes(x=merged_to_plot$long, y=merged_to_plot$lat, colour=merged_to_plot$diff), position= position_jitter(w=0.3, h=0.3), size=2.5)+
+  scale_color_gradientn(colours=c("blue", "red"), name="RMSSDflux - RMSSDJung")+
   coord_map(xlim = c(-123,-103), ylim = c(23,41))
 
 mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="Latitude") 
