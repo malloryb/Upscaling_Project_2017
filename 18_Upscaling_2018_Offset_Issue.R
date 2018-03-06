@@ -798,26 +798,34 @@ plot_seasonal_cycle <- function(x){
   require("ggplot2")
   require("ggthemes")
   require("scales")
+  require("psych")
   r <- as.character(round(cor(x$GPP, x$Jung_GPP), 3))
-  lbl <- paste("r =", r)
+  rmssdGPP <- as.character(round(rmssd(x$GPP), 3))
+  rmssdJungGPP <- as.character(round(rmssd(x$Jung_GPP), 3))
+  lbl1 <- paste("rmssdFlux =", rmssdGPP)
+  lbl2 <- paste("rmssdJung =", rmssdJungGPP)
+  filename <- paste(x$site[1], "seasonal_comparison.png", sep="_")
+  print(filename)
   q <- ggplot() +
     ggtitle(x$site)+
     geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
     geom_line(data = x, aes(x = month, y = Jung_GPP, color = I("blue")), size=2) +
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
-    annotate("text", label = lbl, parse=FALSE, x = 1, y = 4, size = 5, colour = "Black")+
-    geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP-Jung_se,ymax=Jung_GPP+Jung_se),colour="blue")+
+    annotate("text", label = lbl1, parse=FALSE, x = 2, y = 4.5, size = 5, colour = "Black")+
+    annotate("text", label = lbl2, parse=FALSE, x = 2, y = 5, size = 5, colour = "Black")+
+        geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP-Jung_se,ymax=Jung_GPP+Jung_se),colour="blue")+
     scale_x_continuous(breaks=pretty_breaks())+
     xlab('month')+
     ylab('GPP')+
     theme_classic()+
     theme(legend.position = c(0, 0))
-  plot(q)
-}
+  
+    ggsave(filename, device=tiff, plot=q, dpi = 400)
+         }
 
 list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
 lapply(list_seasons, plot_seasonal_cycle)
-
+plot_seasonal_cycle(list_seasons[[1]])
 #IAV correlations
 Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
@@ -872,8 +880,6 @@ corfunc <- function(xx)
 {
   return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP)))
 }
-
-
 
 ddply(IAV_to_plot, .(site.x), corfunc)
 ddply(spring, .(site.x), corfunc)
