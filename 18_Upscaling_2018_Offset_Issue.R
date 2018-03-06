@@ -759,6 +759,7 @@ library(ggthemes)
 
 Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
+levels(Merged_Jung_Comp$site.x)
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
 summary(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
@@ -855,7 +856,7 @@ rmssdfunc <- function(xx)
   return(data.frame(RMSSDGPP = rmssd(xx$GPP), RMSSDJungGPP= rmssd(xx$Jung_GPP)))
 }
 
-do.call(rbind, lapply(out, rmssdfunc))
+RMSSD_to_plot <- do.call(rbind, lapply(out, rmssdfunc))
 IAV_to_plot <- do.call(rbind, lapply(out, IAV_func))
 str(IAV_to_plot)
 summer <- do.call(rbind, lapply(summer_out, IAV_func))
@@ -880,5 +881,22 @@ ddply(winter, .(site.x), corfunc)
 ddply(fall, .(site.x), corfunc)
 ddply(summer, .(site.x), corfunc)
 
+#Plots of rmssd------------------------
+library(stringr)
 
+str(RMSSD_to_plot)
+RMSSD_to_plot$site <- as.factor(rownames(RMSSD_to_plot))
+
+Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+str(Sites)
+levels(Sites$site)
+levels(RMSSD_to_plot$site)
+Sites$site <- str_replace_all(Sites$site, "us_ray", "mx_ray")
+Sites$site <- str_replace_all(Jung_2017$site, "us_tes", "mx_tes")
+
+merge(RMSSD_to_plot, Sites, by="site")
+mp_plot <- mp+ geom_point(aes(x=sites$Long, y=sites$Lat,colour=sites$Data_Cat), position= position_jitter(w=0.3, h=0.3), size=2.5)+
+  scale_color_manual(values=c("green", "yellow", "red"), name="Processing Level", labels=c("1 - in hand", "2 - minimal processing", "3 - significant processing"))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))
+mp_plot+ theme_bw(base_size=14)+ labs(title = "Flux Sites by Data Availability", x="Longitude", y="Latitude") 
 
