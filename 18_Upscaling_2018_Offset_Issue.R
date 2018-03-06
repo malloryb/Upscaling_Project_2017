@@ -756,6 +756,7 @@ write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.c
 #Graphing comps----------------------------------------
 #Need to create some graphs now:
 library(ggthemes)
+library(plyr)
 
 Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
@@ -793,6 +794,7 @@ names(seasonal_to_plot)[names(seasonal_to_plot) == 'site.x'] <- 'site'
 #write out plot
 #write out correlation?
 #plot graph 
+setwd("D:/Upscaling_Project/Jung_Comps/")
 
 plot_seasonal_cycle <- function(x){
   require("ggplot2")
@@ -820,12 +822,12 @@ plot_seasonal_cycle <- function(x){
     theme_classic()+
     theme(legend.position = c(0, 0))
   
-    ggsave(filename, device=tiff, plot=q, dpi = 400)
+    plot(q)
+    ggsave(filename, device='png', width=16, height=16, plot=q, dpi = 300, units = "cm")
          }
 
 list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
 lapply(list_seasons, plot_seasonal_cycle)
-plot_seasonal_cycle(list_seasons[[1]])
 #IAV correlations
 Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
