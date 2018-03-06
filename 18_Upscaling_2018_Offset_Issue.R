@@ -757,7 +757,7 @@ write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.c
 #Need to create some graphs now:
 library(ggthemes)
 
-Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
 summary(Merged_Jung_Comp)
@@ -818,7 +818,7 @@ list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
 lapply(list_seasons, plot_seasonal_cycle)
 
 #IAV correlations
-Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 str(Merged_Jung_Comp)
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
 summary(Merged_Jung_Comp)
@@ -849,6 +849,13 @@ IAV_func <- function(x){
   return(df)
 }
 
+require(psych)
+rmssdfunc <- function(xx)
+{
+  return(data.frame(RMSSDGPP = rmssd(xx$GPP), RMSSDJungGPP= rmssd(xx$Jung_GPP)))
+}
+
+do.call(rbind, lapply(out, rmssdfunc))
 IAV_to_plot <- do.call(rbind, lapply(out, IAV_func))
 str(IAV_to_plot)
 summer <- do.call(rbind, lapply(summer_out, IAV_func))
@@ -859,11 +866,13 @@ fall <- do.call(rbind, lapply(fall_out, IAV_func))
 #ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
 
 
-require(plyr)a
+require(plyr)
 corfunc <- function(xx)
 {
   return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP)))
 }
+
+
 
 ddply(IAV_to_plot, .(site.x), corfunc)
 ddply(spring, .(site.x), corfunc)
