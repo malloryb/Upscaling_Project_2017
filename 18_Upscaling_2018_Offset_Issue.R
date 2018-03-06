@@ -885,18 +885,31 @@ ddply(summer, .(site.x), corfunc)
 library(stringr)
 
 str(RMSSD_to_plot)
-RMSSD_to_plot$site <- as.factor(rownames(RMSSD_to_plot))
+RMSSD_to_plot$site <- rownames(RMSSD_to_plot)
+RMSSD_to_plot$site <- str_replace_all(RMSSD_to_plot$site, "us_ray", "mx_ray")
+RMSSD_to_plot$site <- rownames(RMSSD_to_plot)
+RMSSD_to_plot$site <- as.factor(RMSSD_to_plot$site)
+
 
 Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(Sites)
 levels(Sites$site)
+Sites$site <- str_replace_all(Sites$site, "-", "_")
 levels(RMSSD_to_plot$site)
-Sites$site <- str_replace_all(Sites$site, "us_ray", "mx_ray")
-Sites$site <- str_replace_all(Jung_2017$site, "us_tes", "mx_tes")
 
 merge(RMSSD_to_plot, Sites, by="site")
-mp_plot <- mp+ geom_point(aes(x=sites$Long, y=sites$Lat,colour=sites$Data_Cat), position= position_jitter(w=0.3, h=0.3), size=2.5)+
-  scale_color_manual(values=c("green", "yellow", "red"), name="Processing Level", labels=c("1 - in hand", "2 - minimal processing", "3 - significant processing"))+
+RMSSD_to_plot$diff <- (RMSSD_to_plot$RMSSDGPP - RMSSD_to_plot$RMSSDJungGPP)
+RMMSD_to_plot
+#Using GGPLOT, plot the Base World Map
+mp <- NULL
+mapWorld <- borders("world", regions=c("Mexico", "USA"), colour="gray50", fill="gray50") # create a layer of borders
+mp <- ggplot() +   mapWorld
+?borders
+str(RMSSD_to_plot)
+
+mp_plot <- mp+ geom_point(aes(x=RMSSD_to_plot$long, y=RMSSD_to_plot$lat, colour=RMSSD_to_plot$diff), position= position_jitter(w=0.3, h=0.3), size=2.5)+
+  scale_color_gradientn(colours=rainbow(2), name="RMSSDflux - RMSSDJung")+
   coord_map(xlim = c(-123,-103), ylim = c(23,41))
-mp_plot+ theme_bw(base_size=14)+ labs(title = "Flux Sites by Data Availability", x="Longitude", y="Latitude") 
+
+mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="Latitude") 
 
