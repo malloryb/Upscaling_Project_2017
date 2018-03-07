@@ -810,6 +810,7 @@ new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
 #Double check there's no NA's in here
 new_DF
 summary(Merged_Jung_Comp)
+str(Merged_Jung_Comp)
 
 #split apply combine (with ddply) to get annual and seasonal sums of GPP (IAV)
 out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
@@ -843,7 +844,25 @@ spring_to_plot <- do.call(rbind, lapply(spring_out, IAV_func))
 winter_to_plot <- do.call(rbind, lapply(winter_out, IAV_func))
 fall_to_plot <- do.call(rbind, lapply(fall_out, IAV_func))
 
-#7. Plots of rmssd------------------------
+#7. Plots of rmssd & seasonal variability ------------------------\
+library(ggplot2)
+library(psych)
+library(ggpubr)
+library(stringr)
+library(lubridate)
+Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+Sites$site <- str_replace_all(Sites$site, "-", "_")
+str(Merged_Jung_Comp)
+Merged_Jung_Comp$diff <- Merged_Jung_Comp$GPP - Merged_Jung_Comp$Jung_GPP
+
+ggplot(Merged_Jung_Comp, aes(x=month, y=diff, color=site.x)) + geom_point(size=2) +geom_smooth(aes(group=site.x), method="loess", se=FALSE)+theme_few() 
+
+
+ggarrange(bxp, dp, bp + rremove("x.text"), 
+          labels = c("Forests", "Shrublands", "Grassland", "Desert"),
+          ncol = 2, nrow = 2)
+
+
 library(stringr)
 str(RMSSD_to_plot)
 RMSSD_to_plot$site <- rownames(RMSSD_to_plot)
@@ -872,9 +891,7 @@ mp_plot <- mp+ geom_point(aes(x=merged_to_plot$long, y=merged_to_plot$lat, colou
   scale_color_gradientn(colours=c("blue", "red"), name="RMSSDflux - RMSSDJung")+
   coord_map(xlim = c(-123,-103), ylim = c(23,41))
 
-mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="Latitude") 
-
-
+mp_plot+ theme_few(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="Latitude") 
 
 #ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
 #IAV Plots: corplots and bubble plots
