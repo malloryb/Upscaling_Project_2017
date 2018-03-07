@@ -893,6 +893,10 @@ ggarrange(Fo, Gra, Sav, Shr + rremove("x.text"),
           legend="none",
           ncol = 2, nrow = 2)
 
+#Correlation plot of differences against GPP
+ggplot(Residual_plot, (aes(x=GPP, y=diff, color=Veg)))+geom_point(size=2)+ geom_smooth(method="lm")+ theme_few()+ylab("FluxGPP - JungGPP")+xlab("FluxGPP")
+cor(Residual_plot$GPP, Residual_plot$diff, use="complete.obs")
+
 
 library(stringr)
 str(RMSSD_to_plot)
