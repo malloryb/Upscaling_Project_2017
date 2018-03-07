@@ -797,7 +797,7 @@ list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
 lapply(list_seasons, plot_seasonal_cycle)
 
 #6. Graphs of IAV correlations----------------------------
-Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
 summary(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
@@ -824,6 +824,7 @@ winter <- subset(Merged_Jung_Comp, month==12 | month==1 | month==2)
 winter_out <- split(winter, winter$site.x)
 
 IAV_func <- function(x){
+  require(plyr)
   df <- ddply(x, .(year, site.x), summarize, Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
   return(df)
 }
@@ -844,15 +845,14 @@ fall_to_plot <- do.call(rbind, lapply(fall_out, IAV_func))
 
 #7. Plots of rmssd------------------------
 library(stringr)
-
 str(RMSSD_to_plot)
 RMSSD_to_plot$site <- rownames(RMSSD_to_plot)
 RMSSD_to_plot$site <- str_replace_all(RMSSD_to_plot$site, "us_ray", "mx_ray")
-RMSSD_to_plot$site <- rownames(RMSSD_to_plot)
+RMSSD_to_plot$site <- str_replace_all(RMSSD_to_plot$site, "us_tes", "mx_tes")
 RMSSD_to_plot$site <- as.factor(RMSSD_to_plot$site)
 
 
-Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(Sites)
 levels(Sites$site)
 Sites$site <- str_replace_all(Sites$site, "-", "_")
@@ -860,7 +860,7 @@ levels(RMSSD_to_plot$site)
 
 merged_to_plot <- merge(RMSSD_to_plot, Sites, by="site")
 RMSSD_to_plot$diff <- (RMSSD_to_plot$RMSSDGPP - RMSSD_to_plot$RMSSDJungGPP)
-RMMSD_to_plot
+RMSSD_to_plot
 
 #Using GGPLOT, plot the Base World Map
 mp <- NULL
@@ -879,15 +879,39 @@ mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude",
 
 
 #ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
-require(plyr)
-corfunc <- function(xx)
-{
-  return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP)))
+corfunc <- function(xx){
+  require(plyr)
+    getmode <- function(v) {
+    uniqv <- unique(v)
+    uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
+  
+  return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP, use="complete.obs"), MAP=getmode(xx$MAP)))
 }
 
-ddply(IAV_to_plot, .(site.x), corfunc)
-ddply(spring, .(site.x), corfunc)
-ddply(winter, .(site.x), corfunc)
-ddply(fall, .(site.x), corfunc)
-ddply(summer, .(site.x), corfunc)
+Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+str(Sites)
+Sites$site <- str_replace_all(Sites$site, "-", "_")
+names(IAV_to_plot)[names(IAV_to_plot) == 'site.x'] <- 'site'
+IAV_to_plot$site <- as.factor(str_replace_all(as.character(IAV_to_plot$site), "us_ray", "mx_ray"))
+IAV_to_plot$site <- as.factor(str_replace_all(as.character(IAV_to_plot$site), "us_tes", "mx_tes"))
+str(IAV_to_plot)
+
+IAV_to_plot <- merge(IAV_to_plot, Sites, by="site")
+levels(IAV_to_plot$site)
+levels(Sites$site)
+
+IAVplot <- ddply(IAV_to_plot, .(site), corfunc)
+Springplot <- ddply(spring, .(site), corfunc)
+Winterplot <- ddply(winter, .(site), corfunc)
+Fallplot <- ddply(fall, .(site), corfunc)
+Summerplot <-ddply(summer, .(site), corfunc)
+
+
+ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + theme_minimal()
+
+
+
+#IAV Plots include: corplots and bubble plots
+
 
