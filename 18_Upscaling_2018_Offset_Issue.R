@@ -844,22 +844,53 @@ spring_to_plot <- do.call(rbind, lapply(spring_out, IAV_func))
 winter_to_plot <- do.call(rbind, lapply(winter_out, IAV_func))
 fall_to_plot <- do.call(rbind, lapply(fall_out, IAV_func))
 
-#7. Plots of rmssd & seasonal variability ------------------------\
+#7. Plots of rmssd & seasonal variability ------------------------
 library(ggplot2)
 library(psych)
 library(ggpubr)
 library(stringr)
 library(lubridate)
+library(ggthemes)
+library(plyr)
+library(scales)
 Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 Sites$site <- str_replace_all(Sites$site, "-", "_")
 str(Merged_Jung_Comp)
 Merged_Jung_Comp$diff <- Merged_Jung_Comp$GPP - Merged_Jung_Comp$Jung_GPP
+names(Merged_Jung_Comp)[names(Merged_Jung_Comp) == 'site.x'] <- 'site'
+Sites <- Sites[,c("site", "Vegtype")]
+Veg_merge <- plyr::rename(Sites, c("site"="site", "Vegtype"="Veg"))
+Residual_plot <- merge(Merged_Jung_Comp, Veg_merge, by="site")
 
-ggplot(Merged_Jung_Comp, aes(x=month, y=diff, color=site.x)) + geom_point(size=2) +geom_smooth(aes(group=site.x), method="loess", se=FALSE)+theme_few() 
+#Split apply combine plots
+Y <- split(Residual_plot, Residual_plot$Veg)
+Forest <- Y[[1]]
+Grassland <- Y[[2]]
+Savanna <- Y[[3]]
+Shrubland <- Y[[4]]
+str(residplot)
 
+stdev <- ddply(Residual_plot, .(Veg), summarize, std_dev=sd(diff,na.rm=TRUE))
+formax <- (stdev[1,2]*1.96)
+formin <- -(stdev[1,2]*1.96)
+grassmax <- (stdev[2,2]*1.96)
+grassmin <- -(stdev[2,2]*1.96)
+shrubmax <- (stdev[4,2]*1.96)
+shrubmin <- -(stdev[4,2]*1.96)
+savmax <- (stdev[3,2]*1.96)
+savmin <- -(stdev[3,2]*1.96)
 
-ggarrange(bxp, dp, bp + rremove("x.text"), 
-          labels = c("Forests", "Shrublands", "Grassland", "Desert"),
+ggplot(Residual_plot, aes(x=month, y=diff, color=Veg)) + geom_point(size=2) +geom_smooth(aes(group=Veg), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ ylab("FluxGPP - JungGPP")+ scale_x_continuous(breaks=pretty_breaks())
+Fo <- ggplot(Forest, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0), linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+geom_line(aes(y=(formax)), linetype="dotted", color="black")+geom_line(aes(y=(formin)), linetype="dotted", color="black")
+Gra <- ggplot(Grassland, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(grassmax)), linetype="dotted", color="black")+geom_line(aes(y=(grassmin)), linetype="dotted", color="black")
+Sav <- ggplot(Savanna, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(savmax)), linetype="dotted", color="black")+geom_line(aes(y=(savmin)), linetype="dotted", color="black")
+Shr <- ggplot(Shrubland, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(shrubmax)), linetype="dotted", color="black")+geom_line(aes(y=(shrubmin)), linetype="dotted", color="black")
+
+#apply (and write out)
+
+ggarrange(Fo, Gra, Sav, Shr + rremove("x.text"), 
+          labels = c("Forests", "Grassland", "Savanna", "Shrubland"),
+          legend=NULL,
           ncol = 2, nrow = 2)
 
 
