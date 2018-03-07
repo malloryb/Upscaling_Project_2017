@@ -877,6 +877,7 @@ mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude",
 
 
 #ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
+#IAV Plots: corplots and bubble plots
 
 IAVplot_func <- function(xx){
   require(ggplot2)
@@ -922,20 +923,47 @@ IAVplot_func(summer)
 IAVplot_func(fall) 
 IAVplot_func(winter) 
 
+IAVBubblePlot<- function(xx){
+  require(ggplot2)
+  require(stringr)
+  require(plyr)
+  require(psych)
+  
+  Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  Sites$site <- str_replace_all(Sites$site, "-", "_")
+  
+  
+  names(xx)[names(xx) == 'site.x'] <- 'site'
+  xx$site <- as.factor(str_replace_all(as.character(xx$site), "us_ray", "mx_ray"))
+  xx$site <- as.factor(str_replace_all(as.character(xx$site), "us_tes", "mx_tes"))
+  
+  xxmerge <- merge(xx, Sites, by="site")
+  print(str(xxmerge))
+  
+  corfunc <- function(gg){
+    require(plyr)
+    getmode <- function(v) {
+      uniqv <- unique(v)
+      uniqv[which.max(tabulate(match(v, uniqv)))]
+    }
+    
+    return(data.frame(COR = cor(gg$GPP, gg$Jung_GPP, use="complete.obs"), pval=cor.test(gg$GPP, gg$Jung_GPP)$p.value, RMSSD=rmssd(gg$GPP)))
+  }
+  
+  xxplot <- ddply(xxmerge, .(site), corfunc)
+  summary(xxplot)
+  xxplot$sig <- ifelse(xxplot$pval <0.05, "Significant", "nonsignificant")
+  xxbubble <- merge(xxmerge, xxplot, by="site")
+  print(str(xxbubble))
 
-<- ddply(spring, .(site), corfunc)
-Winterplot <- ddply(winter, .(site), corfunc)
-Fallplot <- ddply(fall, .(site), corfunc)
-Summerplot <-ddply(summer, .(site), corfunc)
+  print(summary(xxbubble))
+  
+  p <- ggplot(xxbubble, aes(x=GPP, y=Jung_GPP, color=sig)) + geom_point(size=2) +geom_smooth(aes(group=site), method="lm", se=FALSE)+theme_few() 
+  plot(p)
+}
 
+  
+IAVBubblePlot(IAV_to_plot)
 
-ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
-ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
-ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
-ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
-
-
-
-#IAV Plots include: corplots and bubble plots
 
 
