@@ -847,10 +847,8 @@ fall_to_plot <- do.call(rbind, lapply(fall_out, IAV_func))
 library(stringr)
 str(RMSSD_to_plot)
 RMSSD_to_plot$site <- rownames(RMSSD_to_plot)
-RMSSD_to_plot$site <- str_replace_all(RMSSD_to_plot$site, "us_ray", "mx_ray")
-RMSSD_to_plot$site <- str_replace_all(RMSSD_to_plot$site, "us_tes", "mx_tes")
-RMSSD_to_plot$site <- as.factor(RMSSD_to_plot$site)
-
+RMSSD_to_plot$site <- as.factor(str_replace_all(RMSSD_to_plot$site, "us_ray", "mx_ray"))
+RMSSD_to_plot$site <- as.factor(str_replace_all(RMSSD_to_plot$site, "us_tes", "mx_tes"))
 
 Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(Sites)
@@ -879,36 +877,62 @@ mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude",
 
 
 #ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
-corfunc <- function(xx){
+
+IAVplot_func <- function(xx){
+  require(ggplot2)
+  require(stringr)
   require(plyr)
-    getmode <- function(v) {
-    uniqv <- unique(v)
-    uniqv[which.max(tabulate(match(v, uniqv)))]
-  }
+  require(psych)
   
-  return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP, use="complete.obs"), MAP=getmode(xx$MAP)))
-}
+  Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  Sites$site <- str_replace_all(Sites$site, "-", "_")
+  
 
-Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
-str(Sites)
-Sites$site <- str_replace_all(Sites$site, "-", "_")
-names(IAV_to_plot)[names(IAV_to_plot) == 'site.x'] <- 'site'
-IAV_to_plot$site <- as.factor(str_replace_all(as.character(IAV_to_plot$site), "us_ray", "mx_ray"))
-IAV_to_plot$site <- as.factor(str_replace_all(as.character(IAV_to_plot$site), "us_tes", "mx_tes"))
-str(IAV_to_plot)
+  names(xx)[names(xx) == 'site.x'] <- 'site'
+  xx$site <- as.factor(str_replace_all(as.character(xx$site), "us_ray", "mx_ray"))
+  xx$site <- as.factor(str_replace_all(as.character(xx$site), "us_tes", "mx_tes"))
+  
+  levels(xx$site)
+  levels(Sites$site)
+  
+  xxmerge <- merge(xx, Sites, by="site")
 
-IAV_to_plot <- merge(IAV_to_plot, Sites, by="site")
-levels(IAV_to_plot$site)
-levels(Sites$site)
+  corfunc <- function(gg){
+    require(plyr)
+    getmode <- function(v) {
+      uniqv <- unique(v)
+      uniqv[which.max(tabulate(match(v, uniqv)))]
+    }
+    
+    return(data.frame(COR = cor(gg$GPP, gg$Jung_GPP, use="complete.obs"), pval=cor.test(gg$GPP, gg$Jung_GPP)$p.value, MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
+  }
+  xxplot <- ddply(xxmerge, .(site), corfunc)
+  summary(xxplot)
+  xxplot$sig <- ifelse(xxplot$pval <0.05, "Significant", "nonsignificant")
+  
+  print(summary(xxplot))
+  
+  p <- ggplot(xxplot, aes(x=MAP, y=COR, color=sig)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  plot(p)
+  }
 
-IAVplot <- ddply(IAV_to_plot, .(site), corfunc)
-Springplot <- ddply(spring, .(site), corfunc)
+IAVplot_func(IAV_to_plot)
+IAVplot_func(spring) 
+IAVplot_func(summer) 
+IAVplot_func(fall) 
+IAVplot_func(winter) 
+
+
+<- ddply(spring, .(site), corfunc)
 Winterplot <- ddply(winter, .(site), corfunc)
 Fallplot <- ddply(fall, .(site), corfunc)
 Summerplot <-ddply(summer, .(site), corfunc)
 
 
-ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + theme_minimal()
+ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
+ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
+ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
+ggplot(IAVplot, aes(x=MAP, y=COR)) + geom_point(size=2) + geom_line(aes(y=0), linetype="dotted")+ theme_few() 
 
 
 
