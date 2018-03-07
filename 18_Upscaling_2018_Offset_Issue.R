@@ -14,6 +14,7 @@ library(lubridate)
 library(tidyverse)
 library(stringr)
 library(SPEI)
+
 #1) Merge daymet files with fixed flux files----------------------
 #Read all three big .csv files and merge by date
 
@@ -33,7 +34,6 @@ Flux_merge$site <- str_replace_all(Flux_merge$site, "us-son", "us-so4")
 Flux_merge$site <- str_replace_all(Flux_merge$site, "us-soo", "us-so2")
 Flux_merge$sitedate <- with(Flux_merge, paste(site,date, sep="-"))
 
-
 #Replace sites "us-ray" and "us-tex" with their proper name (they are from mexiflux not ameriflux)
 Daymet_merge<- subset(Daymet_merge, select = -c(X))
 Daymet_merge$tmed <- ((Daymet_merge$tmax + Daymet_merge$tmin)/2)
@@ -43,7 +43,7 @@ Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-tes", "mx-tes")
 Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
 unique(Daymet_merge$site)
 
-#Set latitudes by site
+#Set latittude by site for SPEI analysis
 str(Daymet_merge)
 IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 IGBP_lookup <- IGBP_lookup[,c("site", "lat")]
@@ -51,7 +51,8 @@ Lat_merge <- plyr::rename(IGBP_lookup, c("site"="site", "lat"="Latitude"))
 Daymet_for_SPEI <- merge(Daymet_merge, Lat_merge, by="site")
 str(Daymet_for_SPEI)
 unique(Daymet_for_SPEI$site)
-#split 
+
+#split apply combine to calculate SPEI from Daymet data 
 #More sites in here than in the lookup file - so should be lots of blanks re: Latitude 
 X <- split(Daymet_for_SPEI, Daymet_for_SPEI$site)
 df1  <- X[[1]]
@@ -79,7 +80,7 @@ df22 <- X[[22]]
 df23 <- X[[23]]
 df24 <- X[[24]]
 
-#SPEI_calc_function
+#SPEI_calc_function - spei1, spei3, spei6, spei9, and spei12 
 SPEI_calc <- function(A){
   A <- A[order(A$date),]
   print(A$site[1])
@@ -120,6 +121,7 @@ str(l.df)
 #Apply & combine in one
 Daymet_merge <- do.call("rbind", lapply(l.df, SPEI_calc))
 
+#Now merge the MODIS, flux, and Daymet files together
 MODIS_merge<- subset(MODIS_merge, select = -c(X))
 MODIS_merge$date <- as.Date(MODIS_merge$date, format="%Y-%m-%d")
 MODIS_merge$site <- str_replace_all(MODIS_merge$site, "us-ray", "mx-ray")
@@ -134,6 +136,7 @@ levels(unlist(as.factor(MODIS_merge$site)))
 head(Daymet_merge)
 head(Flux_merge)
 head(MODIS_merge)
+
 #Merge! And clean up merged mess. Final merged file should have same number
 #of observations as the "flux_merge" file since we should have complete records
 #For both daymet and MODIS - 2197 obs for all
@@ -145,6 +148,7 @@ str(Merged_all)
 #Cleanup
 #Delete extraneous columns
 Merged_all <- subset(Merged_all, select = -c(sitedate, date.x, site.x, date.y, site.y))
+
 #Format_Date
 Merged_all$date <- as.Date(Merged_all$date)
 Merged_all$IGBP <- NA
@@ -163,7 +167,7 @@ str(ALL_inc_IGPB)
 #write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv")
 
 #Get random forest models (this code could be cleaned up significantly) 
-#Run site-based RF with proper variables --------
+#2. Run site-based RF with proper variables ------------------
 library(lubridate)
 library(caret)
 library(randomForest)
@@ -182,16 +186,15 @@ SPEI_Check$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
 SPEI_Check$site_year <- do.call(paste, c(SPEI_Check[c("site", "year")], sep = "_")) 
 str(SPEI_Check)
 
-SPEI_cors <- ddply(SPEI_Check, .(site_year), summarize,
-        spei1mean = mean(spei1,na.rm=TRUE), spei1max= spei1[which.max( abs(spei1))], spei1min=spei1[which.min( abs(spei1))], 
-        spei1med=median_hilow(spei1, na.rm=TRUE), spei12 = first(spei12))
-cor(SPEI_cors$spei12, SPEI_cors$spei1mean, use="complete.obs")
-cor(SPEI_cors$spei12, SPEI_cors$spei1max, use="complete.obs")
-cor(SPEI_cors$spei12, SPEI_cors$spei1min, use="complete.obs")
-cor(SPEI_cors$spei12, SPEI_cors$spei1med, use="complete.obs")
+#Checked out whether SPEI is correlated with other stuff
+#SPEI_cors <- ddply(SPEI_Check, .(site_year), summarize,
+#        spei1mean = mean(spei1,na.rm=TRUE), spei1max= spei1[which.max( abs(spei1))], spei1min=spei1[which.min( abs(spei1))], 
+#        spei1med=median_hilow(spei1, na.rm=TRUE), spei12 = first(spei12))
+#cor(SPEI_cors$spei12, SPEI_cors$spei1mean, use="complete.obs")
+#cor(SPEI_cors$spei12, SPEI_cors$spei1max, use="complete.obs")
+#cor(SPEI_cors$spei12, SPEI_cors$spei1min, use="complete.obs")
+#cor(SPEI_cors$spei12, SPEI_cors$spei1med, use="complete.obs")
 
-#Print first lines
-head(All_sites)
 #Fix column names and add numeric columns
 str(All_sites)
 All_sites$elev <- as.numeric(All_sites$elev)
@@ -200,7 +203,7 @@ All_sites$month <- as.factor(All_sites$month)
 All_sites$precip <- as.numeric(All_sites$precip)
 All_sites$swe <- as.numeric(All_sites$swe)
 
-#3. Prepare your data----------------------
+#Prepare your data
 #Normalization makes data easier for the RF algorithm to learn
 #Two types of normalization: 
 #example normalization (normalize each case individually)
@@ -208,9 +211,9 @@ All_sites$swe <- as.numeric(All_sites$swe)
 #Normalization a good idea when one attribute has a wide range of values compared to others
 
 #User-defined normalization function
-normalize <- function(x) {
-  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
-}
+#normalize <- function(x) {
+#  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
+#}
 
 #Function to see if any cols have NAs. Now that I'm not standardizing GPP anymore having issues w/ NAs
 nacols <- function(df) {
@@ -218,7 +221,6 @@ nacols <- function(df) {
 }
 
 str(All_sites)
-#All_sites <- subset(All_sites, month== 4 | month== 5| month== 6| month==7 | month==8 | month==9)
 All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
                          "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
 
@@ -231,11 +233,10 @@ All_sites$spei3[266] <- 0.908
 All_sites$spei3[1447:1449]
 All_sites$spei3[1448] <- -1.0609
 
-
+#Get rid of non-complete cases and double check
 summary(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
 summary(All_sites)
-str(All_sites)
 
 #No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
@@ -245,20 +246,17 @@ str(All_sites)
 #tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 #Split into training and testing data
-
 #Create index to split based on year
 index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 
-
-#Resample data to overrepresent high GPP observations
+#Resample data to overrepresent high GPP observations(? should I have done this)
 #Subset training set
 All_sites.training <- All_sites[index,]
 All_sites.test <- All_sites[-index,]
 str(All_sites)
 
 #All_sites.trianing <- preProcess(All_sites.training, method = c("center", "scale"))
-
 str(All_sites.training)
 str(All_sites.test)
 
@@ -375,7 +373,6 @@ saveRDS(RF_T3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_3_3.rds")
 saveRDS(RF_F4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_3_3.rds")
 saveRDS(RF_T4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_3_3.rds")
 
-
 RFA1
 RFA2
 lb1 <- paste("R^2 == ", "0.70")
@@ -414,14 +411,17 @@ qplot(predA2, All_sites.test[,5]) +
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   ggtitle("Random forest - A2 (A1 + water balance)")  
 
-
-
-##Running RF models on gridded data subsets --------------------------
+##3. Running RF models on gridded data subsets --------------------------
 library(caret)
 library(randomForest)
 raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif", band=93)
-#Create extents 
+#Giant function to do all analyses and create input data - however doing this on STORM with a
+#modified functino now 
 RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
+  require(SPEI)
+  require(ncdf4)
+  require(raster)
+  require(dplyr)
   #Read in files
   filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
   filenameDayl <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
@@ -669,40 +669,10 @@ Apply_RF(wkg, "us_wkg")
   gc()
 }
 
-
-
-
-
-
 RF_Val_Analysis(band1=85, bandsp=1273, month="Jan", monthno=1, year=2007)
-RF_winter_Analysis(band1=86, month="Feb", monthno=2, year=2007)
-RF_spring_Analysis(band1=87, month="Mar", monthno=3, year=2007)
-RF_spring_Analysis(band1=88, month="Apr", monthno=4, year=2007)
-RF_spring_Analysis(band1=89, month="May", monthno=5, year=2007)
-RF_summer_Analysis(band1=90, month="Jun", monthno=6, year=2007)
-RF_summer_Analysis(band1=91, month="Jul", monthno=7, year=2007)
-RF_summer_Analysis(band1=92, month="Aug", monthno=8, year=2007)
-RF_winter_Analysis(band1=93, month="Sep", monthno=9, year=2007)
-RF_winter_Analysis(band1=94, month="Oct", monthno=10, year=2007)
-RF_winter_Analysis(band1=95, month="Nov", monthno=11, year=2007)
-RF_winter_Analysis(band1=96, month="Dec", monthno=12, year=2007)
-
-library(raster)
 
 
-#Reading SPEIbase netcdf file
-library(ncdf4)
-library(raster)
-library(reshape2)
-library(dplyr)
-library(chron)
-library(lattice)
-library(RColorBrewer)
-
-spei12 <- brick("F:/SPEIBase/spei12.nc")
-spei12[[1273]] 
-
-#Need to merge flux and input files-------------------------------------------------------------
+#4. Comparing Tower flux data and Jung 2017 data------------------------------------------------------------
 library(ggplot2)
 library(lubridate)
 library(plyr)
@@ -751,18 +721,15 @@ Merged_Jung_Comp <- merge(Flux_files, Jung_2017, by="sitedate", all.x=T)
 #Delete columns: site.y, X, X1, monthyear.y
 drops <- c("site.y", "X", "X1", "monthyear.y")
 Merged_Jung_Comp <- Merged_Jung_Comp[, !(names(Merged_Jung_Comp) %in% drops)]
-write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+#write.csv(Merged_Jung_Comp, "F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 
-#Graphing comps----------------------------------------
+#5. Graphing intraseasonal comparisons-----------------------------
 #Need to create some graphs now:
 library(ggthemes)
 library(plyr)
 
 Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
-str(Merged_Jung_Comp)
-levels(Merged_Jung_Comp$site.x)
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
-summary(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
 Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
 Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
@@ -770,30 +737,28 @@ Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
 #Delete all files after 2013 (Fluxcom only goes through 2013)
 Merged_Jung_Comp<-Merged_Jung_Comp[!(Merged_Jung_Comp$year > 2013 | Merged_Jung_Comp$year < 1999),]
 new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
+#Check there's no NAs
 new_DF
 summary(Merged_Jung_Comp)
 
-sd(Merged_Jung_Comp$Jung_GPP)
-#Need both interannual and seasonal graphs and correlations
-#First let's make the graphs comparing seasonal cycles 
 #Split - apply - combine 
+#split
 out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
 str(out)
+#Apply
 seasonal_func <- function(x){
   df <- ddply(x, .(month, site.x), summarize, Jung_se=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP[!is.na(Jung_GPP)])) , Jung_GPP=mean(Jung_GPP, na.rm=TRUE), GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])) , GPP=mean(GPP, na.rm=TRUE))
   return(df)
 }
 
 lapply(out, seasonal_func)
+#Combine
 seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
-str(seasonal_to_plot)
 seasonal_to_plot
 names(seasonal_to_plot)[names(seasonal_to_plot) == 'site.x'] <- 'site'
 
-#going to have to create a plotting function to plot all of these separately (and write out)
-#write out plot
-#write out correlation?
-#plot graph 
+#Plotting function that plots all sites serparately and writes out graphs
+#Where to write out .png files
 setwd("D:/Upscaling_Project/Jung_Comps/")
 
 plot_seasonal_cycle <- function(x){
@@ -826,11 +791,13 @@ plot_seasonal_cycle <- function(x){
     ggsave(filename, device='png', width=16, height=16, plot=q, dpi = 300, units = "cm")
          }
 
+#split
 list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
+#apply (and write out)
 lapply(list_seasons, plot_seasonal_cycle)
-#IAV correlations
+
+#6. Graphs of IAV correlations----------------------------
 Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
-str(Merged_Jung_Comp)
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
 summary(Merged_Jung_Comp)
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
@@ -840,10 +807,11 @@ Merged_Jung_Comp$year <- year(Merged_Jung_Comp$date)
 #Delete all files after 2013 (Fluxcom only goes through 2013)
 Merged_Jung_Comp<-Merged_Jung_Comp[!(Merged_Jung_Comp$year > 2013 | Merged_Jung_Comp$year < 1999),]
 new_DF <- Merged_Jung_Comp[is.na(Merged_Jung_Comp$Jung_GPP),]
+#Double check there's no NA's in here
 new_DF
 summary(Merged_Jung_Comp)
-#get IAV (by site...)
-#ddply to get annual sums of GPP (IAV)
+
+#split apply combine (with ddply) to get annual and seasonal sums of GPP (IAV)
 out <- split(Merged_Jung_Comp, Merged_Jung_Comp$site.x)
 str(out)
 summer <- subset(Merged_Jung_Comp, month==6 | month==7 | month==8)
@@ -860,36 +828,21 @@ IAV_func <- function(x){
   return(df)
 }
 
-require(psych)
+
 rmssdfunc <- function(xx)
-{
+{require(psych)
   return(data.frame(RMSSDGPP = rmssd(xx$GPP), RMSSDJungGPP= rmssd(xx$Jung_GPP)))
 }
 
 RMSSD_to_plot <- do.call(rbind, lapply(out, rmssdfunc))
 IAV_to_plot <- do.call(rbind, lapply(out, IAV_func))
 str(IAV_to_plot)
-summer <- do.call(rbind, lapply(summer_out, IAV_func))
-spring <- do.call(rbind, lapply(spring_out, IAV_func))
-winter <- do.call(rbind, lapply(winter_out, IAV_func))
-fall <- do.call(rbind, lapply(fall_out, IAV_func))
+summer_to_plot <- do.call(rbind, lapply(summer_out, IAV_func))
+spring_to_plot <- do.call(rbind, lapply(spring_out, IAV_func))
+winter_to_plot <- do.call(rbind, lapply(winter_out, IAV_func))
+fall_to_plot <- do.call(rbind, lapply(fall_out, IAV_func))
 
-#ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
-
-
-require(plyr)
-corfunc <- function(xx)
-{
-  return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP)))
-}
-
-ddply(IAV_to_plot, .(site.x), corfunc)
-ddply(spring, .(site.x), corfunc)
-ddply(winter, .(site.x), corfunc)
-ddply(fall, .(site.x), corfunc)
-ddply(summer, .(site.x), corfunc)
-
-#Plots of rmssd------------------------
+#7. Plots of rmssd------------------------
 library(stringr)
 
 str(RMSSD_to_plot)
@@ -908,6 +861,7 @@ levels(RMSSD_to_plot$site)
 merged_to_plot <- merge(RMSSD_to_plot, Sites, by="site")
 RMSSD_to_plot$diff <- (RMSSD_to_plot$RMSSDGPP - RMSSD_to_plot$RMSSDJungGPP)
 RMMSD_to_plot
+
 #Using GGPLOT, plot the Base World Map
 mp <- NULL
 mapWorld <- borders("world", regions=c("Mexico", "USA"), colour="gray50", fill="gray50") # create a layer of borders
@@ -921,4 +875,19 @@ mp_plot <- mp+ geom_point(aes(x=merged_to_plot$long, y=merged_to_plot$lat, colou
   coord_map(xlim = c(-123,-103), ylim = c(23,41))
 
 mp_plot+ theme_bw(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="Latitude") 
+
+
+
+#ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
+require(plyr)
+corfunc <- function(xx)
+{
+  return(data.frame(COR = cor(xx$GPP, xx$Jung_GPP)))
+}
+
+ddply(IAV_to_plot, .(site.x), corfunc)
+ddply(spring, .(site.x), corfunc)
+ddply(winter, .(site.x), corfunc)
+ddply(fall, .(site.x), corfunc)
+ddply(summer, .(site.x), corfunc)
 
