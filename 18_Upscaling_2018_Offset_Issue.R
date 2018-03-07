@@ -889,8 +889,8 @@ Shr <- ggplot(Shrubland, aes(x=month, y=diff, color=site)) + geom_point(size=2) 
 #apply (and write out)
 
 ggarrange(Fo, Gra, Sav, Shr + rremove("x.text"), 
-          labels = c("Forests", "Grassland", "Savanna", "Shrubland"),
-          legend=NULL,
+          labels = c("Forest", "Grass", "Savanna", "Shrub"), vjust=1.5, hjust=-0.4, 
+          legend="none",
           ncol = 2, nrow = 2)
 
 
