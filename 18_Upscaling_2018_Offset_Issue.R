@@ -1019,7 +1019,11 @@ IAVBubblePlot(IAV_to_plot)
 
 #8. Now looking at the Barnes et al. 2018 upscaled flux data-----------------------------
 library(raster)
-
-
-
+test <- raster("F:/Upscaling_Project/Upscaled_GPP/RF_F3/Apr_2001_us_aud.tif")
+Files <- list.files(path="F:/Upscaling_Project/Uspcaled_GPP/RF_F3", pattern="*.tif", all.files = TRUE)
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F3/")
+Files <- list.files(pattern="*.tif")
+#Function should: 
+#Read all files together from given site
+#
 
