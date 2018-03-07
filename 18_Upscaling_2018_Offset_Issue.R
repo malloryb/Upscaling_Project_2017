@@ -1017,5 +1017,9 @@ IAVBubblePlot<- function(xx){
   
 IAVBubblePlot(IAV_to_plot)
 
+#8. Now looking at the Barnes et al. 2018 upscaled flux data-----------------------------
+library(raster)
+
+
 
 
