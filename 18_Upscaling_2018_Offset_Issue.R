@@ -1019,6 +1019,8 @@ IAVBubblePlot(IAV_to_plot)
 
 #8. Now looking at the Barnes et al. 2018 upscaled flux data-----------------------------
 library(raster)
+library(plyr)
+library(tibble)
 #Function should: 
 #Read all files together from given site
 
@@ -1030,54 +1032,39 @@ test <- Files[[363]]
 format_Barnesoutput(test)
 
 format_Barnesoutput <- function(xx){
+  require("raster")
+  require("lubridate")
+  #get function filename
   filename <- tools::file_path_sans_ext(basename(xx))
+  #read in site 
   xx <- raster(xx)
   print(filename)
   site <- substr(filename,12,15)
-  sitedf <- data.frame(Site=character(),
-                       lat=character(),
-                       long=character())
-  sitedf$Site[1,] <- substr(filename, 12, 15)
-  print(sitedf)
+  site_df <- data.frame(site=substr(filename,13,15))
+  print(site_df)
 
   #some sort of lookup table is needed 
   lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
   lookup$sitechar <- substr(lookup$site, 4,6)
   print(lookup)
-  lookup<- match(site, lookup)
   point <- data.frame("site" = lookup$sitechar, 
                     "lat" = lookup$lat, 
                     "long" = lookup$long) 
   print(point)
-  Merge <- merge(sitedf, point, by="site")
-  Stats <- cellStats(xx,stat='mean', na.rm=TRUE)
-  print(Stats)
-  Stats <- tibble::rownames_to_column(Stats)
-  print(Stats)
-  
-  
+  merged <- merge(site_df, point, by="site")
+  print(merged)
+  merged$stats <- cellStats(xx,stat='mean', na.rm=TRUE)
+  merged$file <- filename
+  merged$month <- tolower(substr(merged$file, 1,3))
+  merged$year<-substr(merged$file, 5,8)
+  merged$site <- substr(merged$file, 10,15)
+  print(merged)
+  merged$monthyear <- paste(merged$month, merged$year, sep="_")
+  merged$date <- as.Date(paste("01", merged$monthyear, sep="_"), format="%d_%b_%Y")
+  print(merged)
   }
 
-str(AUDstats)
-AUDstat <- as.data.frame(AUDstats)
-AUDstat <- tibble::rownames_to_column(AUDstat)
-colnames(AUDstat) <- c("file", "scenemean")
-stackAud <- stack(Aud_files)
-Audpoint <- cbind(-110.509, 31.591)
-AUDresult <- extract(stackAud, Audpoint)
-typeof(AUDresult)
-str(AUDresult)
-test <- as.data.frame(as.table(AUDresult))
-test[1] <- NULL
-colnames(test) <- c("file", "point")
-merged <- merge(test, AUDstat)
-merged$month<-substr(merged$file, 1,3)
-merged$year<-substr(merged$file, 5,8)
-merged$site <- substr(merged$file, 10,15)
-merged$month <- strptime(merged$month, format="%b")
-merged$monthyear <- paste(merged$month, merged$year, sep="_")
-merged$date <- as.Date(paste("01", merged$monthyear, sep="_"), format="%d_%b_%Y")
-merged
+
 
 
 #can't I just rbind everything together then organize later? 
