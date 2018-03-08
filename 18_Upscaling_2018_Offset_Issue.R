@@ -1019,11 +1019,65 @@ IAVBubblePlot(IAV_to_plot)
 
 #8. Now looking at the Barnes et al. 2018 upscaled flux data-----------------------------
 library(raster)
-test <- raster("F:/Upscaling_Project/Upscaled_GPP/RF_F3/Apr_2001_us_aud.tif")
-Files <- list.files(path="F:/Upscaling_Project/Uspcaled_GPP/RF_F3", pattern="*.tif", all.files = TRUE)
-setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F3/")
-Files <- list.files(pattern="*.tif")
 #Function should: 
 #Read all files together from given site
-#
 
+test <- raster("F:/Upscaling_Project/Upscaled_GPP/RF_F3/Apr_2001_us_aud.tif")
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F3/")
+Files <- list.files(pattern="*.tif", all.files = TRUE)
+test <- Files[[363]]
+
+format_Barnesoutput(test)
+
+format_Barnesoutput <- function(xx){
+  filename <- tools::file_path_sans_ext(basename(xx))
+  xx <- raster(xx)
+  print(filename)
+  site <- substr(filename,12,15)
+  sitedf <- data.frame(Site=character(),
+                       lat=character(),
+                       long=character())
+  sitedf$Site[1,] <- substr(filename, 12, 15)
+  print(sitedf)
+
+  #some sort of lookup table is needed 
+  lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  lookup$sitechar <- substr(lookup$site, 4,6)
+  print(lookup)
+  lookup<- match(site, lookup)
+  point <- data.frame("site" = lookup$sitechar, 
+                    "lat" = lookup$lat, 
+                    "long" = lookup$long) 
+  print(point)
+  Merge <- merge(sitedf, point, by="site")
+  Stats <- cellStats(xx,stat='mean', na.rm=TRUE)
+  print(Stats)
+  Stats <- tibble::rownames_to_column(Stats)
+  print(Stats)
+  
+  
+  }
+
+str(AUDstats)
+AUDstat <- as.data.frame(AUDstats)
+AUDstat <- tibble::rownames_to_column(AUDstat)
+colnames(AUDstat) <- c("file", "scenemean")
+stackAud <- stack(Aud_files)
+Audpoint <- cbind(-110.509, 31.591)
+AUDresult <- extract(stackAud, Audpoint)
+typeof(AUDresult)
+str(AUDresult)
+test <- as.data.frame(as.table(AUDresult))
+test[1] <- NULL
+colnames(test) <- c("file", "point")
+merged <- merge(test, AUDstat)
+merged$month<-substr(merged$file, 1,3)
+merged$year<-substr(merged$file, 5,8)
+merged$site <- substr(merged$file, 10,15)
+merged$month <- strptime(merged$month, format="%b")
+merged$monthyear <- paste(merged$month, merged$year, sep="_")
+merged$date <- as.Date(paste("01", merged$monthyear, sep="_"), format="%d_%b_%Y")
+merged
+
+
+#can't I just rbind everything together then organize later? 
