@@ -1026,10 +1026,13 @@ library(tibble)
 
 test <- raster("F:/Upscaling_Project/Upscaled_GPP/RF_F3/Apr_2001_us_aud.tif")
 setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F3/")
-Files <- list.files(pattern="*.tif", all.files = TRUE)
-test <- Files[[363]]
+RFFiles <- list.files(pattern="*.tif", all.files = TRUE)
+str(RF_F3)
 
-format_Barnesoutput(test)
+RF_F3 <- do.call("rbind", lapply(RFFiles, format_Barnesoutput))
+RF_F3[with(RF_F3, order(site, date)), ]
+str(RF_F3)
+write.csv(RF_F3, "F:/Upscaling_Project/Upscaled_GPP/RF_F3_2001_2013.csv")
 
 format_Barnesoutput <- function(xx){
   require("raster")
@@ -1041,27 +1044,22 @@ format_Barnesoutput <- function(xx){
   print(filename)
   site <- substr(filename,12,15)
   site_df <- data.frame(site=substr(filename,13,15))
-  print(site_df)
-
   #some sort of lookup table is needed 
   lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
   lookup$sitechar <- substr(lookup$site, 4,6)
-  print(lookup)
   point <- data.frame("site" = lookup$sitechar, 
                     "lat" = lookup$lat, 
                     "long" = lookup$long) 
-  print(point)
   merged <- merge(site_df, point, by="site")
-  print(merged)
   merged$stats <- cellStats(xx,stat='mean', na.rm=TRUE)
   merged$file <- filename
   merged$month <- tolower(substr(merged$file, 1,3))
   merged$year<-substr(merged$file, 5,8)
   merged$site <- substr(merged$file, 10,15)
-  print(merged)
   merged$monthyear <- paste(merged$month, merged$year, sep="_")
   merged$date <- as.Date(paste("01", merged$monthyear, sep="_"), format="%d_%b_%Y")
   print(merged)
+  return(merged)
   }
 
 
