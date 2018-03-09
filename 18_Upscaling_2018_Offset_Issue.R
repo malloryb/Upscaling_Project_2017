@@ -15,6 +15,37 @@ library(tidyverse)
 library(stringr)
 library(SPEI)
 
+merge.with.order <- function(x,y, ..., sort = T, keep_order)
+{
+  #Function from here: https://www.r-statistics.com/2012/01/merging-two-data-frame-objects-while-preserving-the-rows-order/
+  # this function works just like merge, only that it adds the option to return the merged data.frame ordered by x (1) or by y (2)
+  add.id.column.to.data <- function(DATA)
+  {
+    data.frame(DATA, id... = seq_len(nrow(DATA)))
+  }
+  # add.id.column.to.data(data.frame(x = rnorm(5), x2 = rnorm(5)))
+  order.by.id...and.remove.it <- function(DATA)
+  {
+    # gets in a data.frame with the "id..." column.  Orders by it and returns it
+    if(!any(colnames(DATA)=="id...")) stop("The function order.by.id...and.remove.it only works with data.frame objects which includes the 'id...' order column")
+    
+    ss_r <- order(DATA$id...)
+    ss_c <- colnames(DATA) != "id..."
+    DATA[ss_r, ss_c]
+  }
+  
+  # tmp <- function(x) x==1; 1	# why we must check what to do if it is missing or not...
+  # tmp()
+  
+  if(!missing(keep_order))
+  {
+    if(keep_order == 1) return(order.by.id...and.remove.it(merge(x=add.id.column.to.data(x),y=y,..., sort = FALSE)))
+    if(keep_order == 2) return(order.by.id...and.remove.it(merge(x=x,y=add.id.column.to.data(y),..., sort = FALSE)))
+    # if you didn't get "return" by now - issue a warning.
+    warning("The function merge.with.order only accepts NULL/1/2 values for the keep_order variable")
+  } else {return(merge(x=x,y=y,..., sort = sort))}
+}
+
 #1) Merge daymet files with fixed flux files----------------------
 #Read all three big .csv files and merge by date
 
@@ -1024,16 +1055,6 @@ library(tibble)
 #Function should: 
 #Read all files together from given site
 
-test <- raster("F:/Upscaling_Project/Upscaled_GPP/RF_F3/Apr_2001_us_aud.tif")
-setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F3/")
-RFFiles <- list.files(pattern="*.tif", all.files = TRUE)
-str(RF_F3)
-
-RF_F3 <- do.call("rbind", lapply(RFFiles, format_Barnesoutput))
-RF_F3[with(RF_F3, order(site, date)), ]
-str(RF_F3)
-write.csv(RF_F3, "F:/Upscaling_Project/Upscaled_GPP/RF_F3_2001_2013.csv")
-
 format_Barnesoutput <- function(xx){
   require("raster")
   require("lubridate")
@@ -1048,9 +1069,12 @@ format_Barnesoutput <- function(xx){
   lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
   lookup$sitechar <- substr(lookup$site, 4,6)
   point <- data.frame("site" = lookup$sitechar, 
-                    "lat" = lookup$lat, 
-                    "long" = lookup$long) 
+                      "lat" = lookup$lat, 
+                      "long" = lookup$long)
   merged <- merge(site_df, point, by="site")
+  sitepoint <- cbind(as.numeric(merged$long), as.numeric(merged$lat))
+  print(sitepoint)
+  merged$result <- extract(xx, sitepoint)
   merged$stats <- cellStats(xx,stat='mean', na.rm=TRUE)
   merged$file <- filename
   merged$month <- tolower(substr(merged$file, 1,3))
@@ -1060,9 +1084,159 @@ format_Barnesoutput <- function(xx){
   merged$date <- as.Date(paste("01", merged$monthyear, sep="_"), format="%d_%b_%Y")
   print(merged)
   return(merged)
+}
+
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F3/")
+RFF3Files <- list.files(pattern="*.tif", all.files = TRUE)
+RF_F3 <- do.call("rbind", lapply(RFF3Files, format_Barnesoutput))
+RF_F3[with(RF_F3, order(site, date)), ]
+str(RF_F3)
+write.csv(RF_F3, "F:/Upscaling_Project/Upscaled_GPP/RF_F3_2001_2013.csv")
+
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_F4/")
+RFF4Files <- list.files(pattern="*.tif", all.files = TRUE)
+RF_F4 <- do.call("rbind", lapply(RFF4Files, format_Barnesoutput))
+RF_F4[with(RF_F4, order(site, date)), ]
+str(RF_F4)
+write.csv(RF_F4, "F:/Upscaling_Project/Upscaled_GPP/RF_F4_2001_2013.csv")
+
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_T3/")
+RFT3Files <- list.files(pattern="*.tif", all.files = TRUE)
+RF_T3 <- do.call("rbind", lapply(RFT3Files, format_Barnesoutput))
+RF_T3[with(RF_T3, order(site, date)), ]
+str(RF_T3)
+write.csv(RF_T3, "F:/Upscaling_Project/Upscaled_GPP/RF_T3_2001_2013.csv")
+
+
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_T4/")
+RFT4Files <- list.files(pattern="*.tif", all.files = TRUE)
+RF_T4 <- do.call("rbind", lapply(RFT4Files, format_Barnesoutput))
+RF_T4[with(RF_T4, order(site, date)), ]
+str(RF_T4)
+write.csv(RF_T4, "F:/Upscaling_Project/Upscaled_GPP/RF_T4_2001_2013.csv")
+
+#9. Compare my models to real flux data ----------------------------------
+RF_F3 <- read.csv("F:/Upscaling_Project/Upscaled_GPP/RF_F3_2001_2013.csv")
+RF_F3 <- plyr::rename(RF_F3, c("result"="RFF3result", "stats"="RFF3mean"))
+RF_T3 <- read.csv("F:/Upscaling_Project/Upscaled_GPP/RF_T3_2001_2013.csv")
+RF_T3 <- plyr::rename(RF_T3, c("result"="RFT3result", "stats"="RFT3mean"))
+RF_F4<- read.csv("F:/Upscaling_Project/Upscaled_GPP/RF_F4_2001_2013.csv")
+RF_F4 <- plyr::rename(RF_F4, c("result"="RFF4result", "stats"="RFF4mean"))
+RF_T4<- read.csv("F:/Upscaling_Project/Upscaled_GPP/RF_T4_2001_2013.csv")
+RF_T4 <- plyr::rename(RF_T4, c("result"="RFT4result", "stats"="RFT4mean"))
+
+RFint <- merge(RF_F3, RF_F4[, c("RFF4result", "RFF4mean", "file")], by="file")
+RFint2<- merge(RFint, RF_T3[, c("RFT3result", "RFT3mean", "file")], by="file")
+RFall <- merge(RFint2,RF_T4[, c("RFT4result", "RFT4mean", "file")], by="file")
+head(RFall)
+str(RFall)
+RFall <- subset(RFall, select=-c(X))
+#Merge with fluxfiles 
+Flux_files <- read.csv("F:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
+#Merge by "site_date" column
+str(Flux_files)
+Flux_files$site <- str_replace_all(Flux_files$site, "us-soy", "us-so3")
+Flux_files$site <- str_replace_all(Flux_files$site, "us-sob", "us-so2")
+Flux_files$site <- str_replace_all(Flux_files$site, "us-son", "us-so4")
+Flux_files$site <- str_replace_all(Flux_files$site, "us-soo", "us-so2")
+Flux_files$monthyear <- (gsub('([[:punct:]])|\\-','_',Flux_files$monthyear))
+Flux_files$site <- (gsub('([[:punct:]])|\\-','_',Flux_files$site))
+Flux_files$site <- as.factor(Flux_files$site)
+Flux_files$file <- as.factor(paste(Flux_files$monthyear, Flux_files$site, sep="_"))
+levels(Flux_files$file)
+levels(RFall$file)
+Flux_files_merge <- Flux_files[,c("file", "GPP")]
+RFall2 <- merge.with.order(RFall, Flux_files_merge, by="file", all.x=TRUE, keep_order=1)
+head(RFall2)
+
+write.csv(RFall2, "F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP.csv")
+
+
+RFall2 <- read.csv("F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP.csv")
+str(RFall2)
+toBeRemoved<-which(RFall2$site=="mx_ray" | RFall2$site=="mx_tes" | RFall2$site == "us_lpa") 
+RFall2<-RFall2[-toBeRemoved,] 
+complete.cases(RFall2)
+
+IAV_func2 <- function(x){
+  require(plyr)
+  df <- ddply(x, .(year, site), summarize, RFFF3result=sum(RFF3result, na.rm=TRUE), RFF4result=sum(RFF4result), RFT4result=sum(RFT4result), 
+              RFT3result=sum(RFT3result), RFF3mean=sum(RFF3mean),RFT3mean=sum(RFT3mean),RFF4mean=sum(RFF4mean),RFT4mean=sum(RFT4mean), GPP=sum(GPP, na.rm=TRUE))
+  return(df)
+}
+
+IAVplot_myRF_func <- function(xx, yy){
+  require(ggplot2)
+  require(stringr)
+  require(plyr)
+  require(psych)
+  
+  Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  Sites$site <- as.factor(str_replace_all(Sites$site, "-", "_"))
+  
+  result <-paste(yy, "result", sep="")
+  scene <- paste(yy, "mean", sep="")
+  
+  xxtomerge <- xx[, c(eval(as.character(result)), eval(as.character(scene)), "GPP", "site", "date", "month", "year", "monthyear")]
+  
+  merge.with.order <- function(x,y, ..., sort = T, keep_order)
+  {
+    #Function from here: https://www.r-statistics.com/2012/01/merging-two-data-frame-objects-while-preserving-the-rows-order/
+    # this function works just like merge, only that it adds the option to return the merged data.frame ordered by x (1) or by y (2)
+    add.id.column.to.data <- function(DATA)
+    {
+      data.frame(DATA, id... = seq_len(nrow(DATA)))
+          }
+    # add.id.column.to.data(data.frame(x = rnorm(5), x2 = rnorm(5)))
+    order.by.id...and.remove.it <- function(DATA)
+    {
+      # gets in a data.frame with the "id..." column.  Orders by it and returns it
+      if(!any(colnames(DATA)=="id...")) stop("The function order.by.id...and.remove.it only works with data.frame objects which includes the 'id...' order column")
+      
+      ss_r <- order(DATA$id...)
+      ss_c <- colnames(DATA) != "id..."
+      DATA[ss_r, ss_c]
+    }
+    
+    # tmp <- function(x) x==1; 1	# why we must check what to do if it is missing or not...
+    # tmp()
+    
+    if(!missing(keep_order))
+    {
+      if(keep_order == 1) return(order.by.id...and.remove.it(merge(x=add.id.column.to.data(x),y=y,..., sort = FALSE)))
+      if(keep_order == 2) return(order.by.id...and.remove.it(merge(x=x,y=add.id.column.to.data(y),..., sort = FALSE)))
+      # if you didn't get "return" by now - issue a warning.
+      warning("The function merge.with.order only accepts NULL/1/2 values for the keep_order variable")
+    } else {return(merge(x=x,y=y,..., sort = sort))}
   }
+  
+  
+  xxmerge <- merge.with.order(xxtomerge, Sites, by="site", all.x=TRUE, keep_order = 1)
+  print(head(xxmerge))
+  print(xxmerge$GPP)
+  print(xxmerge[,2])
+  corfunc <- function(gg){
+    require(plyr)
+    getmode <- function(v) {
+      uniqv <- unique(v)
+      uniqv[which.max(tabulate(match(v, uniqv)))]
+    }
+    
+    return(data.frame(COR = cor(gg$GPP, gg[,2], use="p"), MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
+  }
+  
+  
+  xxplot <- ddply(xxmerge, .(site), corfunc)
+  summary(xxplot)
+  xxplot$sig <- ifelse(xxplot$pval <0.05, "Significant", "nonsignificant")
+  
+  print(summary(xxplot))
+  
+  p <- ggplot(xxplot, aes(x=MAP, y=COR, color=sig)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  plot(p)
+}
 
+RFIAV <- IAV_func2(RFall2)
 
+IAVplot_myRF_func(RFall2, "RFF3")
 
-
-#can't I just rbind everything together then organize later? 
