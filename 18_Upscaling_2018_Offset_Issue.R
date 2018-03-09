@@ -1132,6 +1132,7 @@ head(RFall)
 str(RFall)
 RFall <- subset(RFall, select=-c(X))
 #Merge with fluxfiles 
+RFall <- read.csv("F:/Upscaling_Project/Upscaled_GPP/myRFmodels.csv")
 Flux_files <- read.csv("F:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
 #Merge by "site_date" column
 str(Flux_files)
@@ -1146,22 +1147,23 @@ Flux_files$file <- as.factor(paste(Flux_files$monthyear, Flux_files$site, sep="_
 levels(Flux_files$file)
 levels(RFall$file)
 Flux_files_merge <- Flux_files[,c("file", "GPP")]
-RFall2 <- merge.with.order(RFall, Flux_files_merge, by="file", all.x=TRUE, keep_order=1)
+RFall2 <- merge.with.order(RFall, Flux_files_merge, by="file", keep_order=1)
 head(RFall2)
-
+str(RFall2)
 write.csv(RFall2, "F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP.csv")
 
-
+#Starting with RFall2 (saved version)
 RFall2 <- read.csv("F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP.csv")
 str(RFall2)
 toBeRemoved<-which(RFall2$site=="mx_ray" | RFall2$site=="mx_tes" | RFall2$site == "us_lpa") 
 RFall2<-RFall2[-toBeRemoved,] 
-complete.cases(RFall2)
 
 IAV_func2 <- function(x){
   require(plyr)
-  df <- ddply(x, .(year, site), summarize, RFFF3result=sum(RFF3result, na.rm=TRUE), RFF4result=sum(RFF4result), RFT4result=sum(RFT4result), 
-              RFT3result=sum(RFT3result), RFF3mean=sum(RFF3mean),RFT3mean=sum(RFT3mean),RFF4mean=sum(RFF4mean),RFT4mean=sum(RFT4mean), GPP=sum(GPP, na.rm=TRUE))
+  require(lubridate)
+  df <- ddply(x, .(year, site), summarize, RFF3result=sum(RFF3result, na.rm=TRUE), RFF4result=sum(RFF4result, na.rm=TRUE), RFT4result=sum(RFT4result, na.rm=TRUE), 
+              RFT3result=sum(RFT3result,na.rm=TRUE), RFF3mean=sum(RFF3mean, na.rm=TRUE),RFT3mean=sum(RFT3mean, na.rm=TRUE),RFF4mean=sum(RFF4mean, na.rm=TRUE),RFT4mean=sum(RFT4mean, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
+  df$date <- as.Date(paste("01_01", as.character(df$year), sep="_"), format="%d_%m_%Y")
   return(df)
 }
 
@@ -1170,6 +1172,7 @@ IAVplot_myRF_func <- function(xx, yy){
   require(stringr)
   require(plyr)
   require(psych)
+  require(ggthemes)
   
   Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
   Sites$site <- as.factor(str_replace_all(Sites$site, "-", "_"))
@@ -1177,7 +1180,7 @@ IAVplot_myRF_func <- function(xx, yy){
   result <-paste(yy, "result", sep="")
   scene <- paste(yy, "mean", sep="")
   
-  xxtomerge <- xx[, c(eval(as.character(result)), eval(as.character(scene)), "GPP", "site", "date", "month", "year", "monthyear")]
+  xxtomerge <- xx[, c(eval(as.character(result)), eval(as.character(scene)), "GPP", "site", "date", "year")]
   
   merge.with.order <- function(x,y, ..., sort = T, keep_order)
   {
@@ -1212,9 +1215,8 @@ IAVplot_myRF_func <- function(xx, yy){
   
   
   xxmerge <- merge.with.order(xxtomerge, Sites, by="site", all.x=TRUE, keep_order = 1)
-  print(head(xxmerge))
-  print(xxmerge$GPP)
-  print(xxmerge[,2])
+
+  
   corfunc <- function(gg){
     require(plyr)
     getmode <- function(v) {
@@ -1222,21 +1224,35 @@ IAVplot_myRF_func <- function(xx, yy){
       uniqv[which.max(tabulate(match(v, uniqv)))]
     }
     
-    return(data.frame(COR = cor(gg$GPP, gg[,2], use="p"), MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
+   return(data.frame(CORpoint = cor(gg$GPP, gg[,2], use="complete.obs"), pvalpoint=cor.test(gg$GPP, gg[,2])$p.value, 
+                    CORscene=cor(gg$GPP, gg[,3], use="complete.obs"), pvalscene=cor.test(gg$GPP, gg[,3])$p.value, MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
   }
   
   
   xxplot <- ddply(xxmerge, .(site), corfunc)
   summary(xxplot)
-  xxplot$sig <- ifelse(xxplot$pval <0.05, "Significant", "nonsignificant")
+  xxplot$sigpoint <- ifelse(xxplot$pvalpoint <0.05, "Significant", "nonsignificant")
+  xxplot$sigscene <- ifelse(xxplot$pvalscene <0.05, "Significant", "nonsignificant")
   
   print(summary(xxplot))
   
-  p <- ggplot(xxplot, aes(x=MAP, y=COR, color=sig)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  p <- ggplot(xxplot, aes(x=MAP, y=CORpoint, color=sigpoint)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few()+ggtitle(paste(eval(yy), "point", sep=" ")) 
   plot(p)
+  
+  q <- ggplot(xxplot, aes(x=MAP, y=CORscene, color=sigscene)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few()+ggtitle(paste(eval(yy), "scene", sep=" ")) 
+  plot(q)
 }
 
 RFIAV <- IAV_func2(RFall2)
 
-IAVplot_myRF_func(RFall2, "RFF3")
+toBeRemoved2 <- which(RFIAV$GPP == 0)
+RFIAV<-RFIAV[-toBeRemoved2,] 
 
+
+IAVplot_myRF_func(RFIAV, "RFF3")
+
+IAVplot_myRF_func(RFIAV, "RFF4")
+
+IAVplot_myRF_func(RFIAV, "RFT3")
+
+IAVplot_myRF_func(RFIAV, "RFT4")
