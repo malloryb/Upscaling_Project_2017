@@ -48,8 +48,6 @@ spei <- getspei[,c("sitedate","spei12","spei1", "spei6", "spei3")]
 str(spei)
 levels(getspei$sitedate)
 levels(merged$sitedate)
-str(for_fig_1)
-
 #Function to calculate correlation between spei and monthly GPP 
 corfunc <- function(gg){
   require(plyr)
@@ -64,11 +62,23 @@ corfunc <- function(gg){
 for_fig_1 <- merge(merged, spei, all.x=T)
 for_fig_1$X <- NULL
 for_fig_1$site.x <- NULL
-for_fig_1$month <- as.factor(for_fig_1$month)
 
 #Testing out the corfunc
 corfunc(for_fig_1)
 
+
+#Checking out IAV--------------
+
+IAV_to_plot <-ddply(for_fig_1, .(year, site), summarize, Barnes_GPP=sum(Barnes_GPP, na.rm=TRUE), Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
+
+
+
+
+
+
+
+
+#Creating diagnostic plots-----------------------------------------------------------------------------
 #Subsetting only cases with Flux GPP
 Subs1<-subset(for_fig_1, (!is.na(for_fig_1[,9])))
 str(Subs1)
@@ -80,8 +90,8 @@ GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])), GPP=mean(GPP, na.rm=T
 #Plotting function that plots all sites serparately and writes out graphs
 #Where to write out .png files
 setwd("F:/Upscaling_Project/Upscaled_GPP/")
-list_seasonsRF <- split(plot_seasonal_cycle, plot_seasonal_cycle$site)
-str(seasonal_to_plot)
+list_seasons <- split(plot_seasonal_cycle, plot_seasonal_cycle$site)
+str(list_seasons)
 plot_seasonal_cycle_1 <- function(x){
   require("ggplot2")
   require("ggthemes")
@@ -90,117 +100,45 @@ plot_seasonal_cycle_1 <- function(x){
   require("ggpubr")
   print(str(x))
   droplevels(x)
-  r<- as.character(round(cor(x$GPP, x$RFF3point, use="complete.obs"), 3))
-  s<- as.character(round(cor(x$GPP, x$RFF3scene, use="complete.obs"), 3))
-  t<- as.character(round(cor(x$GPP, x$RFT3point, use="complete.obs"), 3))
-  u<- as.character(round(cor(x$GPP, x$RFT3scene, use="complete.obs"), 3))
-  v<- as.character(round(cor(x$GPP, x$RFF4point, use="complete.obs"), 3))
-  w<- as.character(round(cor(x$GPP, x$RFF4scene, use="complete.obs"), 3))
-  y<- as.character(round(cor(x$GPP, x$RFT4point, use="complete.obs"), 3))
-  z<- as.character(round(cor(x$GPP, x$RFT4scene, use="complete.obs"), 3))
+  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 3))
+  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 3))
   
   print("calculated cors")
   rmssdGPP <- as.character(round(rmssd(x$GPP), 3))
-  rmssdR <- as.character(round(rmssd(x$RFF3point), 3))
-  rmssdS <- as.character(round(rmssd(x$RFF3scene), 3))
-  rmssdT <- as.character(round(rmssd(x$RFT3point), 3))
-  rmssdU <- as.character(round(rmssd(x$RFT3scene), 3))
-  rmssdV <- as.character(round(rmssd(x$RFF4point), 3))
-  rmssdW <- as.character(round(rmssd(x$RFF4scene), 3))
-  rmssdY <- as.character(round(rmssd(x$RFT4point), 3))
-  rmssdZ <- as.character(round(rmssd(x$RFT4scene), 3))
+  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 3))
+  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 3))
+  
+  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 3)
+  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 3)
   
   print("got RMSSD")
   lblGPP <- paste("rmssdFlux =", rmssdGPP)
-  lblR <- paste("rmssdRFpoint =", rmssdR)
-  lblS <- paste("rmssdRFscene =", rmssdS)
-  lblT <- paste("rmssdRFpoint =", rmssdT)
-  lblU <- paste("rmssdRFscene =", rmssdU)
-  lblV <- paste("rmssdRFpoint =", rmssdV)
-  lblW <- paste("rmssdRFscene =", rmssdW)
-  lblY <- paste("rmssdRFpoint =", rmssdY)
-  lblZ <- paste("rmssdRFscene =", rmssdZ)
+  lblB <- paste("rmseBarnes =", rmseBarnes, "r"=B, "rmssd"=rmssdB)
+  lblJ <- paste("rmseJung =", rmseJung, "r"=J, "rmssd"=rmssdJ)
   
   filename <- paste(x$site[1], "seasonal_comparison.png", sep="_")
   print(filename)
   q <- ggplot() +
-    ggtitle(paste(x$site, "RFF3", sep=" "))+
+    ggtitle(paste(x$site, "RFC3", sep=" "))+
     geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFF3point, color = I("blue")), size=2) +
+    geom_line(data = x, aes(x = month, y = Barnes_GPP, color = I("blue")), size=2) +
     geom_line(data = x, aes(x = month, y = Jung_GPP, color = I("green")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP+ Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="blue")+
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFF3point+ RFF3point_se, ymax=RFF3point+RFF3point_se),colour="blue")+
     geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP+ Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="green")+
-    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
-    annotate("text", label = lblR, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
-    annotate("text", label = lblS, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
-    
-    scale_x_continuous(breaks=pretty_breaks())+
+    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Red")+
+    annotate("text", label = lblB, parse=FALSE, x = 3, y = 5, size = 5, colour = "Blue")+
+    annotate("text", label = lblJ, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Green")+
+      scale_x_continuous(breaks=pretty_breaks())+
     xlab('month')+
     ylab('GPP')+
     theme_classic()+
     theme(legend.position = c(0, 0))
-  
-  c <- ggplot() +
-    ggtitle(paste(x$site, "RFF4", sep=" "))+
-    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFF4point, color = I("blue")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFF4scene, color = I("green")), size=2) +
-    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFF4point+ RFF4point_se, ymax=RFF4point+RFF4point_se),colour="blue")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFF4scene+ RFF4scene_se, ymax=RFF4scene+RFF4scene_se),colour="green")+
-    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
-    annotate("text", label = lblV, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
-    annotate("text", label = lblW, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
-    
-    scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_classic()+
-    theme(legend.position = c(0, 0))
-  
-  
-  a <- ggplot() +
-    ggtitle(paste(x$site, "RFT3", sep=" "))+
-    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFT3point, color = I("blue")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFT3scene, color = I("green")), size=2) +
-    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFT3point+ RFT3point_se, ymax=RFT3point+RFT3point_se),colour="blue")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFT3scene+ RFT3scene_se, ymax=RFT3scene+RFT3scene_se),colour="green")+
-    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
-    annotate("text", label = lblT, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
-    annotate("text", label = lblU, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
-    
-    scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_classic()+
-    theme(legend.position = c(0, 0))
-  
-  b <- ggplot() +
-    ggtitle(paste(x$site, "RFT4", sep=" "))+
-    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFT4point, color = I("blue")), size=2) +
-    geom_line(data = x, aes(x = month, y = RFT4scene, color = I("green")), size=2) +
-    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFT4point+ RFT4point_se, ymax=RFT4point+RFT4point_se),colour="blue")+
-    geom_errorbar(data=x,aes(x=month, ymin=RFT4scene+ RFT4scene_se, ymax=RFT4scene+RFT4scene_se),colour="green")+
-    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
-    annotate("text", label = lblY, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
-    annotate("text", label = lblZ, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
-    
-    scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_classic()+
-    theme(legend.position = c(0, 0))
-  
-  ggarrange(q,a,b,c, ncol=2, nrow=2)
+  plot(q)
   filename <- paste(x$site[1], "seasonalRF_comparison.png", sep="_")
-  ggsave(filename, device='png', width=16, height=16, dpi = 300, units = "cm")
+  #ggsave(filename, device='png', width=16, height=16, dpi = 300, units = "cm")
 }
 #split
 #apply (and write out)
-lapply(list_seasonsRF, plot_seasonal_cycle_RF)
+lapply(list_seasons, plot_seasonal_cycle_1)
 
