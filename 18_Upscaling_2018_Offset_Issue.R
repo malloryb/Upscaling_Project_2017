@@ -207,15 +207,14 @@ library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
 str(All_sites)
 head(All_sites)
 #Checking on SPEI
-SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
-SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
-SPEI_Check$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
-SPEI_Check$site_year <- do.call(paste, c(SPEI_Check[c("site", "year")], sep = "_")) 
-str(SPEI_Check)
+#SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
+#SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
+#SPEI_Check$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
+#SPEI_Check$site_year <- do.call(paste, c(SPEI_Check[c("site", "year")], sep = "_")) 
 
 #Checked out whether SPEI is correlated with other stuff
 #SPEI_cors <- ddply(SPEI_Check, .(site_year), summarize,
@@ -242,9 +241,9 @@ All_sites$swe <- as.numeric(All_sites$swe)
 #Normalization a good idea when one attribute has a wide range of values compared to others
 
 #User-defined normalization function
-#normalize <- function(x) {
-#  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
-#}
+normalize <- function(x) {
+  return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
+}
 
 #Function to see if any cols have NAs. Now that I'm not standardizing GPP anymore having issues w/ NAs
 nacols <- function(df) {
@@ -268,7 +267,8 @@ All_sites$spei3[1448] <- -1.0609
 summary(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
 summary(All_sites)
-
+#Going to try squaring GPP
+All_sites$GPP <- sqrt(All_sites$GPP)
 #No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
 #Here's where we can split
 #Timesilces
@@ -277,7 +277,7 @@ summary(All_sites)
 #tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 #Split into training and testing data
-#Create index to split based on year
+
 index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
 index
 
@@ -310,7 +310,7 @@ head(All_sites.training[,colsA2])
 head(All_sites.training[,5:6])
 
 
-#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, tmax, elev, tmin, precip)
+#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, tmax, elev, tmin, precip, spei3, spei9, spei12, spei6, spei1)
 colsA3 <- c(3, 5:7, 10:11, 14:18)
 head(All_sites.training)
 head(All_sites.training[,colsA3])
@@ -336,7 +336,7 @@ model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method=
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 model_rfA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+model_tsA3.sqrt <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 
 model_rfA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
@@ -348,7 +348,7 @@ pred_rfA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
 pred_tsA2 <- as.numeric(predict(object=model_tsA2, All_sites.test[,colsA2]))
 
 pred_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
-pred_tsA3 <- as.numeric(predict(object=model_tsA3, All_sites.test[,colsA3]))
+pred_tsA3t <- as.numeric(predict(object=model_tsA3, All_sites.test[,colsA3]))
 
 pred_rfA4 <- as.numeric(predict(object=model_rfA4, All_sites.test[,colsA4]))
 pred_tsA4 <- as.numeric(predict(object=model_tsA4, All_sites.test[,colsA4]))
@@ -759,7 +759,7 @@ Merged_Jung_Comp <- Merged_Jung_Comp[, !(names(Merged_Jung_Comp) %in% drops)]
 library(ggthemes)
 library(plyr)
 
-Merged_Jung_Comp <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+Merged_Jung_Comp <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 Merged_Jung_Comp <- Merged_Jung_Comp[!(is.na(Merged_Jung_Comp$year)),] 
 Merged_Jung_Comp$date <- as.Date(Merged_Jung_Comp$date, format="%Y-%m-%d")
 Merged_Jung_Comp$month <- month(Merged_Jung_Comp$date)
@@ -825,6 +825,7 @@ plot_seasonal_cycle <- function(x){
 #split
 list_seasons <- split(seasonal_to_plot, seasonal_to_plot$site)
 #apply (and write out)
+#CAREFUL THIS WRITES EVERYTHING OUT
 lapply(list_seasons, plot_seasonal_cycle)
 
 #6. Graphs of IAV correlations----------------------------
@@ -1150,7 +1151,7 @@ Flux_files_merge <- Flux_files[,c("file", "GPP")]
 RFall2 <- merge.with.order(RFall, Flux_files_merge, by="file", keep_order=1)
 head(RFall2)
 str(RFall2)
-write.csv(RFall2, "F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP.csv")
+write.csv(RFall2, "F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP_3_9.csv")
 
 #Starting with RFall2 (saved version)
 RFall2 <- read.csv("F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP.csv")
@@ -1256,3 +1257,170 @@ IAVplot_myRF_func(RFIAV, "RFF4")
 IAVplot_myRF_func(RFIAV, "RFT3")
 
 IAVplot_myRF_func(RFIAV, "RFT4")
+
+#RF model seasonal comparisons-------------------------------------------
+
+Merged_RF_Comp <- read.csv("F:/Upscaling_Project/Upscaled_GPP/myRFmodelswithfluxGPP_3_9.csv")
+Merged_RF_Comp <- Merged_RF_Comp[!(is.na(Merged_RF_Comp$year)),] 
+Merged_RF_Comp$date <- as.Date(Merged_RF_Comp$date, format="%Y-%m-%d")
+Merged_RF_Comp$month <- month(Merged_RF_Comp$date)
+Merged_RF_Comp$year <- year(Merged_RF_Comp$date)
+Merged_RF_Comp$site <- as.character(Merged_RF_Comp$site)
+#Delete all files after 2013 (Fluxcom only goes through 2013)
+toBeRemoved3<-which(Merged_RF_Comp$site=="mx_ray" | Merged_RF_Comp$site=="mx_tes" |Merged_RF_Comp$site== "us_lpa") 
+Merged_RF_Comp<-Merged_RF_Comp[-toBeRemoved3,] 
+Merged_RF_Comp<-Merged_RF_Comp[!(Merged_RF_Comp$year > 2013 | Merged_RF_Comp$year < 1999),]
+new_DF <- Merged_RF_Comp[is.na(Merged_RF_Comp$GPP),]
+#Check there's no NAs
+new_DF
+summary(Merged_RF_Comp)
+Merged_RF_Comp$site <- as.factor(Merged_RF_Comp$site)
+levels(Merged_RF_Comp$site)
+#Split - apply - combine 
+#split
+out <- split(Merged_RF_Comp, Merged_RF_Comp$site)
+str(out)
+
+#Apply
+seasonal_func <- function(x){
+  df <- ddply(x, .(month, site), summarize, RFF3point_se=sd(RFF3result, na.rm=TRUE)/sqrt(length(RFF3result[!is.na(RFF3result)])) , RFF3point=mean(RFF3result, na.rm=TRUE),  RFF3scene=mean(RFF3mean, na.rm=TRUE), RFF3scene_se=sd(RFF3mean, na.rm=TRUE)/sqrt(length(RFF3mean[!is.na(RFF3mean)])) , 
+              RFF4point_se=sd(RFF4result, na.rm=TRUE)/sqrt(length(RFF4result[!is.na(RFF4result)])) , RFF4point=mean(RFF4result, na.rm=TRUE),  RFF4scene=mean(RFF4mean, na.rm=TRUE), RFF4scene_se=sd(RFF4mean, na.rm=TRUE)/sqrt(length(RFF4mean[!is.na(RFF4mean)])) , 
+              RFT3point_se=sd(RFT3result, na.rm=TRUE)/sqrt(length(RFT3result[!is.na(RFT3result)])) , RFT3point=mean(RFT3result, na.rm=TRUE),  RFT3scene=mean(RFT3mean, na.rm=TRUE), RFT3scene_se=sd(RFT3mean, na.rm=TRUE)/sqrt(length(RFT3mean[!is.na(RFT3mean)])) , 
+              RFT4point_se=sd(RFT4result, na.rm=TRUE)/sqrt(length(RFT4result[!is.na(RFT4result)])) , RFT4point=mean(RFT4result, na.rm=TRUE),  RFT4scene=mean(RFT4mean, na.rm=TRUE), RFT4scene_se=sd(RFT4mean, na.rm=TRUE)/sqrt(length(RFT4mean[!is.na(RFT4mean)])) , 
+              GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])), GPP=mean(GPP, na.rm=TRUE))
+  return(df)
+  
+}
+
+lapply(out, seasonal_func)
+
+#Combine
+seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
+
+#Plotting function that plots all sites serparately and writes out graphs
+#Where to write out .png files
+setwd("F:/Upscaling_Project/Upscaled_GPP/")
+list_seasonsRF <- split(seasonal_to_plot, seasonal_to_plot$site)
+str(seasonal_to_plot)
+plot_seasonal_cycle_RF <- function(x){
+  require("ggplot2")
+  require("ggthemes")
+  require("scales")
+  require("psych")
+  require("ggpubr")
+  print(str(x))
+  droplevels(x)
+  r<- as.character(round(cor(x$GPP, x$RFF3point, use="complete.obs"), 3))
+  s<- as.character(round(cor(x$GPP, x$RFF3scene, use="complete.obs"), 3))
+  t<- as.character(round(cor(x$GPP, x$RFT3point, use="complete.obs"), 3))
+  u<- as.character(round(cor(x$GPP, x$RFT3scene, use="complete.obs"), 3))
+  v<- as.character(round(cor(x$GPP, x$RFF4point, use="complete.obs"), 3))
+  w<- as.character(round(cor(x$GPP, x$RFF4scene, use="complete.obs"), 3))
+  y<- as.character(round(cor(x$GPP, x$RFT4point, use="complete.obs"), 3))
+  z<- as.character(round(cor(x$GPP, x$RFT4scene, use="complete.obs"), 3))
+  
+  print("calculated cors")
+  rmssdGPP <- as.character(round(rmssd(x$GPP), 3))
+  rmssdR <- as.character(round(rmssd(x$RFF3point), 3))
+  rmssdS <- as.character(round(rmssd(x$RFF3scene), 3))
+  rmssdT <- as.character(round(rmssd(x$RFT3point), 3))
+  rmssdU <- as.character(round(rmssd(x$RFT3scene), 3))
+  rmssdV <- as.character(round(rmssd(x$RFF4point), 3))
+  rmssdW <- as.character(round(rmssd(x$RFF4scene), 3))
+  rmssdY <- as.character(round(rmssd(x$RFT4point), 3))
+  rmssdZ <- as.character(round(rmssd(x$RFT4scene), 3))
+  
+  print("got RMSSD")
+  lblGPP <- paste("rmssdFlux =", rmssdGPP)
+  lblR <- paste("rmssdRFpoint =", rmssdR)
+  lblS <- paste("rmssdRFscene =", rmssdS)
+  lblT <- paste("rmssdRFpoint =", rmssdT)
+  lblU <- paste("rmssdRFscene =", rmssdU)
+  lblV <- paste("rmssdRFpoint =", rmssdV)
+  lblW <- paste("rmssdRFscene =", rmssdW)
+  lblY <- paste("rmssdRFpoint =", rmssdY)
+  lblZ <- paste("rmssdRFscene =", rmssdZ)
+  
+  filename <- paste(x$site[1], "seasonal_comparison.png", sep="_")
+  print(filename)
+  q <- ggplot() +
+    ggtitle(paste(x$site, "RFF3", sep=" "))+
+    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFF3point, color = I("blue")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFF3scene, color = I("green")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFF3point+ RFF3point_se, ymax=RFF3point+RFF3point_se),colour="blue")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFF3scene+ RFF3scene_se, ymax=RFF3scene+RFF3scene_se),colour="green")+
+    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
+    annotate("text", label = lblR, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
+    annotate("text", label = lblS, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
+    
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_classic()+
+    theme(legend.position = c(0, 0))
+  
+  c <- ggplot() +
+    ggtitle(paste(x$site, "RFF4", sep=" "))+
+    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFF4point, color = I("blue")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFF4scene, color = I("green")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFF4point+ RFF4point_se, ymax=RFF4point+RFF4point_se),colour="blue")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFF4scene+ RFF4scene_se, ymax=RFF4scene+RFF4scene_se),colour="green")+
+    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
+    annotate("text", label = lblV, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
+    annotate("text", label = lblW, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
+    
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_classic()+
+    theme(legend.position = c(0, 0))
+
+  
+  a <- ggplot() +
+    ggtitle(paste(x$site, "RFT3", sep=" "))+
+    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFT3point, color = I("blue")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFT3scene, color = I("green")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFT3point+ RFT3point_se, ymax=RFT3point+RFT3point_se),colour="blue")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFT3scene+ RFT3scene_se, ymax=RFT3scene+RFT3scene_se),colour="green")+
+    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
+    annotate("text", label = lblT, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
+    annotate("text", label = lblU, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
+    
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_classic()+
+    theme(legend.position = c(0, 0))
+
+  b <- ggplot() +
+    ggtitle(paste(x$site, "RFT4", sep=" "))+
+    geom_line(data = x, aes(x = month, y = GPP, color =I("red")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFT4point, color = I("blue")), size=2) +
+    geom_line(data = x, aes(x = month, y = RFT4scene, color = I("green")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFT4point+ RFT4point_se, ymax=RFT4point+RFT4point_se),colour="blue")+
+    geom_errorbar(data=x,aes(x=month, ymin=RFT4scene+ RFT4scene_se, ymax=RFT4scene+RFT4scene_se),colour="green")+
+    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Black")+
+    annotate("text", label = lblY, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
+    annotate("text", label = lblZ, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Black")+
+    
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_classic()+
+    theme(legend.position = c(0, 0))
+
+  ggarrange(q,a,b,c, ncol=2, nrow=2)
+  filename <- paste(x$site[1], "seasonalRF_comparison.png", sep="_")
+  ggsave(filename, device='png', width=16, height=16, dpi = 300, units = "cm")
+}
+#split
+#apply (and write out)
+lapply(list_seasonsRF, plot_seasonal_cycle_RF)
+
