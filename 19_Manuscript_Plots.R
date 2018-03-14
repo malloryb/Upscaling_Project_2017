@@ -70,8 +70,50 @@ corfunc(for_fig_1)
 #Checking out IAV--------------
 
 IAV_to_plot <-ddply(for_fig_1, .(year, site), summarize, Barnes_GPP=sum(Barnes_GPP, na.rm=TRUE), Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
+IAV_to_plot
 
+IAVplot_func1(IAV_to_plot)
 
+IAVplot_func1 <- function(xx){
+  require(ggplot2)
+  require(stringr)
+  require(plyr)
+  require(psych)
+  require(ggpubr)
+  require(ggthemes)
+  
+  Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  Sites$site <- str_replace_all(Sites$site, "-", "_")
+  
+  levels(xx$site)
+  levels(Sites$site)
+  
+  xxmerge <- merge(xx, Sites, by="site")
+  
+  corfunc <- function(gg){
+    require(plyr)
+    getmode <- function(v) {
+      uniqv <- unique(v)
+      uniqv[which.max(tabulate(match(v, uniqv)))]
+    }
+    
+    return(data.frame(corJ = cor(gg$GPP, gg$Jung_GPP, use="complete.obs"), pvalJ=cor.test(gg$GPP, gg$Jung_GPP)$p.value,
+                      corB = cor(gg$GPP, gg$Barnes_GPP, use="complete.obs"), pvalB=cor.test(gg$GPP, gg$Barnes_GPP)$p.value,
+                      MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
+  }
+  
+  xxplot <- ddply(xxmerge, .(site), corfunc)
+  summary(xxplot)
+  xxplot$sigB <- ifelse(xxplot$pvalB <0.05, "Significant", "nonsignificant")
+  xxplot$sigJ <- ifelse(xxplot$pvalJ <0.05, "Significant", "nonsignificant")
+  
+  print(summary(xxplot))
+  
+  
+  b <- ggplot(xxplot, aes(x=MAP, y=corB, color=sigB)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  j <- ggplot(xxplot, aes(x=MAP, y=corJ, color=sigJ)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  ggpubr::ggarrange(b,j, ncols=2)
+}
 
 
 
