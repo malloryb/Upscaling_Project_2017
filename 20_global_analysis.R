@@ -14,6 +14,11 @@ GlobalAnalysis <- function(bandsp, bandcru, year, month, moname, shmonth){
   require(lubridate)
   require(plyr)
   require(dplyr)
+  require(gdal)
+  require(caret)
+  require(randomForest)
+  require(raster)
+  require(ncdf4)
   date <-as.Date(paste(year, month, "01", sep="-"), format="%Y-%m-%d")
   #SPEI now
   spei6 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei06.nc")[[bandsp]]
@@ -27,6 +32,7 @@ GlobalAnalysis <- function(bandsp, bandcru, year, month, moname, shmonth){
   tmax <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2001.2010.tmx.dat.nc")[[bandcru]]
   #VP
   vp<- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2001.2010.vap.dat.nc")[[bandcru]]
+  plot(vp)
   print("spei and cru data read in")
   #month raster
   cru_ext <- extent(-180,180,-90, 90)
@@ -35,8 +41,6 @@ GlobalAnalysis <- function(bandsp, bandcru, year, month, moname, shmonth){
   monthrast = raster(ext=cru_ext, res=0.5)
   values(monthrast) <- eval(month)
   values(shrast) <- eval(shmonth)
-  plot(monthrast)
-  plot(shrast)
   monthR <- mosaic(monthrast, shrast, fun=min)
   plot(monthR)
   print("monthrast calculated")
@@ -62,8 +66,7 @@ GlobalAnalysis <- function(bandsp, bandcru, year, month, moname, shmonth){
   dayl = raster(pts)
   projection(dayl) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
   dayl <- dayl*3600
-  plot(dayl)
-print("srad and elev read in")
+ print("srad and elev read in")
 #Mat and map
 MAT <- raster("F:/Upscaling_Project/Test_Global_Upscaling/MAT_raster")
 MAP <- raster("F:/Upscaling_Project/Test_Global_Upscaling/MAP_raster")
@@ -115,12 +118,45 @@ plot(R)
 NDVI <- mean(R, na.rm=TRUE)
 print("monthly NDVI obtained")
 
+cru_ext <- extent(vp)
+spei12 <- resample(spei12, vp, method="bilinear")
+spei6 <- resample(spei6, vp, method="bilinear")
+spei1 <- resample(spei1, vp, method="bilinear")
+Jul_2010_wk1<- resample(vp, vp, method="bilinear")
+elev <- resample(elev, vp, method="bilinear")
+srad <- resample(srad, vp, method="bilinear")
+month <- resample(month, vp, method="bilinear")
+MAT <- resample(MAT, vp, method="bilinear")
+MAP <- resample(MAP, vp, method="bilinear")
+dayl <- resample(dayl, vp, method="bilinear")
+NDVI <- reample(NDVI, vp, method="bilinear")
+print("resampling done")
+
+rast_stack <- stack(NDVI, month, elev, precip, tmax, tmin, MAP, MAT, srad, vp, dayl, spei1, spei6, spei12)
+plot(rast_stack)
+rast_ext <- extent(rast_stack[[1]])
+names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "daylength", "spei1", "spei6","spei12"))
+
+RFC3 <- readRDS("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_C3oversample_3_11.rds")
+#Going to mask before I do this
+
+# Read SHAPEFILE.shp from the current working directory (".")
+GPP <- predict(rast_stack, RFC3, ext=rast_ext)
+plot(GPP)
+mask <- raster("F:/Upscaling_Project/Test_Global_Upscaling/Drylands_dataset_2007/CBBNDrylands.tif")
+plot(mask)
+mask[mask < 0.5] <- NA
+mask[mask >0.5] <-1
+plot(mask)
+mask <- resample(mask, GPP, method="bilinear")
+GPP_drylands <- mask( GPP, mask)
+plot(GPP_drylands)
+filenameF <- paste("F:/Upscaling_Project/Test_Global_Upscaling/Upscaled_GPP", "moname", "year", sep="_")
+writeRaster(GPP_drlyands, filenameF)
   
   } 
 
 GlobalAnalysis(1315, 115, 2010, 07, "Jul", 01)
-
-
 
 
 Jul_2010_wk1 <- raster("F:/Upscaling_Project/Test_Global_Upscaling/VHP.G04.C07.NN.P2010027.SM.SMN.tif")
