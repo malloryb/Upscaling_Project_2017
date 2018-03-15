@@ -56,22 +56,135 @@ corfunc <- function(gg){
                     CORJung12= cor(gg$Jung_GPP, gg$spei1, use="complete.obs"), pvalJung12=cor.test(gg$Jung_GPP, gg$spei1)$p.value))
 }
 
-
-
 #Merge SPEI with Flux, Barnes, and Jung
 for_fig_1 <- merge(merged, spei, all.x=T)
 for_fig_1$X <- NULL
 for_fig_1$site.x <- NULL
-
+#write.csv(for_fig_1, "D:/Upscaling_Project/For_Fig_1.csv")
 #Testing out the corfunc
 corfunc(for_fig_1)
-
-
 #Checking out IAV--------------
+for_fig_1<-for_fig_1[!(for_fig_1$year > 2013 | for_fig_1$year < 1999),]
+#Subset values where GPP is a value
+Subs1<-subset(for_fig_1, (!is.na(for_fig_1[,9])))
+str(Subs1)
+summary(for_fig_1)
+for_fig_1[100:150,]
 
+#Get IAV for IAV plots
 IAV_to_plot <-ddply(for_fig_1, .(year, site), summarize, Barnes_GPP=sum(Barnes_GPP, na.rm=TRUE), Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
-IAV_to_plot
+#Get figure 1 formatting data ready (corrs with SPEI)
+Fig1_to_plot <-ddply(Subs1, .(year, site), summarize, SPEI_12max=max(abs(spei12)), SPEI_12mean=mean(spei12, na.rm=TRUE),
+                     SPEI_6max=max(abs(spei6)), SPEI_6mean=mean(spei6, na.rm=TRUE),
+                     SPEI_1max=max(abs(spei1)), SPEI_1mean=mean(spei1, na.rm=TRUE),
+                     Barnes_GPP=sum(Barnes_GPP, na.rm=TRUE), Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
 
+#Just mean annual SPEI12
+corfunc2 <- function(gg){
+  require(plyr)
+  return(data.frame(FluxGPP = cor(gg$GPP, gg$SPEI_12mean, use="complete.obs"), 
+                    #pvalFlux=cor.test(gg$GPP, gg$SPEI_12mean)$p.value,
+                    BarnesGPP = cor(gg$Barnes_GPP, gg$SPEI_12mean, use="complete.obs"), 
+                    #pvalBarnes=cor.test(gg$Barnes_GPP, gg$SPEI_12max)$p.value,
+                    JungGPP = cor(gg$Jung_GPP, gg$SPEI_12mean, use="complete.obs"))) 
+                    #pvalJung=cor.test(gg$Jung_GPP, gg$SPEI_12max)$p.value))
+  
+}
+list_sites <- split(Fig1_to_plot, Fig1_to_plot$site)
+Plot_12m_IAV <- do.call("rbind", lapply(list_sites, corfunc2))
+Plot_12m_IAV <- tibble::rownames_to_column(Plot_12m_IAV)
+#Using GGPLOT, plot the Base World Map
+library(ggplot2)
+library(ggthemes)
+mp <- NULL
+mapWorld <- borders("world", regions=c("Mexico", "USA"), colour="gray50", fill="gray50") # create a layer of borders
+mp <- ggplot() +   mapWorld
+?borders
+str(Plot_12m_IAV)
+SPEI12_IAV_long <- tidyr::gather(Plot_12m_IAV, rowname, GPP, factor_key=TRUE)
+str(SPEI12_IAV_long)
+names(SPEI12_IAV_long) <- c("site", "GPP", "cor")
+#Need to match lat and long now 
+lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+lookup$sitechar <- substr(lookup$site, 4,6)
+point <- data.frame("site" = paste("us_", lookup$sitechar, sep=""), 
+                    "lat" = lookup$lat, 
+                    "long" = lookup$long)
+merged <- merge(SPEI12_IAV_long, point, by="site")
+
+split <- split(merged, merged$GPP)
+FluxGPP <- split$FluxGPP
+JungGPP <- split$JungGPP
+BarnesGPP <- split$BarnesGPP
+
+JungGPP$JungGPP_dif <- abs(FluxGPP$cor - JungGPP$cor)
+BarnesGPP$BarnesGPP_dif <- abs(FluxGPP$co - BarnesGPP$cor)
+range(FluxGPP$cor)
+range(BarnesGPP$cor)
+range(JungGPP$cor)
+mp_plot1 <- mp+ geom_point(aes(x=FluxGPP$long, y=FluxGPP$lat, colour=FluxGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
+  scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-.75,1))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))+ 
+  theme_few(base_size=8)+ labs(title = "Flux GPP vs SPEI12", x="Longitude", y="Latitude") 
+
+
+mp_plot2 <- mp+ geom_point(aes(x=BarnesGPP$long, y=BarnesGPP$lat, colour=BarnesGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
+  scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-0.75,1))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))+
+  theme_few(base_size=8)+ labs(title = "BarnesGPP vs SPEI12", x="Longitude", y="Latitude") 
+
+
+mp_plot3 <- mp+ geom_point(aes(x=JungGPP$long, y=JungGPP$lat, colour=JungGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
+  scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-0.75,1))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))+ theme_few(base_size=8)+ labs(title = "Jung GPP vs SPEI12", x="Longitude", y="Latitude") 
+
+ggpubr::ggarrange(mp_plot1, mp_plot2, mp_plot3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
+
+
+mp_plot5 <- mp+ geom_point(aes(x=BarnesGPP$long, y=BarnesGPP$lat, colour=BarnesGPP$BarnesGPP_dif), position= position_jitter(w=0.3, h=0.3), size=2.5)+
+  scale_color_gradientn(colours=c("red", "blue"), name="Correlation Difference", limits=c(-0,.75))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))
+
+mp_plot5+ theme_few(base_size=14)+ labs(title = "Relationship strength with SPEI12: Barnes vs. Ground Flux", x="Longitude", y="Latitude") 
+
+
+  mp_plot4 <- mp+ geom_point(aes(x=JungGPP$long, y=JungGPP$lat, colour=JungGPP$JungGPP_dif), position= position_jitter(w=0.3, h=0.3), size=2.5)+
+  scale_color_gradientn(colours=c("red", "blue"), name="Correlation Difference", limits=c(0,.75))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))
+
+mp_plot4+ theme_few(base_size=14)+ labs(title = "Relationship strength with SPEI12: Jung vs. Ground Flux", x="Longitude", y="Latitude") 
+
+
+#Plotting Figure 1----------------------
+
+
+  
+  
+#Split, apply combine to find which corr is best !
+list_sites <- split(Fig1_to_plot, Fig1_to_plot$site)
+
+corfunc1 <- function(gg){
+  require(plyr)
+  return(data.frame(corG12 = cor(gg$GPP, gg$SPEI_12max, use="complete.obs"), pvalG12=cor.test(gg$GPP, gg$SPEI_12max)$p.value,
+    corB12 = cor(gg$SPEI_12max, gg$Barnes_GPP, use="complete.obs"), pvalB12=cor.test(gg$SPEI_12max, gg$Barnes_GPP)$p.value,
+    corJ12 = cor(gg$SPEI_12max, gg$Jung_GPP, use="complete.obs"), pvalJ12=cor.test(gg$SPEI_12max, gg$Jung_GPP)$p.value, 
+    corG12m = cor(gg$GPP, gg$SPEI_12mean, use="complete.obs"), pvalG12m=cor.test(gg$GPP, gg$SPEI_12mean)$p.value,
+    corB12m = cor(gg$Barnes_GPP, gg$SPEI_12mean, use="complete.obs"), pvalB12m=cor.test(gg$Barnes_GPP, gg$SPEI_12max)$p.value,
+    corJ12m = cor(gg$Jung_GPP, gg$SPEI_12mean, use="complete.obs"), pvalJ12m=cor.test(gg$Jung_GPP, gg$SPEI_12max)$p.value,
+    corG6 = cor(gg$GPP, gg$SPEI_12max, use="complete.obs"), pvalG6=cor.test(gg$GPP, gg$SPEI_12max)$p.value,
+    corB6 = cor(gg$SPEI_6max, gg$Barnes_GPP, use="complete.obs"), pvalB6=cor.test(gg$SPEI_6max, gg$Barnes_GPP)$p.value,
+    corJ6 = cor(gg$SPEI_6max, gg$Jung_GPP, use="complete.obs"), pvalJ6=cor.test(gg$SPEI_6max, gg$Jung_GPP)$p.value, 
+    corG6m = cor(gg$GPP, gg$SPEI_6mean, use="complete.obs"), pvaB6m=cor.test(gg$GPP, gg$SPEI_6mean)$p.value,
+    corB6m = cor(gg$Barnes_GPP, gg$SPEI_6mean, use="complete.obs"), pvalB6m=cor.test(gg$Barnes_GPP, gg$SPEI_6mean)$p.value,
+    corJ6m = cor(gg$Jung_GPP, gg$SPEI_6mean, use="complete.obs"), pvalJ6m=cor.test(gg$Jung_GPP, gg$SPEI_6mean)$p.value))
+  
+}
+checkcorrs <- do.call("rbind", lapply(list_sites, corfunc1))
+round(checkcorrs,2)
+#write.csv(checkcorrs, "D:/Upscaling_Project/Checkcorrs.csv")
+
+#MY IAV IS BETTER WOOHOO!--------------------------
+IAV_to_plot
 IAVplot_func1(IAV_to_plot)
 
 IAVplot_func1 <- function(xx){
@@ -97,6 +210,9 @@ IAVplot_func1 <- function(xx){
       uniqv[which.max(tabulate(match(v, uniqv)))]
     }
     
+    gg[gg == 0] <- NA
+    
+    
     return(data.frame(corJ = cor(gg$GPP, gg$Jung_GPP, use="complete.obs"), pvalJ=cor.test(gg$GPP, gg$Jung_GPP)$p.value,
                       corB = cor(gg$GPP, gg$Barnes_GPP, use="complete.obs"), pvalB=cor.test(gg$GPP, gg$Barnes_GPP)$p.value,
                       MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
@@ -110,14 +226,11 @@ IAVplot_func1 <- function(xx){
   print(summary(xxplot))
   
   
-  b <- ggplot(xxplot, aes(x=MAP, y=corB, color=sigB)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
-  j <- ggplot(xxplot, aes(x=MAP, y=corJ, color=sigJ)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
-  ggpubr::ggarrange(b,j, ncols=2)
+  bplot <- ggplot(xxplot, aes(x=MAP, y=corB, color=sigB)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  jplot <- ggplot(xxplot, aes(x=MAP, y=corJ, color=sigJ)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  plot(bplot)
+  plot(jplot)
 }
-
-
-
-
 
 
 #Creating diagnostic plots-----------------------------------------------------------------------------
@@ -131,6 +244,7 @@ GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])), GPP=mean(GPP, na.rm=T
 
 #Plotting function that plots all sites serparately and writes out graphs
 #Where to write out .png files
+
 setwd("F:/Upscaling_Project/Upscaled_GPP/")
 list_seasons <- split(plot_seasonal_cycle, plot_seasonal_cycle$site)
 str(list_seasons)
