@@ -925,7 +925,7 @@ ggarrange(Fo, Gra, Sav, Shr + rremove("x.text"),
           legend="none",
           ncol = 2, nrow = 2)
 
-#Correlation plot of differences against GPP
+#Correion plot of differences against GPP
 ggplot(Residual_plot, (aes(x=GPP, y=diff, color=Veg)))+geom_point(size=2)+ geom_smooth(method="lm")+ theme_few()+ylab("FluxGPP - JungGPP")+xlab("FluxGPP")
 cor(Residual_plot$GPP, Residual_plot$diff, use="complete.obs")
 
@@ -954,11 +954,11 @@ mp <- ggplot() +   mapWorld
 str(RMSSD_to_plot)
 summary(RMSSD_to_plot)
 
-mp_plot <- mp+ geom_point(aes(x=merged_to_plot$long, y=merged_to_plot$lat, colour=merged_to_plot$diff), position= position_jitter(w=0.3, h=0.3), size=2.5)+
+mp_plot <- mp+ geom_point(aes(x=merged_to_plot$long, y=merged_to_plot$, colour=merged_to_plot$diff), position= position_jitter(w=0.3, h=0.3), size=2.5)+
   scale_color_gradientn(colours=c("blue", "red"), name="RMSSDflux - RMSSDJung")+
   coord_map(xlim = c(-123,-103), ylim = c(23,41))
 
-mp_plot+ theme_few(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="Latitude") 
+mp_plot+ theme_few(base_size=14)+ labs(title = "RMSSD comparison", x="Longitude", y="itude") 
 
 #ddply to get seasonal sums of GPP (Summer vs. spring vs. winter vs. fall)
 #IAV Plots: corplots and bubble plots
@@ -969,7 +969,7 @@ IAVplot_func <- function(xx){
   require(plyr)
   require(psych)
   
-  Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
   Sites$site <- str_replace_all(Sites$site, "-", "_")
   
 
@@ -986,7 +986,7 @@ IAVplot_func <- function(xx){
     require(plyr)
     getmode <- function(v) {
       uniqv <- unique(v)
-      uniqv[which.max(tabulate(match(v, uniqv)))]
+      uniqv[which.max(tabue(match(v, uniqv)))]
     }
     
     return(data.frame(COR = cor(gg$GPP, gg$Jung_GPP, use="complete.obs"), pval=cor.test(gg$GPP, gg$Jung_GPP)$p.value, MAP=getmode(gg$MAP), RMSSD=rmssd(gg$GPP)))
@@ -1028,7 +1028,7 @@ IAVBubblePlot<- function(xx){
     require(plyr)
     getmode <- function(v) {
       uniqv <- unique(v)
-      uniqv[which.max(tabulate(match(v, uniqv)))]
+      uniqv[which.max(tabue(match(v, uniqv)))]
     }
     
     return(data.frame(COR = cor(gg$GPP, gg$Jung_GPP, use="complete.obs"), pval=cor.test(gg$GPP, gg$Jung_GPP)$p.value, RMSSD=rmssd(gg$GPP)))
