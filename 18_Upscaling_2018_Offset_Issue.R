@@ -635,6 +635,7 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   RFT3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
   RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
   RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
+  RFC3 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF")
   
   
   #For each site: 4 .tifs written out - write function and lapply over list of extents? Or at least function to apply models and write them out
@@ -917,7 +918,6 @@ Fo <- ggplot(Forest, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geo
 Gra <- ggplot(Grassland, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(grassmax)), linetype="dotted", color="black")+geom_line(aes(y=(grassmin)), linetype="dotted", color="black")
 Sav <- ggplot(Savanna, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(savmax)), linetype="dotted", color="black")+geom_line(aes(y=(savmin)), linetype="dotted", color="black")
 Shr <- ggplot(Shrubland, aes(x=month, y=diff, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(shrubmax)), linetype="dotted", color="black")+geom_line(aes(y=(shrubmin)), linetype="dotted", color="black")
-
 #apply (and write out)
 
 ggarrange(Fo, Gra, Sav, Shr + rremove("x.text"), 
