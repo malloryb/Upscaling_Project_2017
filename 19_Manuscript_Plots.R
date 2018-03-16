@@ -1,7 +1,7 @@
 #Manuscript plots for upscaling project
 #Fig 1: 
-setwd("D:/Upscaling_Project/Upscaled_GPP/RF_C3/")
-lst <- list.files("D:/Upscaling_Project/Upscaled_GPP/RF_C3/", pattern=".csv")
+setwd("F:/Upscaling_Project/Upscaled_GPP/RF_C3/")
+lst <- list.files("F:/Upscaling_Project/Upscaled_GPP/RF_C3/", pattern=".csv")
 #Format output from RFC3 flux file 
 format_Barnesoutput <- function(xx){
   print("read file")
@@ -33,13 +33,13 @@ RFC3_long <- tidyr::gather(RF_C3, site, Barnes_GPP, us_aud:us_wkg, factor_key=TR
 str(RFC3_long)
 RFC3_long$sitedate <- as.factor(paste(RFC3_long$monthyear, RFC3_long$site, sep="_"))
 #Merge with true flux data and Jung 2017 data
-FluxJung <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+FluxJung <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 levels(RFC3_long$sitedate)
 levels(FluxJung$sitedate)
 merged <- merge(RFC3_long, FluxJung, all=T)
 
 #Merge with SPEI Going to use site-based SPEI 12 for now
-getspei <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv")
+getspei <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv")
 str(getspei)
 getspei$site <- (gsub('([[:punct:]])|\\-','_', getspei$site))
 getspei$monthyear <- (gsub('([[:punct:]])|\\-','_', getspei$monthyear))
@@ -60,7 +60,7 @@ corfunc <- function(gg){
 for_fig_1 <- merge(merged, spei, all.x=T)
 for_fig_1$X <- NULL
 for_fig_1$site.x <- NULL
-#write.csv(for_fig_1, "D:/Upscaling_Project/For_Fig_1.csv")
+#write.csv(for_fig_1, "F:/Upscaling_Project/For_Fig_1.csv")
 #Testing out the corfunc
 corfunc(for_fig_1)
 #Checking out IAV--------------
@@ -105,7 +105,7 @@ SPEI12_IAV_long <- tidyr::gather(Plot_12m_IAV, rowname, GPP, factor_key=TRUE)
 str(SPEI12_IAV_long)
 names(SPEI12_IAV_long) <- c("site", "GPP", "cor")
 #Need to match lat and long now 
-lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 lookup$sitechar <- substr(lookup$site, 4,6)
 point <- data.frame("site" = paste("us_", lookup$sitechar, sep=""), 
                     "lat" = lookup$lat, 
@@ -121,7 +121,13 @@ JungGPP$JungGPP_dif <- abs(FluxGPP$cor - JungGPP$cor)
 BarnesGPP$BarnesGPP_dif <- abs(FluxGPP$co - BarnesGPP$cor)
 range(FluxGPP$cor)
 range(BarnesGPP$cor)
+JungGPP[order(JungGPP$cor),]
+BarnesGPP[order(BarnesGPP$cor),]
+FluxGPP[order(FluxGPP$cor),]
+
 range(JungGPP$cor)
+JungGPP
+#Plotting Figure 1----------------------
 mp_plot1 <- mp+ geom_point(aes(x=FluxGPP$long, y=FluxGPP$lat, colour=FluxGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
   scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-.75,1))+
   coord_map(xlim = c(-123,-103), ylim = c(23,41))+ 
@@ -141,21 +147,30 @@ mp_plot3 <- mp+ geom_point(aes(x=JungGPP$long, y=JungGPP$lat, colour=JungGPP$cor
 ggpubr::ggarrange(mp_plot1, mp_plot2, mp_plot3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
 
 
-mp_plot5 <- mp+ geom_point(aes(x=BarnesGPP$long, y=BarnesGPP$lat, colour=BarnesGPP$BarnesGPP_dif), position= position_jitter(w=0.3, h=0.3), size=2.5)+
-  scale_color_gradientn(colours=c("red", "blue"), name="Correlation Difference", limits=c(-0,.75))+
-  coord_map(xlim = c(-123,-103), ylim = c(23,41))
+#Just the global GPP part now
+library(lattice)
+library(rasterVis)
+library(grid)
+lst2010 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2010_.tif", full.names=TRUE)
+stack2010 <- stack(lst2010)
+mean2010 <- calc(stack2010, mean, na.rm=TRUE) 
+plot <- plot(mean2010)
 
-mp_plot5+ theme_few(base_size=14)+ labs(title = "Relationship strength with SPEI12: Barnes vs. Ground Flux", x="Longitude", y="Latitude") 
+# coerce to a SpatialPolygons object
+ext <- extent(c(-123,-103, 23,41))
+p <- as(ext, 'SpatialPolygons') 
 
 
-  mp_plot4 <- mp+ geom_point(aes(x=JungGPP$long, y=JungGPP$lat, colour=JungGPP$JungGPP_dif), position= position_jitter(w=0.3, h=0.3), size=2.5)+
-  scale_color_gradientn(colours=c("red", "blue"), name="Correlation Difference", limits=c(0,.75))+
-  coord_map(xlim = c(-123,-103), ylim = c(23,41))
+proj <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+worldSHP <- shapefile("F:/Upscaling_Project/Test_Global_Upscaling/TM_WORLD_BORDERS-0.3.shp")
+mapTheme <- rasterTheme(region = brewer.pal(8, "RdYlGn"))
+plot <- levelplot(mean2010, margin=F, par.settings=mapTheme, at=seq(0, 6, length.out=40), main="Mean Daily GPP")
+plot + layer(sp.lines(worldSHP, lwd=0.8, col='gray'))+
+  layer(sp.polygons(p, pch=4, alpha=1))
+trellis.focus("legend", side="right", clipp.off=TRUE, highlight=FALSE)
+grid.text(("daily GPP \n (gCm-2day-1) uptake"), 0.2, 0, hjust=0.5, vjust=1)
+trellis.unfocus()
 
-mp_plot4+ theme_few(base_size=14)+ labs(title = "Relationship strength with SPEI12: Jung vs. Ground Flux", x="Longitude", y="Latitude") 
-
-
-#Plotting Figure 1----------------------
 
 
   
@@ -181,7 +196,42 @@ corfunc1 <- function(gg){
 }
 checkcorrs <- do.call("rbind", lapply(list_sites, corfunc1))
 round(checkcorrs,2)
-#write.csv(checkcorrs, "D:/Upscaling_Project/Checkcorrs.csv")
+#write.csv(checkcorrs, "F:/Upscaling_Project/Checkcorrs.csv")
+#For Figure 2--------------------
+str(merged)
+merged <- merge(RFC3_long, FluxJung, all=T)
+Jung <- dplyr::select(merged, "sitedate", "GPP", "Jung=_GPP")
+Barnes <- dplyr::select(merged, "sitedate", "GPP", "Barnes_GPP")
+Jung$model <- "Jung"
+Jung <- Jung[complete.cases(Jung), ] 
+Barnes <- Barnes[complete.cases(Barnes), ]
+str(Jung)
+colnames(Jung)[3] <- "model_GPP"
+colnames(Barnes)[3] <- "model_GPP"
+fig_2b_plot <- rbind(Barnes, Jung)
+fig_2b_plot$model <- as.factor(fig_2b_plot$model)
+
+lm_eqn = function(m) {
+  l <- list(a = format(coef(m)[1], digits = 2),
+            b = format(abs(coef(m)[2]), digits = 2),
+            r2 = format(summary(m)$r.squared, digits = 2));
+  if (coef(m)[2] >= 0)  {
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2,l)
+  } else {
+    eq <- substitute(italic(y) == a - b %.% italic(x)*","~~italic(r)^2~"="~r2,l)    
+  }
+  as.character(as.expression(eq));                 
+}
+
+ggplot(fig_2b_plot, aes(x=GPP, y=model_GPP, group=model, colour=model))+
+  geom_smooth(method="lm",se=FALSE) +geom_point(alpha=0.5, size=1)+ theme_few() +geom_abline(intercept=0,slope=1)+
+  xlim(0,9)+ylim(0,9)+
+  annotate("text", x = 2, y = 8.5, colour = "#F8766D", size = 4,
+           label = lm_eqn(lm(model_GPP ~ GPP, Barnes)), parse = TRUE)+
+  annotate("text", x = 2, y = 9, colour = "#00BFC4", size = 4,
+           label = lm_eqn(lm(model_GPP ~ GPP, Jung)), parse = TRUE)
+
+#Want: pair flux GPP & jung GPP, barnes GPP & jung GPP, rbind, then make a geom_point that's colored by "model"
 
 #MY IAV IS BETTER WOOHOO!--------------------------
 IAV_to_plot
@@ -195,7 +245,7 @@ IAVplot_func1 <- function(xx){
   require(ggpubr)
   require(ggthemes)
   
-  Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+  Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
   Sites$site <- str_replace_all(Sites$site, "-", "_")
   
   levels(xx$site)
@@ -226,10 +276,13 @@ IAVplot_func1 <- function(xx){
   print(summary(xxplot))
   
   
-  bplot <- ggplot(xxplot, aes(x=MAP, y=corB, color=sigB)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
-  jplot <- ggplot(xxplot, aes(x=MAP, y=corJ, color=sigJ)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few() 
+  bplot <- ggplot(xxplot, aes(x=MAP, y=corB, color=sigB)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few(base_size = 10)+
+    ggtitle("Correlation BarnesIAV, FluxIAV")
+  jplot <- ggplot(xxplot, aes(x=MAP, y=corJ, color=sigJ)) + geom_point(size=2) + ylim(-1,1) +geom_line(aes(y=0),linetype="dotted")+ theme_few(base_size = 10) +
+    ggtitle("Correlation JungIAV, FluxIAV")
   plot(bplot)
   plot(jplot)
+  ggarrange(bplot, jplot, common.legend = TRUE, ncol = 2)
 }
 
 
@@ -238,14 +291,13 @@ IAVplot_func1 <- function(xx){
 Subs1<-subset(for_fig_1, (!is.na(for_fig_1[,9])))
 str(Subs1)
 #Create data frame for seasonal cycle plotting
-plot_seasonal_cycle <- ddply(Subs1, .(month, site), summarize, Barnes_GPP_se=sd(Barnes_GPP, na.rm=TRUE)/sqrt(length(Barnes_GPP[!is.na(Barnes_GPP)])), Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE),
-Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE),  Jung_GPP_se=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP[!is.na(Jung_GPP)])), Jung_GPP=mean(Jung_GPP, na.rm=TRUE), 
+plot_seasonal_cycle <- ddply(Subs1, .(month, site), summarize, Barnes_GPP_se=sd(Barnes_GPP, na.rm=TRUE)/sqrt(length(Barnes_GPP[!is.na(Barnes_GPP)])), Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE),  Jung_GPP_se=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP[!is.na(Jung_GPP)])), Jung_GPP=mean(Jung_GPP, na.rm=TRUE), 
 GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])), GPP=mean(GPP, na.rm=TRUE))
 
 #Plotting function that plots all sites serparately and writes out graphs
 #Where to write out .png files
 
-setwd("F:/Upscaling_Project/Upscaled_GPP/")
+setwd("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Final Dissertation/")
 list_seasons <- split(plot_seasonal_cycle, plot_seasonal_cycle$site)
 str(list_seasons)
 plot_seasonal_cycle_1 <- function(x){
@@ -268,9 +320,9 @@ plot_seasonal_cycle_1 <- function(x){
   rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 3)
   
   print("got RMSSD")
-  lblGPP <- paste("rmssdFlux =", rmssdGPP)
-  lblB <- paste("rmseBarnes =", rmseBarnes, "r"=B, "rmssd"=rmssdB)
-  lblJ <- paste("rmseJung =", rmseJung, "r"=J, "rmssd"=rmssdJ)
+  lblGPP <- paste("RMSSDFlux =", rmssdGPP)
+  lblB <- paste("rmseBarnes =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
+  lblJ <- paste("rmseJung =", rmseJung, ",r=", J, ",RMSSD=",rmssdJ)
   
   filename <- paste(x$site[1], "seasonal_comparison.png", sep="_")
   print(filename)
@@ -282,9 +334,9 @@ plot_seasonal_cycle_1 <- function(x){
     geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP+ Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="blue")+
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
     geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP+ Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="green")+
-    annotate("text", label = lblGPP, parse=FALSE, x =3, y = 4.5, size = 5, colour = "Red")+
-    annotate("text", label = lblB, parse=FALSE, x = 3, y = 5, size = 5, colour = "Blue")+
-    annotate("text", label = lblJ, parse=FALSE, x = 3, y = 5.5, size = 5, colour = "Green")+
+    annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 8, colour = "Red")+
+    annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 8, colour = "Blue")+
+    annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 8, colour = "Green")+
       scale_x_continuous(breaks=pretty_breaks())+
     xlab('month')+
     ylab('GPP')+
@@ -292,9 +344,99 @@ plot_seasonal_cycle_1 <- function(x){
     theme(legend.position = c(0, 0))
   plot(q)
   filename <- paste(x$site[1], "seasonalRF_comparison.png", sep="_")
-  #ggsave(filename, device='png', width=16, height=16, dpi = 300, units = "cm")
+  ggsave(filename, device='png', width=16, height=16, dpi = 300, units = "cm")
 }
 #split
 #apply (and write out)
+#Figure 2c-----------------------
 lapply(list_seasons, plot_seasonal_cycle_1)
+list_seasons[[1]]
+getRMSE <- function(x){
+  str(x)
+  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2) 
+  df <- data.frame(rmseBarnes, rmseJung, x$site, x$month)
+  colnames(df) <- c("Barnes","Jung", "site", "month")
+  return(df)
 
+}
+
+str(merged)
+Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+Sites$site <- str_replace_all(Sites$site, "-", "_")
+merged$diff1 <- merged$GPP - merged$Jung_GPP
+merged$diff2 <- merged$GPP - merged$Barnes_GPP
+
+Sites <- Sites[,c("site", "Vegtype")]
+Veg_merge <- plyr::rename(Sites, c("site"="site", "Vegtype"="Veg"))
+Residual_plot <- merge(merged, Veg_merge, by="site")
+
+#Split apply combine plots
+Y <- split(Residual_plot, Residual_plot$Veg)
+Forest <- Y[[1]]
+Grassland <- Y[[2]]
+Savanna <- Y[[3]]
+Shrubland <- Y[[4]]
+str(residplot)
+
+stdev <- ddply(Residual_plot, .(Veg), summarize, std_dev1=sd(diff1,na.rm=TRUE), std_dev2=sd(diff2,na.rm=TRUE))
+str(stdev)
+formax1 <- (stdev[1,2]*1.96)
+formin1 <- -(stdev[1,2]*1.96)
+grassmax1 <- (stdev[2,2]*1.96)
+grassmin1 <- -(stdev[2,2]*1.96)
+shrubmax1 <- (stdev[4,2]*1.96)
+shrubmin1 <- -(stdev[4,2]*1.96)
+savmax1 <- (stdev[3,2]*1.96)
+savmin1 <- -(stdev[3,2]*1.96)
+
+
+formax2 <- (stdev[1,3]*1.96)
+formin2 <- -(stdev[1,3]*1.96)
+grassmax2 <- (stdev[2,3]*1.96)
+grassmin2 <- -(stdev[2,3]*1.96)
+shrubmax2 <- (stdev[4,3]*1.96)
+shrubmin2 <- -(stdev[4,3]*1.96)
+savmax2 <- (stdev[3,3]*1.96)
+savmin2 <- -(stdev[3,3]*1.96)
+
+library(ggplot2)
+library(scales)
+library(ggthemes)
+library(ggpubr)
+
+str(Residual_plot)
+B2 <- ggplot(Residual_plot, aes(x=month, y=diff2, color=Veg)) + geom_point(size=2, alpha=0.5) +geom_smooth(aes(group=Veg), method="loess", se=FALSE)+theme_few() + ylim(-5,5) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ ylab("FluxGPP - BarnesGPP")+ scale_x_continuous(breaks=pretty_breaks())
+Fo2 <- ggplot(Forest, aes(x=month, y=diff2, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-5,5) +geom_line(aes(y=0), linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - BarnesGPP")+geom_line(aes(y=(formax1)), linetype="dotted", color="black")+geom_line(aes(y=(formin1)), linetype="dotted", color="black")
+Gra2 <- ggplot(Grassland, aes(x=month, y=diff2, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-3,5) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - BarnesGPP")+ geom_line(aes(y=(grassmax1)), linetype="dotted", color="black")+geom_line(aes(y=(grassmin1)), linetype="dotted", color="black")
+Sav2 <- ggplot(Savanna, aes(x=month, y=diff2, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-4,4) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - BarnesGPP")+ geom_line(aes(y=(savmax1)), linetype="dotted", color="black")+geom_line(aes(y=(savmin1)), linetype="dotted", color="black")
+Shr2 <- ggplot(Shrubland, aes(x=month, y=diff2, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-4,4) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - BarnesGPP")+ geom_line(aes(y=(shrubmax1)), linetype="dotted", color="black")+geom_line(aes(y=(shrubmin1)), linetype="dotted", color="black")
+#apply (and write out)
+
+ggpubr::ggarrange(Fo2, Gra2, Sav2, Shr2 + rremove("x.text"), 
+          labels = c("Forest", "Grass", "Savanna", "Shrub"), vjust=1.5, hjust=-0.4, 
+          legend="none",
+          ncol = 2, nrow = 2)
+
+J2 <- ggplot(Residual_plot, aes(x=month, y=diff1, color=Veg)) + geom_point(size=2, alpha=0.5) +geom_smooth(aes(group=Veg), method="loess", se=FALSE)+theme_few() + ylim(-5,5) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ ylab("FluxGPP - JungGPP")+ scale_x_continuous(breaks=pretty_breaks())
+
+ggarrange(B2, J2, common.legend = TRUE, ncol=2, nrow=1)
+Fo <- ggplot(Forest, aes(x=month, y=diff1, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-3,5) +geom_line(aes(y=0), linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+geom_line(aes(y=(formax1)), linetype="dotted", color="black")+geom_line(aes(y=(formin1)), linetype="dotted", color="black")
+Gra <- ggplot(Grassland, aes(x=month, y=diff1, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-3,3) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(grassmax1)), linetype="dotted", color="black")+geom_line(aes(y=(grassmin1)), linetype="dotted", color="black")
+Sav <- ggplot(Savanna, aes(x=month, y=diff1, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-4,4) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(savmax1)), linetype="dotted", color="black")+geom_line(aes(y=(savmin1)), linetype="dotted", color="black")
+Shr <- ggplot(Shrubland, aes(x=month, y=diff1, color=site)) + geom_point(size=2) +geom_smooth(aes(group=site), method="loess", se=FALSE)+theme_few() + ylim(-3,3) +geom_line(aes(y=0),linetype="twodash", size=1, color="black")+ scale_x_continuous(breaks=pretty_breaks())+ ylab("FluxGPP - JungGPP")+ geom_line(aes(y=(shrubmax1)), linetype="dotted", color="black")+geom_line(aes(y=(shrubmin1)), linetype="dotted", color="black")
+#apply (and write out)
+
+ggpubr::ggarrange(Fo, Gra, Sav, Shr + rremove("x.text"), 
+                  labels = c("Forest", "Grass", "Savanna", "Shrub"), vjust=1.5, hjust=-0.4, 
+                  legend="none",
+                  ncol = 2, nrow = 2)
+
+
+#Correion plot of differences against GPP
+B <- ggplot(Residual_plot, (aes(x=GPP, y=diff1, color=Veg)))+geom_point(size=2)+ ylim(-5,5) + geom_smooth(method="lm")+ theme_few()+ylab("FluxGPP - JungGPP")+xlab("FluxGPP")+annotate("text", label="r = 0.84", y=5,x=1)
+J <- ggplot(Residual_plot, (aes(x=GPP, y=diff2, color=Veg)))+geom_point(size=2)+ ylim(-5,5) +geom_smooth(method="lm")+ theme_few()+ylab("FluxGPP - BarnesGPP")+xlab("FluxGPP")+ annotate("text", label="r=0.09", y=5,x=1)
+ggpubr::ggarrange(B,J, common.legend = TRUE, ncol=2, nrow=1)
+
+cor(Residual_plot$GPP, Residual_plot$diff1, use="complete.obs")
+cor(Residual_plot$GPP, Residual_plot$diff2, use="complete.obs")
