@@ -148,6 +148,8 @@ names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "
 plot(rast_stack)
 
 RFC3 <- readRDS("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_C3oversample_3_11.rds")
+varImp(RFC3)
+varImpPlot(RFC3)
 #Going to mask before I do this
 
 # Read SHAPEFILE.shp from the current working directory (".")
@@ -349,22 +351,35 @@ GlobalAnalysis2(1378, 58, 2015, 10, "Oct", 04)
 GlobalAnalysis2(1379, 59, 2015, 11, "Nov", 05)
 GlobalAnalysis2(1380, 60, 2015, 12, "Dec", 06)
 
+
+#OK compare strongest El Nino year in the data record with the strongest la nina year in the data record
+#El Nino: 2015
+#La Nina: 2010
+#Add up CO2 and quantify the difference if possible
+#months south vs. northern hemisphere: 
+#Northern:  1  2   3  4   5   6  7  8  9 10  11 12
+#Southern: 7   8  9  10  11  12  1  2 3  4  5  6
 lst2010 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2010_.tif", full.names=TRUE)
-plot(raster("F:/Upscaling_Project/Test_Global_Upscaling/_Jan_2010_.tif"))
 stack2010 <- stack(lst2010)
 plot(stack2010)
 sum2010 <- calc(stack2010, sum, na.rm=TRUE) 
 plot(sum2010)
 
 lst2015 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2015_.tif", full.names=TRUE)
-plot(raster("F:/Upscaling_Project/Test_Global_Upscaling/_Jan_2015_.tif"))
 stack2015 <- stack(lst2015)
 plot(stack2015)
 sum2015 <- calc(stack2015, sum, na.rm=TRUE) 
 plot(sum2015)
-
-diff <- sum2010 - sum2015
+diff <- sum2015 - sum2010
+percentdiff <- 100*((sum2015-sum2010)/(sum2015))
+percentdiff[percentdiff==-Inf] <- NA
+plot(percentdiff)
 names(diff) <- "Difference"
+cellStats(sum2010, sum)
+cellStats(sum2015, sum)
+
+summary(percentdiff)
+
 #function from here: https://stackoverflow.com/questions/33750235/plotting-a-raster-with-the-color-ramp-diverging-around-zero
 diverge0 <- function(p, ramp) {
   # p: a trellis object resulting from rasterVis::levelplot
@@ -389,145 +404,41 @@ diverge0 <- function(p, ramp) {
   p
 }
 library(rasterVis)
-p <- levelplot(diff)
-diverge0(p, "RdYlBu")
-map('world', fill=TRUE, col="white")
-levelplot(diff,par.settings=RdBuTheme(), at=seq(-25,25, len=100))
-mapTheme <- rasterTheme(region=brewer.pal(8,"RdBu"))
-plt <- levelplot(diff, margin=F, par.settings=mapTheme)
-plt + map("world", colour="gray50", fill="white") # create a layer of borders
-
-#Now for 2015
-Jul_2015_wk1 <- raster("F:/Upscaling_Project/Test_Global_Upscaling/VHP.G04.C07.NP.P2015027.SM.SMN.tif")
-#Set -999 to NA and Apply scaling factor: 0.0010
-Jul_2015_wk1[Jul_2015_wk1 ==-9999] <- NA
-#Get spei12, spei1, and spei6 data
-spei6 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei06.nc")[[1375]]
-spei12 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei12.nc")[[1375]]
-spei1 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei01.nc")[[1375]]
-#Precip
-precip <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.pre.dat.nc")[[55]]
-#Tmin
-tmin <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmn.dat.nc")[[55]]
-#Tmax
-tmax <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmx.dat.nc")[[55]]
-#VP
-vp<- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.vap.dat.nc")[[55]]
-#Srad: workflow here https://gis.stackexchange.com/questions/20018/how-can-i-convert-data-in-the-form-of-lat-lon-value-into-a-raster-file-using-r
-#srad from here: https://eosweb.larc.nasa.gov/cgi-bin/sse/global.cgi?email=skip@larc.nasa.gov
-pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
-pts <- pts[,c(1:2, 9)]
-coordinates(pts)=~Lon+Lat
-proj4string(pts)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # set it to lat-long
-pts = spTransform(pts,CRS(("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")))
-gridded(pts) = TRUE
-srad = raster(pts)
-projection(srad) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-plot(srad)
-#Daylength the same as srad but also must convert to seconds from hours
-pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
-pts <- pts[,c(1:2)]
-pts2  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylight.csv")
-pts2 <- pts2[,c(1,8)]
-merged <- merge(pts, pts2, by="Lat")
-coordinates(merged)=~Lon+Lat
-proj4string(merged)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # set it to lat-long
-pts = spTransform(merged,CRS(("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")))
-gridded(pts) = TRUE
-dayl = raster(pts)
-projection(dayl) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-dayl <- dayl*3600
-plot(dayl)
-#month raster
-sh <- extent(-180,180,-90, -89.1)
-shrast = raster(ext=sh, re=0.5)
-monthrast = raster(ext=cru_ext, res=0.5)
-values(monthrast) <- 7
-values(shrast) <- 1
-month <- mosaic(monthrast, shrast, fun=min)
-plot(month)
-
-#Get MAP/MAT: http://www.worldclim.org/bioclim
-climate <- getData('worldclim', var='bio', res=2.5)
-#BIO1 = Annual Mean Temperature
-#BIO12 = Annual Precipitation
-MAT <- (climate$bio1)/10
-MAP <- (climate$bio12)
-plot(MAT)
-plot(MAP)
-#Elevation
-# Isolate the name of the first sds
-library(raster)
+library(maps)
+library(mapdata)
+library(mapplots)
+library(maptools)
+library(rasterImage)
+library(ggplot2)
 library(sp)
-library(rgdal) 
-filename <- "F:/Upscaling_Project/Test_Global_Upscaling/dem060.hdf"
-outfile="testout"
-gdal_translate(filename,outfile,sds=TRUE,verbose=TRUE)
-file.rename(outfile,paste(outfile,".tif",sep=""))
-test <- raster("F:/Upscaling_Project/Upscaling_Project_2017/testout.tif")
-elev <- flip(test, direction="y")
-elev[elev ==-9999] <- NA
-crs(elev) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" 
-extent(elev) <- c(-180, 180, -90, 90)
-#Get month
-sh <- extent(-180,180,-90, 0)
-shrast = raster(ext=sh, re=0.5)
-monthrast = raster(ext=cru_ext, res=0.5)
-values(monthrast) <- 7
-values(shrast) <- 1
-month <- mosaic(monthrast, shrast, fun=min)
-plot(month)
-#Then transform to whatever projection the raster is:
-#Need to resample all to the same resolution and extent -> we'll do the resolution of the cru data 
-cru_ext <- extent(vp)
-spei12 <- resample(spei12, vp, method="bilinear")
-spei6 <- resample(spei6, vp, method="bilinear")
-spei1 <- resample(spei1, vp, method="bilinear")
-Jul_2015_wk1<- resample(vp, vp, method="bilinear")
-elev <- resample(elev, vp, method="bilinear")
-srad <- resample(srad, vp, method="bilinear")
-month <- resample(month, vp, method="bilinear")
-MAT <- resample(MAT, vp, method="bilinear")
-MAP <- resample(MAP, vp, method="bilinear")
-dayl <- resample(dayl, vp, method="bilinear")
-print("resampling done")
+library(grid)
+library(lattice)
+percentdiff
 
-rast_stack <- stack(Jul_2015_wk1, month, elev, precip, tmax, tmin, MAP, MAT, srad, vp, dayl, spei1, spei6, spei12)
-plot(rast_stack)
-rast_ext <- extent(rast_stack[[1]])
-names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "daylength", "spei1", "spei6","spei12"))
+#Have to divide by 1000 to avoid integer overflow problem
+neg <- sum(Which(percentdiff <0, cells=TRUE,  na.rm=TRUE))/1000
+pos <- sum(Which(percentdiff >0, cells=TRUE,  na.rm=TRUE))/1000
+slices <- c(neg, pos)
+lbls <- c("Negative", "Positive")
+colors=c("black", "white")
+pie(slices, labels=lbls, col=colors)
 
-library(caret)
-library(raster)
-library(randomForest)
-library(ncdf4)
-RFC3 <- readRDS("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_C3oversample_3_11.rds")
-#Going to mask before I do this
-require(rgdal)
-# Read SHAPEFILE.shp from the current working directory (".")
-Jul_2015_GPP <- predict(rast_stack, RFC3, ext=rast_ext)
-plot(Jul_2015_GPP)
-mask <- raster("F:/Upscaling_Project/Test_Global_Upscaling/Drylands_dataset_2007/CBBNDrylands.tif")
-plot(mask)
-mask[mask < 0.5] <- NA
-mask[mask >0.5] <-1
-plot(mask)
-mask <- resample(mask, Jul_2001_GPP, method="bilinear")
-Jul_2015_dry <- mask(Jul_2015_GPP, mask)
-plot(Jul_2015_dry)
-diff <- Jul_2010_dry - Jul_2015_dry
-plot(diff)
+#p <- levelplot(diff)
+#diverge0(p, "RdYlBu")
+mapTheme <- rasterTheme(region = brewer.pal(8, "RdBu"))
+plot <- levelplot(percentdiff, margin=F, par.settings=mapTheme, at=seq(-125, 125, length.out=40), main="% change in GPP: 2015 vs. 2010")
+plot + layer(sp.lines(worldSHP, lwd=0.8, col='gray'))
+trellis.focus("legend", side="right", clipp.off=TRUE, highlight=FALSE)
+grid.text(("% change \n in CO2 uptake"), 0.2, 0, hjust=0.5, vjust=1)
+trellis.unfocus()
+
+proj <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+worldSHP <- shapefile("F:/Upscaling_Project/Test_Global_Upscaling/TM_WORLD_BORDERS-0.3.shp")
+
+
 
 require(colorRamps)
 col5 <- colorRampPalette(c('red', 'cornsilk', 'blue'))  #create color ramp starting from blue to red
 color_levels=10 #the number of colors to use
 max_absolute_value=4 #what is the maximum absolute value of raster?
 plot(diff, col=col5(n=color_levels), breaks=seq(-max_absolute_value,max_absolute_value,length.out=color_levels+1) , axes=FALSE)
-
-#OK compare strongest El Nino year in the data record with the strongest la nina year in the data record
-#El Nino: 2015
-#La Nina: 2010
-#Add up CO2 and quantify the difference if possible
-#months south vs. northern hemisphere: 
-#Northern:  1  2   3  4   5   6  7  8  9 10  11 12
-#Southern: 7   8  9  10  11  12  1  2 3  4  5  6
