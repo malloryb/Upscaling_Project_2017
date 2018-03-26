@@ -40,7 +40,7 @@ GlobalAnalysis <- function(bandsp, bandcru, year, month, moname, shmonth){
   values(monthrast) <- month
   values(shrast) <- shmonth
   monthR <- mosaic(monthrast, shrast, fun=ifelse(month <7, max, min))
-  plot(monthR)
+  #plot(monthR)
   print("monthrast calculated")
   pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
   head(pts)
@@ -114,7 +114,7 @@ proc_ndvi <- function(x){
 }
 
 R <- stack(lapply(ndvi_to_average, proc_ndvi))
-plot(R)
+#plot(R)
 NDVI <- calc(R, mean, na.rm=TRUE)
 plot(NDVI)
 print(NDVI)
@@ -145,11 +145,11 @@ print("resampling done")
 rast_stack <- stack(NDVI, monthR, elev, precip, tmax, tmin, MAP, MAT, srad, vp, dayl, spei1, spei6, spei12)
 rast_ext <- extent(rast_stack[[1]])
 names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "daylength", "spei1", "spei6","spei12"))
-plot(rast_stack)
+#plot(rast_stack)
 
 RFC3 <- readRDS("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_C3oversample_3_11.rds")
 varImp(RFC3)
-varImpPlot(RFC3)
+#varImpPlot(RFC3)
 #Going to mask before I do this
 
 # Read SHAPEFILE.shp from the current working directory (".")
@@ -164,7 +164,7 @@ mask <- resample(mask, GPP, method="bilinear")
 GPP_drylands <- mask( GPP, mask)
 title <- paste("Upscaled GPP", moname, year, sep=" ")
 filenameF <- paste("F:/Upscaling_Project/Test_Global_Upscaling/", moname, year, ".tif", sep="_")
-writeRaster(GPP_drylands, filenameF)
+writeRaster(GPP_drylands, filenameF, overwrite=TRUE)
 #plot(GPP_drylands, ggtitle = title)  
   } 
 #For files 2011 and after 
@@ -321,7 +321,7 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   GPP_drylands <- mask( GPP, mask)
   title <- paste("Upscaled GPP", moname, year, sep=" ")
   filenameF <- paste("F:/Upscaling_Project/Test_Global_Upscaling/", moname, year, ".tif", sep="_")
-  writeRaster(GPP_drylands, filenameF)
+  writeRaster(GPP_drylands, filenameF, overwrite=TRUE)
   #plot(GPP_drylands, ggtitle = title)  
 } 
 
