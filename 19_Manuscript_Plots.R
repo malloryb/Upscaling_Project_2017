@@ -308,16 +308,16 @@ plot_seasonal_cycle_1 <- function(x){
   require("ggpubr")
   print(str(x))
   droplevels(x)
-  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 3))
-  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 3))
+  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
+  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
   
   print("calculated cors")
-  rmssdGPP <- as.character(round(rmssd(x$GPP), 3))
-  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 3))
-  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 3))
+  rmssdGPP <- as.character(round(rmssd(x$GPP), 2))
+  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 2))
+  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 2))
   
-  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 3)
-  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 3)
+  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
   
   print("got RMSSD")
   lblGPP <- paste("RMSSDFlux =", rmssdGPP)
@@ -334,9 +334,9 @@ plot_seasonal_cycle_1 <- function(x){
     geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP+ Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="blue")+
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
     geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP+ Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="green")+
-    annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 8, colour = "Red")+
-    annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 8, colour = "Blue")+
-    annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 8, colour = "Green")+
+    annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "Red")+
+    annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "Blue")+
+    annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "Green")+
       scale_x_continuous(breaks=pretty_breaks())+
     xlab('month')+
     ylab('GPP')+
