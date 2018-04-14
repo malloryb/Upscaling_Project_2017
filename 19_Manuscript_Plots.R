@@ -1,7 +1,7 @@
 #Manuscript plots for upscaling project
 #Fig 1: 
-setwd("F:/Upscaling_Project/Upscaled_GPP/RF_C3/")
-lst <- list.files("F:/Upscaling_Project/Upscaled_GPP/RF_C3/", pattern=".csv")
+setwd("D:/Upscaling_Project/Upscaled_GPP/RF_C3/")
+lst <- list.files("D:/Upscaling_Project/Upscaled_GPP/RF_C3/", pattern=".csv")
 #Format output from RFC3 flux file 
 format_Barnesoutput <- function(xx){
   print("read file")
@@ -33,13 +33,13 @@ RFC3_long <- tidyr::gather(RF_C3, site, Barnes_GPP, us_aud:us_wkg, factor_key=TR
 str(RFC3_long)
 RFC3_long$sitedate <- as.factor(paste(RFC3_long$monthyear, RFC3_long$site, sep="_"))
 #Merge with true flux data and Jung 2017 data
-FluxJung <- read.csv("F:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
+FluxJung <- read.csv("D:/Upscaling_Project/Jung_Comps/Merged_Jung_Comps.csv")
 levels(RFC3_long$sitedate)
 levels(FluxJung$sitedate)
 merged <- merge(RFC3_long, FluxJung, all=T)
 
 #Merge with SPEI Going to use site-based SPEI 12 for now
-getspei <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv")
+getspei <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv")
 str(getspei)
 getspei$site <- (gsub('([[:punct:]])|\\-','_', getspei$site))
 getspei$monthyear <- (gsub('([[:punct:]])|\\-','_', getspei$monthyear))
@@ -70,7 +70,7 @@ Subs1<-subset(for_fig_1, (!is.na(for_fig_1[,9])))
 str(Subs1)
 summary(for_fig_1)
 for_fig_1[100:150,]
-
+library(plyr)
 #Get IAV for IAV plots
 IAV_to_plot <-ddply(for_fig_1, .(year, site), summarize, Barnes_GPP=sum(Barnes_GPP, na.rm=TRUE), Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
 #Get figure 1 formatting data ready (corrs with SPEI)
@@ -78,6 +78,29 @@ Fig1_to_plot <-ddply(Subs1, .(year, site), summarize, SPEI_12max=max(abs(spei12)
                      SPEI_6max=max(abs(spei6)), SPEI_6mean=mean(spei6, na.rm=TRUE),
                      SPEI_1max=max(abs(spei1)), SPEI_1mean=mean(spei1, na.rm=TRUE),
                      Barnes_GPP=sum(Barnes_GPP, na.rm=TRUE), Jung_GPP=sum(Jung_GPP, na.rm=TRUE), GPP=sum(GPP, na.rm=TRUE))
+
+#Plot sensitivity 
+library(ggplot2)
+library(ggpubr)
+#Colors: 
+#Barnes: #1b9e77
+#Flux: #d95f02
+#Jung #7570b3
+Fig1_to_plot
+pp1 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = GPP,group = site)) +
+  stat_smooth(method="lm", se=FALSE, color="#d95f02") + theme_bw()+ ylim(0,55)+
+  ggtitle("Observed GPP")
+
+pp2 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = Barnes_GPP,group = site)) +
+  stat_smooth(method="lm", se=FALSE, color="#1b9e77")+ theme_bw()+ylim(0,55)+
+  ggtitle("DryFlux GPP")
+
+pp3 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = Jung_GPP,group = site)) +
+  stat_smooth(method="lm", se=FALSE, color="#7570b3")+ theme_bw()+ylim(0,55)+
+  ggtitle("Fluxcom GPP")
+
+ggarrange(pp1, pp3, pp2, ncol=3)
+?ggarrange
 
 #Just mean annual SPEI12
 corfunc2 <- function(gg){
@@ -105,11 +128,12 @@ SPEI12_IAV_long <- tidyr::gather(Plot_12m_IAV, rowname, GPP, factor_key=TRUE)
 str(SPEI12_IAV_long)
 names(SPEI12_IAV_long) <- c("site", "GPP", "cor")
 #Need to match lat and long now 
-lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 lookup$sitechar <- substr(lookup$site, 4,6)
 point <- data.frame("site" = paste("us_", lookup$sitechar, sep=""), 
                     "lat" = lookup$lat, 
-                    "long" = lookup$long)
+                    "long" = lookup$long,
+                    "MAP" = lookup$MAP)
 merged <- merge(SPEI12_IAV_long, point, by="site")
 
 split <- split(merged, merged$GPP)
@@ -145,8 +169,54 @@ mp_plot3 <- mp+ geom_point(aes(x=JungGPP$long, y=JungGPP$lat, colour=JungGPP$cor
   coord_map(xlim = c(-123,-103), ylim = c(23,41))+ theme_few(base_size=8)+ labs(title = "Jung GPP vs SPEI12", x="Longitude", y="Latitude") 
 
 ggpubr::ggarrange(mp_plot1, mp_plot2, mp_plot3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
+#Plotting new Figure 1----------------------
+write.csv(merged, "D:/Upscaling_Project/Upscaled_GPP/for_fig_1_3_22_2018.csv")
+mp_plot1 <- mp+ geom_point(aes(x=FluxGPP$long, y=FluxGPP$lat, colour=FluxGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
+  scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-.75,1))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))+ 
+  theme_few(base_size=8)+ labs(title = "Flux GPP vs SPEI12", x="Longitude", y="Latitude") 
 
 
+mp_plot2 <- mp+ geom_point(aes(x=BarnesGPP$long, y=BarnesGPP$lat, colour=BarnesGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
+  scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-0.75,1))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))+
+  theme_few(base_size=8)+ labs(title = "BarnesGPP vs SPEI12", x="Longitude", y="Latitude") 
+
+
+mp_plot3 <- mp+ geom_point(aes(x=JungGPP$long, y=JungGPP$lat, colour=JungGPP$cor), position= position_jitter(w=0.5, h=0.5), size=2)+
+  scale_color_gradientn(colours=c("blue", "white","red"), name="Correlation", limits=c(-0.75,1))+
+  coord_map(xlim = c(-123,-103), ylim = c(23,41))+ theme_few(base_size=8)+ labs(title = "Jung GPP vs SPEI12", x="Longitude", y="Latitude") 
+
+merged <- merged[order(merged$MAP),]
+N = ddply(merged, .(site, GPP), function(x) length(row.names(x)))
+N$Fac = N$V1 / max(N$V1)
+all = merge(merged, N[,-3], by = c("site", "GPP"))
+
+all$label = paste(all$site, all$GPP, sep = ", ")
+str(all)
+
+ggplot(all, aes(x=site, y=cor, fill=factor(GPP)))+
+  geom_bar(aes(width=.5), stat="identity", position="dodge")+ theme_bw()+
+  facet_wrap(~site)
+
+allp <- ggplot(data =all, aes(x=site, y=cor, group=GPP,fill=cor)) + 
+  
+  # Adjust the bar widths according to the scaling factor
+  geom_bar(aes(width = .5*Fac), stat="identity", position="dodge",  colour="NA") + 
+  
+  facet_wrap(~site,ncol=2,scales="free_x")+
+  #   facet_wrap(group~station,ncol=2,scales="free_x")+
+  xlab("Flux sites") + ylab("Correlation between GPP and 12-month SPEI") +
+  ggtitle("GPP and SPEI") + 
+  theme_bw() + 
+  theme(plot.title = element_text(lineheight=.8, face="bold", size=20,vjust=1),
+        axis.text.x = element_text(colour="grey20",size=12,angle=0,hjust=.5,vjust=.5,face="bold"), 
+        axis.text.y = element_text(colour="grey20",size=12,angle=0,hjust=1,vjust=0,face="bold"), 
+        axis.title.x = element_text(colour="grey20",size=15,angle=0,hjust=.5,vjust=0,face="bold"), 
+        axis.title.y = element_text(colour="grey20",size=15,angle=90,hjust=.5,vjust=1,face="bold"),
+        legend.position="none", 
+        strip.text.x = element_text(size = 12, face="bold", colour = "black", angle = 0), 
+        strip.text.y = element_text(size = 12, face="bold", colour = "black"))
 #Just the global GPP part now
 library(lattice)
 library(rasterVis)
