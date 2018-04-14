@@ -3,6 +3,9 @@ library(gdal)
 library(gdalUtils)
 library(raster)
 library(stringr)
+devtools::install_github("benmarwick/rrtools")
+library(rrtools)
+rrtools::use_compendium('Dryflux2018')
 #To-do: create input raster. Testing on 1 month. 
 #NDVI data from: ftp://ftp.star.nesdis.noaa.gov/pub/corp/scsb/wguo/data/VHP_4km/geo_TIFF/
 #The data is weekly. Average the 4 .tifs together to get average veg...will be faster if subsetted first though...
@@ -182,6 +185,7 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   spei6 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei06.nc")[[bandsp]]
   spei12 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei12.nc")[[bandsp]]
   spei1 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei01.nc")[[bandsp]]
+  print("SPEI loaded")
   #Precip
   precip <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.pre.dat.nc")[[bandcru]]
   #Tmin
@@ -322,7 +326,7 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   title <- paste("Upscaled GPP", moname, year, sep=" ")
   filenameF <- paste("F:/Upscaling_Project/Test_Global_Upscaling/", moname, year, ".tif", sep="_")
   writeRaster(GPP_drylands, filenameF, overwrite=TRUE)
-  #plot(GPP_drylands, ggtitle = title)  
+  plot(GPP_drylands, ggtitle = title)  
 } 
 
 
@@ -456,72 +460,71 @@ GlobalAnalysis(1318, 118, 2010, 10, "Oct", 04)
 GlobalAnalysis(1395, 119, 2010, 11, "Nov", 05)
 GlobalAnalysis(1320, 120, 2010, 12, "Dec", 06)
 
-GlobalAnalysis2(1330, 1, 2011, 01, "Jan", 07)
-GlobalAnalysis2(1331, 2, 2011, 02, "Feb", 08)
-GlobalAnalysis2(1332, 3, 2011, 03, "Mar", 09)
-GlobalAnalysis2(1333, 4, 2011, 04, "Aor", 10)
-GlobalAnalysis2(1334, 5, 2011, 05, "May", 11)
-GlobalAnalysis2(1335, 6, 2011, 06, "Jun", 12)
-GlobalAnalysis2(1336, 7, 2011, 07, "Jul", 01)
-GlobalAnalysis2(1337, 8, 2011, 08, "Aug", 02)
-GlobalAnalysis2(1338, 9, 2011, 09, "Sep", 03)
-GlobalAnalysis2(1339, 10, 2011, 10, "Oct", 04)
-GlobalAnalysis2(1340, 11, 2011, 11, "Nov", 05)
-GlobalAnalysis2(1341, 12, 2011, 12, "Dec", 06)
+GlobalAnalysis2(1321, 1, 2011, 01, "Jan", 07)
+GlobalAnalysis2(1322, 2, 2011, 02, "Feb", 08)
+GlobalAnalysis2(1323, 3, 2011, 03, "Mar", 09)
+GlobalAnalysis2(1324, 4, 2011, 04, "Aor", 10)
+GlobalAnalysis2(1325, 5, 2011, 05, "May", 11)
+GlobalAnalysis2(1326, 6, 2011, 06, "Jun", 12)
+GlobalAnalysis2(1327, 7, 2011, 07, "Jul", 01)
+GlobalAnalysis2(1328, 8, 2011, 08, "Aug", 02)
+GlobalAnalysis2(1329, 9, 2011, 09, "Sep", 03)
+GlobalAnalysis2(1330, 10, 2011, 10, "Oct", 04)
+GlobalAnalysis2(1331, 11, 2011, 11, "Nov", 05)
+GlobalAnalysis2(1332, 12, 2011, 12, "Dec", 06)
 
-GlobalAnalysis2(1369, 13, 2012, 01, "Jan", 07)
-GlobalAnalysis2(1370, 14, 2012, 02, "Feb", 08)
-GlobalAnalysis2(1371, 15, 2012, 03, "Mar", 09)
-GlobalAnalysis2(1372, 16, 2012, 04, "Aor", 10)
-GlobalAnalysis2(1373, 17, 2012, 05, "May", 11)
-GlobalAnalysis2(1374, 18, 2012, 06, "Jun", 12)
-GlobalAnalysis2(1375, 19, 2012, 07, "Jul", 01)
-GlobalAnalysis2(1376, 20, 2012, 08, "Aug", 02)
-GlobalAnalysis2(1377, 21, 2012, 09, "Sep", 03)
-GlobalAnalysis2(1378, 22, 2012, 10, "Oct", 04)
-GlobalAnalysis2(1379, 23, 2012, 11, "Nov", 05)
-GlobalAnalysis2(1380, 24, 2012, 12, "Dec", 06)
+GlobalAnalysis2(1333, 13, 2012, 01, "Jan", 07)
+GlobalAnalysis2(1334, 14, 2012, 02, "Feb", 08)
+GlobalAnalysis2(1335, 15, 2012, 03, "Mar", 09)
+GlobalAnalysis2(1336, 16, 2012, 04, "Aor", 10)
+GlobalAnalysis2(1337, 17, 2012, 05, "May", 11)
+GlobalAnalysis2(1338, 18, 2012, 06, "Jun", 12)
+GlobalAnalysis2(1339, 19, 2012, 07, "Jul", 01)
+GlobalAnalysis2(1340, 20, 2012, 08, "Aug", 02)
+GlobalAnalysis2(1341, 21, 2012, 09, "Sep", 03)
+GlobalAnalysis2(1342, 22, 2012, 10, "Oct", 04)
+GlobalAnalysis2(1343, 23, 2012, 11, "Nov", 05)
+GlobalAnalysis2(1344, 24, 2012, 12, "Dec", 06)
 
-GlobalAnalysis2(1381, 25, 2013, 01, "Jan", 07)
-GlobalAnalysis2(1382, 26, 2013, 02, "Feb", 08)
-GlobalAnalysis2(1383, 27, 2013, 03, "Mar", 09)
-GlobalAnalysis2(1384, 28, 2013, 04, "Aor", 10)
-GlobalAnalysis2(1385, 29, 2013, 05, "May", 11)
-GlobalAnalysis2(1386, 30, 2013, 06, "Jun", 12)
-GlobalAnalysis2(1387, 31, 2013, 07, "Jul", 01)
-GlobalAnalysis2(1388, 32, 2013, 08, "Aug", 02)
-GlobalAnalysis2(1389, 33, 2013, 09, "Sep", 03)
-GlobalAnalysis2(1390, 34, 2013, 10, "Oct", 04)
-GlobalAnalysis2(1391, 35, 2013, 11, "Nov", 05)
-GlobalAnalysis2(1392, 36, 2013, 12, "Dec", 06)
+GlobalAnalysis2(1345, 25, 2013, 01, "Jan", 07)
+GlobalAnalysis2(1346, 26, 2013, 02, "Feb", 08)
+GlobalAnalysis2(1347, 27, 2013, 03, "Mar", 09)
+GlobalAnalysis2(1348, 28, 2013, 04, "Aor", 10)
+GlobalAnalysis2(1349, 29, 2013, 05, "May", 11)
+GlobalAnalysis2(1350, 30, 2013, 06, "Jun", 12)
+GlobalAnalysis2(1351, 31, 2013, 07, "Jul", 01)
+GlobalAnalysis2(1352, 32, 2013, 08, "Aug", 02)
+GlobalAnalysis2(1353, 33, 2013, 09, "Sep", 03)
+GlobalAnalysis2(1354, 34, 2013, 10, "Oct", 04)
+GlobalAnalysis2(1355, 35, 2013, 11, "Nov", 05)
+GlobalAnalysis2(1356, 36, 2013, 12, "Dec", 06)
+
+GlobalAnalysis2(1357, 37, 2014, 01, "Jan", 07)
+GlobalAnalysis2(1358, 38, 2014, 02, "Feb", 08)
+GlobalAnalysis2(1359, 39, 2014, 03, "Mar", 09)
+GlobalAnalysis2(1360, 40, 2014, 04, "Aor", 10)
+GlobalAnalysis2(1361, 41, 2014, 05, "May", 11)
+GlobalAnalysis2(1362, 42, 2014, 06, "Jun", 12)
+GlobalAnalysis2(1363, 43, 2014, 07, "Jul", 01)
+GlobalAnalysis2(1364, 44, 2014, 08, "Aug", 02)
+GlobalAnalysis2(1365, 45, 2014, 09, "Sep", 03)
+GlobalAnalysis2(1366, 46, 2014, 10, "Oct", 04)
+GlobalAnalysis2(1367, 47, 2014, 11, "Nov", 05)
+GlobalAnalysis2(1368, 48, 2014, 12, "Dec", 06)
 
 
-GlobalAnalysis2(1393, 37, 2014, 01, "Jan", 07)
-GlobalAnalysis2(1394, 38, 2014, 02, "Feb", 08)
-GlobalAnalysis2(1395, 39, 2014, 03, "Mar", 09)
-GlobalAnalysis2(1396, 40, 2014, 04, "Aor", 10)
-GlobalAnalysis2(1397, 41, 2014, 05, "May", 11)
-GlobalAnalysis2(1398, 42, 2014, 06, "Jun", 12)
-GlobalAnalysis2(1399, 43, 2014, 07, "Jul", 01)
-GlobalAnalysis2(1400, 44, 2014, 08, "Aug", 02)
-GlobalAnalysis2(1401, 45, 2014, 09, "Sep", 03)
-GlobalAnalysis2(1402, 46, 2014, 10, "Oct", 04)
-GlobalAnalysis2(1403, 47, 2014, 11, "Nov", 05)
-GlobalAnalysis2(1404, 48, 2014, 12, "Dec", 06)
-
-
-GlobalAnalysis2(1405, 49, 2015, 01, "Jan", 07)
-GlobalAnalysis2(1406, 50, 2015, 02, "Feb", 08)
-GlobalAnalysis2(1407, 51, 2015, 03, "Mar", 09)
-GlobalAnalysis2(1408, 52, 2015, 04, "Aor", 10)
-GlobalAnalysis2(1409, 53, 2015, 05, "May", 11)
-GlobalAnalysis2(1410, 54, 2015, 06, "Jun", 12)
-GlobalAnalysis2(1411, 55, 2015, 07, "Jul", 01)
-GlobalAnalysis2(1412, 56, 2015, 08, "Aug", 02)
-GlobalAnalysis2(1413, 57, 2015, 09, "Sep", 03)
-GlobalAnalysis2(1414, 58, 2015, 10, "Oct", 04)
-GlobalAnalysis2(1415, 59, 2015, 11, "Nov", 05)
-GlobalAnalysis2(1416, 60, 2015, 12, "Dec", 06)
+GlobalAnalysis2(1369, 49, 2015, 01, "Jan", 07)
+GlobalAnalysis2(1370, 50, 2015, 02, "Feb", 08)
+GlobalAnalysis2(1371, 51, 2015, 03, "Mar", 09)
+GlobalAnalysis2(1372, 52, 2015, 04, "Aor", 10)
+GlobalAnalysis2(1373, 53, 2015, 05, "May", 11)
+GlobalAnalysis2(1374, 54, 2015, 06, "Jun", 12)
+GlobalAnalysis2(1375, 55, 2015, 07, "Jul", 01)
+GlobalAnalysis2(1376, 56, 2015, 08, "Aug", 02)
+GlobalAnalysis2(1377, 57, 2015, 09, "Sep", 03)
+GlobalAnalysis2(1378, 58, 2015, 10, "Oct", 04)
+GlobalAnalysis2(1379, 59, 2015, 11, "Nov", 05)
+GlobalAnalysis2(1380, 60, 2015, 12, "Dec", 06)
 
 #OK compare strongest El Nino year in the data record with the strongest la nina year in the data record
 #El Nino: 2015
@@ -612,4 +615,240 @@ require(colorRamps)
 col5 <- colorRampPalette(c('red', 'cornsilk', 'blue'))  #create color ramp starting from blue to red
 color_levels=10 #the number of colors to use
 max_absolute_value=4 #what is the maximum absolute value of raster?
-plot(diff, col=col5(n=color_levels), breaks=seq(-max_absolute_value,max_absolute_value,length.out=color_levels+1) , axes=FALSE)
+plot(diff, col=col5(n=color_levels), breaks=seq(-max_absolute_value,max_absolute_value,length.out=color_levels+1), axes=FALSE)
+
+#The half-degree compraisons russ wanted
+current.list <- list.files(path="D:/Upscaling_Project/Test_Global_Upscaling", 
+                           pattern ="_.tif$", full.names=TRUE)
+stack_FUF <- stack(current.list)
+plot(stack_FUF[1])
+FUFpoint <- cbind(-111.76, 35.0890)
+FUFresultA1 <-extract(stack_FUF, FUFpoint)
+str(FUFresultA1)
+FUFresultA2 <- as.data.frame(FUFresultA1)
+str(FUFresultA2)
+df <- cbind(names = rownames(FUFresultA2), FUFresultA2)
+library(reshape2)
+long <- melt(df, id.vars = c("names"))
+colnames(long) <- c("X", "name", "GPP")
+long$X <- NULL
+long$month <- substr(long$name, 3,5)
+long$year <- substr(long$name, 7,10)
+long$date <-  date <-as.Date(paste(long$year, long$month, "01", sep="-"), format="%Y-%b-%d")
+str(long)
+write.csv(long, "D:/Upscaling_Project/Test_Global_Upscaling/FUF_0.5_deg.csv")
+
+
+#US-Wkg
+WKGpoint <- cbind(-109.94, 31.7365)
+WKGresult <-extract(stack_FUF, WKGpoint)
+plot(WKGresult[1:12])
+detach("package:tibble", unload=TRUE)
+#TO DO 
+#remake 3 peaked graphs JUST for Kendall and Flagstaff unmanaged forest
+#You got this
+
+
+#Global validation
+#1) Stack up global all years
+library(raster)
+current.list <- list.files(path="F:/Upscaling_Project/Test_Global_Upscaling", 
+                           pattern ="_.tif$", full.names=TRUE)
+stack_val <- stack(current.list)
+#2) Extract Point around Ausflux sites, etc. 
+Drypoint <- cbind(132.3706, -15.2588)
+DryresultA1 <-extract(stack_val, Drypoint)
+str(DryresultA1)
+DryresultA2 <- as.data.frame(DryresultA1)
+str(DryresultA2)
+df <- cbind(names = rownames(DryresultA2), DryresultA2)
+library(reshape2)
+long <- melt(df, id.vars = c("names"))
+colnames(long) <- c("X", "name", "GPP")
+long$X <- NULL
+long$month <- substr(long$name, 3,5)
+long$year <- substr(long$name, 7,10)
+long$date <-  date <-as.Date(paste(long$year, long$month, "01", sep="-"), format="%Y-%b-%d")
+str(long)
+write.csv(long, "F:/Upscaling_Project/Test_Global_Upscaling/Dry_0.5_deg.csv")
+#3)Merge with flux data 
+Dry <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Validation/FLX_AU-Dry_FLUXNET2015_SUBSET_MM_2008-2014_2-3.csv")
+Flux <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Dry_0.5_deg.csv")
+str(Dry)
+Dry$month <- substr(Dry$TIMESTAMP, 5,6)
+Dry$year <-substr(Dry$TIMESTAMP, 1,4)
+Dry$date <- as.Date(paste(Dry$year, Dry$month, "01", sep="-"))
+Flux$date <- as.Date(Flux$date)
+Dry$FluxGPP <- Dry$GPP_DT_VUT_REF
+Flux$DryFluxGPP <- Flux$GPP
+str(Dry)
+str(Flux)
+Aus_Dry_Val <- merge(Dry, Flux, by="date")
+#4) plot!
+library(ggplot2)
+library(ggthemes)
+library(scales)
+library(psych)
+library(ggpubr)
+#  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
+#  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
+  
+#  print("calculated cors")
+#  rmssdGPP <- as.character(round(rmssd(x$GPP), 2))
+#  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 2))
+#  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 2))
+  
+#  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+#  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+  
+#  print("got RMSSD")
+#  lblGPP <- paste("RMSSDObserved =", rmssdGPP)
+#  lblB <- paste("rmseDryFlux =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
+#  lblJ <- paste("rmseFluxcom =", rmseJung, ",r=", J, ",RMSSD=",rmssdJ)
+  
+#  filename <- paste(x$site[1], "seasonal_comparison_3_29.png", sep="_")
+#  print(filename)
+  q <- ggplot() +
+    ggtitle("Global Validation - AUS-Dry")+
+    geom_line(data = Aus_Dry_Val, aes(x = date, y = FluxGPP, color =I("#BD2031")), size=2) +
+    geom_line(data = Aus_Dry_Val, aes(x = date, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
+    #geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP- Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="#5F20BD")+
+    #geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="#BD2031")+
+    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
+    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
+    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
+    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
+    #scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_few(base_size =12)+
+    theme(legend.position = c(0, 0))
+  plot(q)
+
+  
+  library(plyr)
+  plot_seasonal_cycle <- ddply(Aus_Dry_Val, .(month.x), summarize, DryFluxGPP_se=sd(DryFluxGPP, na.rm=TRUE)/sqrt(length(DryFluxGPP[!is.na(DryFluxGPP)])), DryFluxGPP=mean(DryFluxGPP, na.rm=TRUE),
+                               FluxGPP_se=sd(FluxGPP, na.rm=TRUE)/sqrt(length(FluxGPP[!is.na(FluxGPP)])), FluxGPP=mean(FluxGPP, na.rm=TRUE))
+
+  str(plot_seasonal_cycle)
+  plot_seasonal_cycle$month.x <- as.numeric(plot_seasonal_cycle$month.x)
+  p <- ggplot() +
+    ggtitle("Global Validation - AUS-Dry")+
+    geom_line(data = plot_seasonal_cycle, aes(x = month.x, y = FluxGPP, color =I("#BD2031")), size=2) +
+    geom_line(data = plot_seasonal_cycle, aes(x = month.x, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
+    geom_errorbar(data=plot_seasonal_cycle,aes(x=month.x, ymin=DryFluxGPP- DryFluxGPP_se, ymax=DryFluxGPP+DryFluxGPP_se),colour="#5F20BD")+
+    geom_errorbar(data=plot_seasonal_cycle,aes(x=month.x, ymin=FluxGPP-FluxGPP_se,ymax=FluxGPP+FluxGPP_se),colour="#BD2031")+
+    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
+    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
+    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
+    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_few(base_size =18)+
+    theme(legend.position = c(0, 0))
+  plot(p)
+  
+  
+  #For STP----------
+  library(raster)
+  current.list <- list.files(path="F:/Upscaling_Project/Test_Global_Upscaling", 
+                             pattern ="_.tif$", full.names=TRUE)
+  stack_val <- stack(current.list)
+  #2) Extract Point around Ausflux sites, etc. 
+  Drypoint <- cbind(133.3502, -17.1507)
+  DryresultA1 <-extract(stack_val, Drypoint)
+  str(DryresultA1)
+  DryresultA2 <- as.data.frame(DryresultA1)
+  str(DryresultA2)
+  df <- cbind(names = rownames(DryresultA2), DryresultA2)
+  library(reshape2)
+  long <- melt(df, id.vars = c("names"))
+  colnames(long) <- c("X", "name", "GPP")
+  long$X <- NULL
+  long$month <- substr(long$name, 3,5)
+  long$year <- substr(long$name, 7,10)
+  long$date <-  date <-as.Date(paste(long$year, long$month, "01", sep="-"), format="%Y-%b-%d")
+  str(long)
+  write.csv(long, "F:/Upscaling_Project/Test_Global_Upscaling/Stp_0.5_deg.csv")
+  #3)Merge with flux data 
+  Dry <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Validation/FLX_AU-Stp_FLUXNET2015_SUBSET_MM_2008-2014_1-3.csv")
+  Flux <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Dry_0.5_deg.csv")
+  str(Dry)
+  Dry$month <- substr(Dry$TIMESTAMP, 5,6)
+  Dry$year <-substr(Dry$TIMESTAMP, 1,4)
+  Dry$date <- as.Date(paste(Dry$year, Dry$month, "01", sep="-"))
+  Flux$date <- as.Date(Flux$date)
+  Dry$FluxGPP <- Dry$GPP_DT_VUT_REF
+  Flux$DryFluxGPP <- Flux$GPP
+  str(Dry)
+  str(Flux)
+  Aus_Stp_Val <- merge(Dry, Flux, by="date")
+  #4) plot!
+  library(ggplot2)
+  library(ggthemes)
+  library(scales)
+  library(psych)
+  library(ggpubr)
+  #  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
+  #  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
+  
+  #  print("calculated cors")
+  #  rmssdGPP <- as.character(round(rmssd(x$GPP), 2))
+  #  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 2))
+  #  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 2))
+  
+  #  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+  #  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+  
+  #  print("got RMSSD")
+  #  lblGPP <- paste("RMSSDObserved =", rmssdGPP)
+  #  lblB <- paste("rmseDryFlux =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
+  #  lblJ <- paste("rmseFluxcom =", rmseJung, ",r=", J, ",RMSSD=",rmssdJ)
+  
+  #  filename <- paste(x$site[1], "seasonal_comparison_3_29.png", sep="_")
+  #  print(filename)
+  r <- ggplot() +
+    ggtitle("Global Validation - AUS-Stp")+
+    geom_line(data = Aus_Stp_Val, aes(x = date, y = FluxGPP, color =I("#BD2031")), size=2) +
+    geom_line(data = Aus_Stp_Val, aes(x = date, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
+    #geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP- Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="#5F20BD")+
+    #geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="#BD2031")+
+    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
+    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
+    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
+    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
+    #scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_few(base_size =18)+
+    theme(legend.position = c(0, 0))
+  plot(r)
+  
+  
+  library(plyr)
+  plot_seasonal_cycle2 <- ddply(Aus_Stp_Val, .(month.x), summarize, DryFluxGPP_se=sd(DryFluxGPP, na.rm=TRUE)/sqrt(length(DryFluxGPP[!is.na(DryFluxGPP)])), DryFluxGPP=mean(DryFluxGPP, na.rm=TRUE),
+                               FluxGPP_se=sd(FluxGPP, na.rm=TRUE)/sqrt(length(FluxGPP[!is.na(FluxGPP)])), FluxGPP=mean(FluxGPP, na.rm=TRUE))
+  
+  str(plot_seasonal_cycle2)
+  plot_seasonal_cycle2$month.x <- as.numeric(plot_seasonal_cycle2$month.x)
+  s <- ggplot() +
+    ggtitle("Global Validation - AUS-Stp")+
+    geom_line(data = plot_seasonal_cycle2, aes(x = month.x, y = FluxGPP, color =I("#BD2031")), size=2) +
+    geom_line(data = plot_seasonal_cycle2, aes(x = month.x, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
+    geom_errorbar(data=plot_seasonal_cycle2,aes(x=month.x, ymin=DryFluxGPP- DryFluxGPP_se, ymax=DryFluxGPP+DryFluxGPP_se),colour="#5F20BD")+
+    geom_errorbar(data=plot_seasonal_cycle2,aes(x=month.x, ymin=FluxGPP-FluxGPP_se,ymax=FluxGPP+FluxGPP_se),colour="#BD2031")+
+    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
+    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
+    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
+    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
+    scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_few(base_size =18)+
+    theme(legend.position = c(0, 0))
+  plot(s)
+  
+  
+plot_seasonal_cycles2_scaled <- scale(plot_seasonal_cycle2[,2:5])
+str(plot_seasonal_cycles2_scaled)  
