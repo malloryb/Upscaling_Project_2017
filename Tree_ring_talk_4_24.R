@@ -30,18 +30,34 @@ modis_ndvi <- function(file){
   tstndvi$year <- substrRight(as.character(tstndvi$date),4)
   tstndvi$monthyear <- paste(tstndvi$month, tstndvi$year, sep="-")
   tstndvi$date <- paste(tstndvi$monthyear, "01", sep="-")
-  mergendvi <- ddply(tstndvi, ~date, summarize, NDVI=mean(NDVI, na.rm=TRUE))
+  mergendvi <- ddply(tstndvi, ~monthyear, summarize, NDVI=mean(NDVI, na.rm=TRUE))
   mergendvi$site <- paste("us", substr(filename, 1,3), sep="-")
+  mergendvi$sitedate <- paste(mergendvi$site, mergendvi$monthyear, sep="-")
   return(mergendvi)
   }
 
 ndvilist <- list.files("F:/Upscaling_Project/MODIS_NDVI/")
-tst <- do.call("rbind", lapply(ndvilist, modis_ndvi))
+ndvi <- do.call("rbind", lapply(ndvilist, modis_ndvi))
 
 #Load data
 All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
 str(All_sites)
+All_sites$sitedate <- paste(All_sites$site, All_sites$monthyear, sep="-")
 All_sites <- rename(All_sites, EVI=NDVI)
+All_sites <- merge(All_sites, ndvi, by="sitedate")
+#now clean it up
+All_sites2 <- dplyr::select(All_sites, -c(X.1,X, X1, monthyear.y, site.y))
+All_sites2 <- rename(All_sites2, monthyear=monthyear.x, site=site.x)
+All_sites2$diff <- All_sites2$EVI - All_sites2$NDVI
+subsites <- subset(All_sites2, diff >0.2)
+levels(subsites$site)
+cor(All_sites2$NDVI, All_sites2$EVI)
+qplot(All_sites2$EVI, All_sites2$NDVI)
+
+ggplot(data=All_sites2, aes(x=date, y=diff, colour=site, group=1)) +
+  geom_line(size=1.2)
+
+
 cutoff_index <- ddply(All_sites, .(site), summarize, cutoff=quantile(GPP, 0.75, na.rm=TRUE))
 cutoff_index <- cutoff_index[-c(23),]
 All_sites <- merge(All_sites, cutoff_index, by="site")
