@@ -124,7 +124,6 @@ mean(tower_GPP$cor)
 mean(Fluxcom_GPP$cor)
 mean(DryFlux_GPP$cor)
 
-
 ggplot(modeled_GPP, aes(x = reorder(site,order_site), y = cor, fill= GPP)) +
   geom_bar(stat="identity", position="dodge")+
   geom_point(data=tower_GPP, aes(site, cor), shape=95, size=20, color="#BD2031")+
@@ -261,3 +260,6 @@ ggplot(fig_2b_plot, aes(x=GPP, y=model_GPP, group=model, colour=model))+
 head(fig_2b_plot)
 str(fig_2b_plot)
 version
+
+#Format MODIS GPP data
+
