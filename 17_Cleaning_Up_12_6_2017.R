@@ -188,7 +188,7 @@ library(caret)
 library(randomForest)
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("E:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
+All_sites <- read.csv("F:/Upscaling_Project/Site_based_RF/Upscaling_All_Sites_12_5.csv") 
 #Print first lines
 head(All_sites)
 #numcols <- c(3:16, 18, 23, 25:33, 34:35)
