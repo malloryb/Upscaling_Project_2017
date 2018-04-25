@@ -452,7 +452,8 @@ corfunc <- function(gg){
 for_fig_1 <- merge(merged, spei, all.x=T)
 for_fig_1$X <- NULL
 for_fig_1$site.x <- NULL
-#write.csv(for_fig_1, "F:/Upscaling_Project/For_Fig_1.csv")
+for_fig_1
+
 #Testing out the corfunc
 corfunc(for_fig_1)
 #Checking out IAV--------------
@@ -481,7 +482,8 @@ library(ggthemes)
 #Flux: #5F20BD
 #Jung #7FBD20
 Fig1_to_plot
-write.csv(Fig1_to_plot, "F:/Upscaling_Project/fig1_to_plot.csv")
+#write.csv(Fig1_to_plot, "F:/Upscaling_Project/fig1_to_plot.csv")
+Fig1_to_plot <- read.csv("F:/Upscaling_Project/fig1_to_plot.csv")
 pp1 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = GPP,group = site)) +
   stat_smooth(method="lm", se=FALSE, color="#BD2031") +  ylim(0,55)+
   xlab("12 month SPEI")+ ylab("Tower GPP")+
@@ -500,25 +502,26 @@ pp3 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = Jung_GPP,group = site)) +
 pp4 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = Modis_GPP,group = site)) +
   stat_smooth(method="lm", se=FALSE, color="blue")+ylim(0,55)+
   xlab("12 month SPEI")+ ylab("MODIS GPP")+
-  ggtitle("Fluxcom GPP")+ theme_few(base_size=12)
+  ggtitle("MODIS GPP")+ theme_few(base_size=12)
 
 
 ggarrange(pp1, pp3, pp2, pp4)
 
 #Figure 1b---------------------------------------------------------
 
-For1b <- read.csv("F:/Upscaling_Project/Upscaled_GPP/for_fig_1_3_22_2018.csv")
-modeled_GPP <- subset(For1b, GPP=="BarnesGPP" | GPP=="JungGPP")
+For1b <- read.csv("F:/Upscaling_Project/For_Fig_1_4_24.csv")
+modeled_GPP <- subset(For1b, GPP=="BarnesGPP" | GPP=="JungGPP" | GPP=="modisgpp")
 tower_GPP <- subset(For1b, GPP=="FluxGPP")
 #Getting correlation for ...
 tower_GPP <- subset(For1b, GPP=="FluxGPP")
 Fluxcom_GPP <- subset(For1b, GPP=="JungGPP")
 DryFlux_GPP<- subset(For1b, GPP=="BarnesGPP")
+MODIS_GPP<- subset(For1b, GPP=="modisgpp")
 
 mean(tower_GPP$cor)
 mean(Fluxcom_GPP$cor)
 mean(DryFlux_GPP$cor)
-
+mean(MODIS_GPP$cor)
 
 ggplot(modeled_GPP, aes(x = reorder(site,order_site), y = cor, fill= GPP)) +
   geom_bar(stat="identity", position="dodge")+
@@ -533,9 +536,12 @@ ggplot(modeled_GPP, aes(x = reorder(site,order_site), y = cor, fill= GPP)) +
 Subs1<-subset(for_fig_1, (!is.na(for_fig_1[,9])))
 str(Subs1)
 #Create data frame for seasonal cycle plotting
-plot_seasonal_cycle <- ddply(Subs1, .(month, site), summarize, Barnes_GPP_se=sd(Barnes_GPP, na.rm=TRUE)/sqrt(length(Barnes_GPP[!is.na(Barnes_GPP)])), Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE),  Jung_GPP_se=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP[!is.na(Jung_GPP)])), Jung_GPP=mean(Jung_GPP, na.rm=TRUE), 
+plot_seasonal_cycle <- ddply(Subs1, .(month, site), summarize, Barnes_GPP_se=sd(Barnes_GPP, na.rm=TRUE)/sqrt(length(Barnes_GPP[!is.na(Barnes_GPP)])), Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE), 
+                             Modis_GPP_se=sd(modisgpp, na.rm=TRUE)/sqrt(length(modisgpp[!is.na(modisgpp)])), Modis_GPP=mean(modisgpp, na.rm=TRUE),Jung_GPP_se=sd(Jung_GPP, na.rm=TRUE)/sqrt(length(Jung_GPP[!is.na(Jung_GPP)])), 
+                             Jung_GPP=mean(Jung_GPP, na.rm=TRUE), 
                              GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])), GPP=mean(GPP, na.rm=TRUE))
 str(Subs1)
+plot_seasonal_cycle
 setwd("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Final Dissertation/")
 
 list_seasons <- split(plot_seasonal_cycle, plot_seasonal_cycle$site)
@@ -550,43 +556,51 @@ plot_seasonal_cycle_1 <- function(x){
   droplevels(x)
   B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
   J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
+  M<- as.character(round(cor(x$GPP, x$Modis_GPP, use="complete.obs"), 2))
   
   print("calculated cors")
   rmssdGPP <- as.character(round(rmssd(x$GPP), 2))
   rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 2))
   rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 2))
+  rmssdM <- as.character(round(rmssd(x$Modis_GPP), 2))
   
   rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
   rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
+  rmseModis =round(sqrt( mean((x$Modis_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
   
   print("got RMSSD")
   lblGPP <- paste("RMSSDObserved =", rmssdGPP)
   lblB <- paste("rmseDryFlux =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
   lblJ <- paste("rmseFluxcom =", rmseJung, ",r=", J, ",RMSSD=",rmssdJ)
+  lblM <- paste("rmseModis =", rmseModis, ",r=", M, ",RMSSD=",rmssdM)
   
-  filename <- paste(x$site[1], "seasonal_comparison_3_29.png", sep="_")
+  filename <- paste(x$site[1], "seasonal_comparison_4_24.png", sep="_")
   print(filename)
   q <- ggplot() +
     ggtitle(paste(x$site, "RFC3", sep=" "))+
     geom_line(data = x, aes(x = month, y = GPP, color =I("#BD2031")), size=2) +
     geom_line(data = x, aes(x = month, y = Barnes_GPP, color = I("#5F20BD")), size=2) +
     geom_line(data = x, aes(x = month, y = Jung_GPP, color = I("#7FBD20")), size=2) +
+    geom_line(data = x, aes(x = month, y = Modis_GPP, color = I("cyan2")), size=2) +
     geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP- Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="#5F20BD")+
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="#BD2031")+
     geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
+    geom_errorbar(data=x,aes(x=month, ymin=Modis_GPP- Modis_GPP_se, ymax=Modis_GPP+Modis_GPP_se),colour="cyan2")+
     annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
     annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
     annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
-    scale_x_continuous(breaks=pretty_breaks())+
+    annotate("text", label = lblM, parse=FALSE, x = 6, y = 9, size = 7, colour = "cyan2")+
+        scale_x_continuous(breaks=pretty_breaks())+
     xlab('month')+
     ylab('GPP')+
     theme_few(base_size =12)+
     theme(legend.position = c(0, 0))
   plot(q)
-  filename <- paste(x$site[1], "seasonalRF_comparison_3_29.png", sep="_")
+  filename <- paste(x$site[1], "seasonalRF_comparison_4_24.png", sep="_")
   ggsave(filename, device='png', width=16, height=16, dpi = 300, units = "cm")
 }
 
+#-----------------------------------------------------------------
 fuf <- list_seasons[[3]]
 plot_seasonal_cycle_1(list_seasons[[3]])
 lapply(list_seasons, plot_seasonal_cycle_1)
