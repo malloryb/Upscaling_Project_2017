@@ -539,11 +539,19 @@ plot(stack2010)
 sum2010 <- calc(stack2010, sum, na.rm=TRUE) 
 plot(sum2010)
 
+lst2011 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2010_.tif", full.names=TRUE)
+stack2011 <- stack(lst2011)
+plot(stack2011)
+sum2011 <- calc(stack2011, sum, na.rm=TRUE) 
+plot(sum2011)
+
+
 lst2015 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2015_.tif", full.names=TRUE)
 stack2015 <- stack(lst2015)
 plot(stack2015)
 sum2015 <- calc(stack2015, sum, na.rm=TRUE) 
 plot(sum2015)
+
 diff <- sum2015 - sum2010
 percentdiff <- 100*((sum2015-sum2010)/(sum2015))
 percentdiff[percentdiff==-Inf] <- NA
@@ -551,6 +559,9 @@ plot(percentdiff)
 names(diff) <- "Difference"
 cellStats(sum2010, sum)
 cellStats(sum2015, sum)
+
+diff2 <- sum2015-sum2011
+plot(diff2)
 
 summary(percentdiff)
 
