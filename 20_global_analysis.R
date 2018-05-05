@@ -533,17 +533,45 @@ GlobalAnalysis2(1380, 60, 2015, 12, "Dec", 06)
 #months south vs. northern hemisphere: 
 #Northern:  1  2   3  4   5   6  7  8  9 10  11 12
 #Southern: 7   8  9  10  11  12  1  2 3  4  5  6
+Aus_ext <- extent(113.338953078,153.569469029, -43.6345972634,  -10.6681857235)
+x <- crop(sum2011, Aus_ext)
+plot(x)
+cellStats(x, sum)
+
+y <- crop(sum2003, Aus_ext)
+plot(y)
+cellStats(y, sum)
+
+
+
 lst2010 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2010_.tif", full.names=TRUE)
 stack2010 <- stack(lst2010)
 plot(stack2010)
 sum2010 <- calc(stack2010, sum, na.rm=TRUE) 
 plot(sum2010)
 
-lst2011 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2010_.tif", full.names=TRUE)
+lst2011 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2011_.tif", full.names=TRUE)
 stack2011 <- stack(lst2011)
-plot(stack2011)
 sum2011 <- calc(stack2011, sum, na.rm=TRUE) 
 plot(sum2011)
+
+
+lst2002 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2002_.tif", full.names=TRUE)
+stack2002 <- stack(lst2002)
+sum2002 <- calc(stack2002, sum, na.rm=TRUE) 
+plot(sum2002)
+
+
+lst2003 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2003_.tif", full.names=TRUE)
+stack2003 <- stack(lst2003)
+sum2003 <- calc(stack2003, sum, na.rm=TRUE) 
+plot(sum2003)
+
+
+lst2009 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2009_.tif", full.names=TRUE)
+stack2009 <- stack(lst2009)
+sum2009 <- calc(stack2009, sum, na.rm=TRUE) 
+plot(sum2009)
 
 
 lst2015 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2015_.tif", full.names=TRUE)
@@ -552,12 +580,16 @@ plot(stack2015)
 sum2015 <- calc(stack2015, sum, na.rm=TRUE) 
 plot(sum2015)
 
-diff <- sum2015 - sum2010
-percentdiff <- 100*((sum2015-sum2010)/(sum2015))
+diff <- sum2011 - sum2003
+plot(percentdiff)
+percentdiff <- 100*((sum2003-sum2011)/(sum2003))
+plot(percentdiff)
 percentdiff[percentdiff==-Inf] <- NA
 plot(percentdiff)
 names(diff) <- "Difference"
+cellStats(sum2009, sum)
 cellStats(sum2010, sum)
+cellStats(sum2011, sum)
 cellStats(sum2015, sum)
 
 diff2 <- sum2015-sum2011
@@ -607,15 +639,16 @@ slices <- c(neg, pos)
 lbls <- c("Negative", "Positive")
 colors=c("black", "white")
 pie(slices, labels=lbls, col=colors)
-
+detach("package:ggplot2", unload=TRUE)
 #p <- levelplot(diff)
 #diverge0(p, "RdYlBu")
 mapTheme <- rasterTheme(region = brewer.pal(8, "RdBu"))
-plot <- levelplot(percentdiff, margin=F, par.settings=mapTheme, at=seq(-125, 125, length.out=40), main="% change in GPP: 2015 vs. 2010")
+plot <- levelplot(percentdiff, margin=F, par.settings=mapTheme, at=seq(-125, 125, length.out=40), main="% change in GPP: 2011 vs. 2003")
 plot + layer(sp.lines(worldSHP, lwd=0.8, col='gray'))
 trellis.focus("legend", side="right", clipp.off=TRUE, highlight=FALSE)
 grid.text(("% change \n in CO2 uptake"), 0.2, 0, hjust=0.5, vjust=1)
 trellis.unfocus()
+
 
 proj <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 worldSHP <- shapefile("F:/Upscaling_Project/Test_Global_Upscaling/TM_WORLD_BORDERS-0.3.shp")
