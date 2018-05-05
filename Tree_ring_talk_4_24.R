@@ -500,7 +500,7 @@ pp3 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = Jung_GPP,group = site)) +
   ggtitle("Fluxcom GPP")+ theme_few(base_size=12)
 
 pp4 <- ggplot(Fig1_to_plot, aes(x = SPEI_12mean, y = Modis_GPP,group = site)) +
-  stat_smooth(method="lm", se=FALSE, color="blue")+ylim(0,55)+
+  stat_smooth(method="lm", se=FALSE, color="cyan2")+ylim(0,55)+
   xlab("12 month SPEI")+ ylab("MODIS GPP")+
   ggtitle("MODIS GPP")+ theme_few(base_size=12)
 
@@ -533,7 +533,7 @@ ggplot(modeled_GPP, aes(x = reorder(site,order_site), y = cor, fill= GPP)) +
   theme(legend.position="none")
 
 #Figure 2-----------------------------
-Subs1<-subset(for_fig_1, (!is.na(for_fig_1[,9])))
+Subs1<-subset(For1b, (!is.na(For1b[,9])))
 str(Subs1)
 #Create data frame for seasonal cycle plotting
 plot_seasonal_cycle <- ddply(Subs1, .(month, site), summarize, Barnes_GPP_se=sd(Barnes_GPP, na.rm=TRUE)/sqrt(length(Barnes_GPP[!is.na(Barnes_GPP)])), Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE), 
@@ -554,6 +554,11 @@ plot_seasonal_cycle_1 <- function(x){
   require("ggpubr")
   print(str(x))
   droplevels(x)
+  #toscale <- sapply(x, is.numeric)
+  #x[toscale] <- lapply(x[toscale], scale)
+  
+  head(x)
+  
   B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
   J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
   M<- as.character(round(cor(x$GPP, x$Modis_GPP, use="complete.obs"), 2))
@@ -567,7 +572,7 @@ plot_seasonal_cycle_1 <- function(x){
   rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
   rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
   rmseModis =round(sqrt( mean((x$Modis_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
-  
+
   print("got RMSSD")
   lblGPP <- paste("RMSSDObserved =", rmssdGPP)
   lblB <- paste("rmseDryFlux =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
@@ -601,8 +606,8 @@ plot_seasonal_cycle_1 <- function(x){
 }
 
 #-----------------------------------------------------------------
-fuf <- list_seasons[[3]]
-plot_seasonal_cycle_1(list_seasons[[3]])
+fuf <- list_seasons[[22]]
+plot_seasonal_cycle_1(list_seasons[[12]])
 lapply(list_seasons, plot_seasonal_cycle_1)
 getRMSE <- function(x){
   str(x)
@@ -613,6 +618,7 @@ getRMSE <- function(x){
   return(df)
   
 }
+list_seasons
 
 RFC3_long <- tidyr::gather(RF_C3, site, Barnes_GPP, us_auF:us_wkg, factor_key=TRUE)
 str(RFC3_long)
