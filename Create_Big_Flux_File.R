@@ -70,8 +70,8 @@ write.csv(MODIS_monthly_means, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/
 #1. formats date
 #2. Gets monthly statistics
 #3. writes out results into data frame with sitename column
-setwd("C:/Users/Mallory/odrive/UA_Google_Drive/Daymet/")
-Daymet_list <- list.files(pattern="*.csv")
+setwd("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet/")
+Daymet_list <- list.files(pattern="^u..*csv$")
 fname <- basename(Daymet_list[1])
 substring(fname, 1,6)
 
@@ -83,9 +83,13 @@ format_daymet <- function(x){
   head(file)
   file$date <-as.Date(paste(file$year, file$yday, sep="-"), format="%Y-%j")
   file$my <- floor_date(file$date, "month")
+  es <- 0.6108 * exp(17.27 * file$tmax..deg.c. / (file$tmax..deg.c. + 237.3))
+  file$vpd <- (file$vp..Pa./1000) - es
+  es <- 
+  file$vpd <- 
   Monthly_means <- ddply(file, .(my), summarise, daylength = mean(dayl..s., na.rm=TRUE),
                          precip=sum(prcp..mm.day., na.rm=TRUE), srad=mean(srad..W.m.2., na.rm=TRUE), swe=sum(swe..kg.m.2., na.rm=TRUE),
-                         tmax=mean(tmax..deg.c., na.rm=TRUE), tmin=mean(tmin..deg.c., na.rm=TRUE), vp=mean(vp..Pa., na.rm=TRUE))
+                         tmax=mean(tmax..deg.c., na.rm=TRUE), tmin=mean(tmin..deg.c., na.rm=TRUE), vp=mean(vp..Pa., na.rm=TRUE), vpd=mean(vpd, na.rm=TRUE))
   Monthly_means <- rename(Monthly_means, replace = c("my"="date"))
   Monthly_means$site <- fname
   
