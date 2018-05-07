@@ -74,7 +74,6 @@ setwd("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet/")
 Daymet_list <- list.files(pattern="^u..*csv$")
 fname <- basename(Daymet_list[1])
 substring(fname, 1,6)
-
 #can we add SPEI calculations to this file? 
 format_daymet <- function(x){
   fname <- substring(basename(x), 1,6)
@@ -84,21 +83,20 @@ format_daymet <- function(x){
   file$date <-as.Date(paste(file$year, file$yday, sep="-"), format="%Y-%j")
   file$my <- floor_date(file$date, "month")
   es <- 0.6108 * exp(17.27 * file$tmax..deg.c. / (file$tmax..deg.c. + 237.3))
-  file$vpd <- (file$vp..Pa./1000) - es
-  es <- 
-  file$vpd <- 
+  file$vpd <- es -(file$vp..Pa./1000) 
+  head(file)
   Monthly_means <- ddply(file, .(my), summarise, daylength = mean(dayl..s., na.rm=TRUE),
                          precip=sum(prcp..mm.day., na.rm=TRUE), srad=mean(srad..W.m.2., na.rm=TRUE), swe=sum(swe..kg.m.2., na.rm=TRUE),
                          tmax=mean(tmax..deg.c., na.rm=TRUE), tmin=mean(tmin..deg.c., na.rm=TRUE), vp=mean(vp..Pa., na.rm=TRUE), vpd=mean(vpd, na.rm=TRUE))
-  Monthly_means <- rename(Monthly_means, replace = c("my"="date"))
+  Monthly_means <- plyr::rename(Monthly_means, replace = c("my"="date"))
   Monthly_means$site <- fname
   
   return(as.data.frame(Monthly_means))
   
 }
 
-test <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Daymet/us-aud.csv")
-test$tmed <- (tmax + tmin/2)
+test <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet/us-aud.csv")
+test$tmed <- (test$tmax + test$tmin/2)
 FF$PET <- thornthwaite(FF$tmed, FF$Latitude[1], na.rm=TRUE)
 FF$BAL <- FF$precip - FF$PET
 FF$spei1 <-spei(FF[,'BAL'],1) 
@@ -106,7 +104,7 @@ FF$spei1 <-spei(FF[,'BAL'],1)
 daymet_tmp <- lapply(Daymet_list, format_daymet)
 daymet <- do.call(rbind, daymet_tmp)
 daymet[800:1200,]
-write.csv(daymet, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Daymet_monthly_all.csv")
+write.csv(daymet, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet_monthly_all_5_5_18.csv")
 
 
 #Get all flux files into one------------------------------
