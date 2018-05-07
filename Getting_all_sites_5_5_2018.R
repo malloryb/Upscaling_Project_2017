@@ -1,7 +1,7 @@
-#Fixing the offset issue (water year starting on Nov 1st vs. Oct 1st) and re-running the site-level analysis
-#Created 2/2/2018
-#To-do's
-#1) Merge daymet files with fixed flux files
+#File to merge flux, daymet, and modis files together, calculate spei, run & validate machine learning models
+#Created 5/7/2018
+#Contains the following sections: 
+#1) Create Machine Learning Input File 
 #2) Merge item #1) with EVI data and LST data
 #3) Merge item #2) with Hydro 1k data
 #4) Calculate water balance using 'spei' package for site-based RF (X)
@@ -46,15 +46,15 @@ merge.with.order <- function(x,y, ..., sort = T, keep_order)
   } else {return(merge(x=x,y=y,..., sort = sort))}
 }
 
-#1) Merge daymet files with fixed flux files----------------------
+#1) Create Machine Learning Input File----------------------
 #Read all three big .csv files and merge by date
 
 #Flux
-Flux_merge <- read.csv("F:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
+Flux_merge <- read.csv("D:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
 #Daymet
-Daymet_merge <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet_monthly_all_5_5_18.csv") 
+Daymet_merge <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Daymet_monthly_all_5_5_18.csv") 
 #MODIS
-MODIS_merge <-  read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/MODIS_3km_monthly.csv")
+MODIS_merge <-  read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/MODIS_3km_monthly.csv")
 
 #Check files, delete "X", and format date col for merge 
 str(Flux_merge)
@@ -81,10 +81,9 @@ Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-lpa", "mx-lpa")
 Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
 unique(Daymet_merge$site)
 
-
 #Set latittude by site for SPEI analysis
 str(Daymet_merge)
-IGBP_lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 IGBP_lookup <- IGBP_lookup[,c("site", "lat")]
 IGBP_lookup$site <- str_replace_all(IGBP_lookup$site, "us-lpa", "mx-lpa")
 str(IGBP_lookup)
@@ -141,9 +140,9 @@ SPEI_calc <- function(A){
   spei9 <- data.frame(spei9 = c(spei9), time=A$date) 
   spei12 <-(spei(A[,'BAL'], 12)$fitted)
   spei12 <-data.frame(spei12 = c(spei12), time=A$date) 
-  spei24 <-(spei(A[,'BAL'], 12)$fitted)
+  spei24 <-(spei(A[,'BAL'], 24)$fitted)
   spei24 <-data.frame(spei24 = c(spei24), time=A$date) 
-  spei48 <-(spei(A[,'BAL'], 12)$fitted)
+  spei48 <-(spei(A[,'BAL'], 48)$fitted)
   spei48 <-data.frame(spei48 = c(spei48), time=A$date) 
     print("bind everything together")
   A$PET <- as.numeric(A$PET)
@@ -166,7 +165,6 @@ SPEI_calc <- function(A){
   #return(final)
 }
 
-testspei <- l.df[[1]]
 #Get list of dataframes using pattern (thank you stack overflow!: https://stackoverflow.com/questions/14954399/put-multiple-data-frames-into-list-smart-way)
 l.df <- lapply(ls(pattern="df[0-9]+"), function(x) get(x))
 str(l.df)
@@ -218,7 +216,7 @@ Merged_all$IGBP <- NA
 str(Merged_all)
 unique(Merged_all$site)
 #Add IGBP column based on lookup table------------------ not working yet 
-IGBP_lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(IGBP_lookup)
 IGBP_lookup$site <- str_replace_all(IGBP_lookup$site, "us-lpa", "mx-lpa")
 All_inc_IGBP <- merge(Merged_all, IGBP_lookup, by="site", all.x=T)
@@ -232,9 +230,9 @@ substrRight <- function(x, n){
 }
 
 #Add NDVI in addition to EVI to the Allsites file
-setwd("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
+setwd("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
 
-ndvilist <- list.files("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
+ndvilist <- list.files("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
 ndvilist
 
 modis_ndvi <- function(file){
@@ -267,7 +265,8 @@ All_sites_ndvi <- subset(All_sites_ndvi, select = -c(site.y, monthyear.y))
 All_sites_ndvi <- rename(All_sites_ndvi, 'site'='site.x')
 All_sites_ndvi <- rename(All_sites_ndvi, 'monthyear'='monthyear.x')
 head(All_sites_ndvi)
-write.csv(All_sites_ndvi, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
+write.csv(All_sites_ndvi, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
+All_sites_ndvi <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
 #function to code month in a way that will allow for automatic s vs. n. hemisphere distinctions
 #going to have to split, apply, combine 
 #Function also calculates amplitude for each site
@@ -298,6 +297,7 @@ xf22 <- X[[22]]
 xf23 <- X[[23]]
 xf24 <- X[[24]]
 
+#Function that incorporates month and daylength
 monthR <- function(x){
   #key data frame 
   df=data.frame(month=numeric(12), SH=character(12), NH=character(12))
@@ -322,7 +322,7 @@ monthR <- function(x){
   
   y <- hem(x)
   y$amp <- max(y$daylength) - min(y$daylength)
-  colnames(y)[41] <- "hmon"
+  colnames(y)[42] <- "hmon"
   y$X <- NULL
   print(head(y))
   print(cor(y$vpd, y$VPD, use="complete.obs"))
@@ -338,18 +338,15 @@ l2.df <- lapply(ls(pattern="xf[0-9]+"), function(x) get(x))
 str(l2.df)
 
 all_sites_hem <- do.call("rbind", lapply(l2.df, monthR))
+str(all_sites_hem)
+write.csv(all_sites_hem, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv")
 
-write.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv")
-
-#Function that incorporates month and daylength
 myplot <- ggplot(data=All_sites, aes(x=month, y=daylength, colour=site)) + geom_line()
 myplot %+% subset(All_sites, site %in% c("us-fuf", "mx-lpa"))
 
   geom_line(All_sites$site="us-fuf")+
   geom_line(All_sites$site="mx-lpa")
 
-#Write out .csv file
-write.csv(All_sites, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_5_5_2018.csv")
 
 str(All_sites)
 #Get random forest models (this code could be cleaned up significantly) 
@@ -362,41 +359,20 @@ library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_5_5_2018.csv") 
-str(All_sites)
-
-
+All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv") 
 head(All_sites)
-#Checking on SPEI
-#SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
-#SPEI_Check$date <- as.Date(SPEI_Check$date, format="%Y-%m-%d")
-#SPEI_Check$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
-#SPEI_Check$site_year <- do.call(paste, c(SPEI_Check[c("site", "year")], sep = "_")) 
-
-#Checked out whether SPEI is correlated with other stuff
-#SPEI_cors <- ddply(SPEI_Check, .(site_year), summarize,
-#        spei1mean = mean(spei1,na.rm=TRUE), spei1max= spei1[which.max( abs(spei1))], spei1min=spei1[which.min( abs(spei1))], 
-#        spei1med=median_hilow(spei1, na.rm=TRUE), spei12 = first(spei12))
-#cor(SPEI_cors$spei12, SPEI_cors$spei1mean, use="complete.obs")
-#cor(SPEI_cors$spei12, SPEI_cors$spei1max, use="complete.obs")
-#cor(SPEI_cors$spei12, SPEI_cors$spei1min, use="complete.obs")
-#cor(SPEI_cors$spei12, SPEI_cors$spei1med, use="complete.obs")
-
-#Fix column names and add numeric columns
 str(All_sites)
 All_sites$elev <- as.numeric(All_sites$elev)
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
-All_sites$month <- as.factor(All_sites$month)
+All_sites$hmon <- as.factor(All_sites$hmon)
 All_sites$precip <- as.numeric(All_sites$precip)
 All_sites$swe <- as.numeric(All_sites$swe)
-
 #Prepare your data
 #Normalization makes data easier for the RF algorithm to learn
 #Two types of normalization: 
 #example normalization (normalize each case individually)
 #feature normalization (adjust each feature in the same way across all cases)
 #Normalization a good idea when one attribute has a wide range of values compared to others
-
 #User-defined normalization function
 normalize <- function(x) {
   return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
@@ -408,56 +384,57 @@ nacols <- function(df) {
 }
 
 str(All_sites)
-All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
-                         "precip", "vp", "MAP", "MAT", "NDVI", "spei1", "spei3", "spei6", "spei9", "spei12")]
+All_sites <- All_sites[c("GPP", "MAP", "MAT", "elev", "hmon", "amp", "spei1", "spei3", "spei6", 
+                         "spei9", "spei12","spei24", "spei48","srad", "swe", "tmed", "tmax", "tmin", "precip", "vp", "vpd",
+                         "EVI","NDVI")]
 
 #408th (row 409) value for All_Sites$spei3 is "Inf" for some reason, and so is the 1495th value. Going to replace it with the average of the two surrounding values: 0.495
 #Why are they in different spots? at 266 and 1448 this time
 which(sapply(All_sites$spei3, is.infinite))
 
-All_sites$spei3[265:267]
-All_sites$spei3[266] <- 0.908
-All_sites$spei3[1447:1449]
-All_sites$spei3[1448] <- -1.0609
+All_sites$spei3[27:29]
+All_sites$spei3[28] <- ((All_sites$spei3[27] + All_sites$spei3[29])/2)
+All_sites$spei3[966:968]
+All_sites$spei3[967] <- ((All_sites$spei3[966] + All_sites$spei3[968])/2)
 
 #Get rid of non-complete cases and double check
 summary(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
 summary(All_sites)
 #Going to try squaring GPP
-All_sites$GPP <- sqrt(All_sites$GPP)
-#No longer going to normalize variables as per here: https://stats.stackexchange.com/questions/57010/is-it-essential-to-do-normalization-for-svm-and-random-forest
-#Here's where we can split
-#Timesilces
-#mypartition <- createIrregularTimeSlices(All_sites$date, initialWindow=48, horizon=12, unit="month", fixedWindow=T)
-#ctrl <- trainControl(index=mypartition$train, indexOut=mypartition$test)
-#tsmod <- train(All_sites.training[colsA1], All_sites.training[,5], method="rf", trControl=ctrl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
+#Going to go back to normalizing some predictor variables - except spei variables and categorical variables (e.g. hmon) 
+str(All_sites)
+All_normalized <- as.data.frame(lapply(All_sites[14:23], normalize))
+str(All_normalized)
+str(All_normalized)
+All <- cbind(All_sites[1:13], All_normalized)
+str(All)
 #Split into training and testing data
-
-index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
+index <- createDataPartition(All$GPP, p=0.80, list=FALSE)
 index
-
 #Resample data to overrepresent high GPP observations(? should I have done this)
 #Subset training set
-All_sites.training <- All_sites[index,]
-All_sites.test <- All_sites[-index,]
-str(All_sites)
-
+All_sites.training <- All[index,]
+All_sites.test <- All[-index,]
 #All_sites.trianing <- preProcess(All_sites.training, method = c("center", "scale"))
 str(All_sites.training)
 str(All_sites.test)
-
 #Overview of algorithms supported by caret function
 names(getModelInfo())
-
-head(All_sites)
+head(All)
+dim(All)
 #Model with all:
-colsA1 <- c(3, 5:23)
+colsA1 <- c(1:23)
 head(All_sites.training)
 head(All_sites.training[,colsA1])
 str(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
+
+#First to whittle down variables: 
+myControl <- trainControl(method="repeatedcv", repeats=4, number=10)
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+
+
 
 str(All_sites.training)
 #Model with: NDVI, daylength, MAP, MAT, vp, month, srad, spei12, PET, tmax, elev, tmin, precip, spei1
@@ -484,10 +461,15 @@ All_sites.training[!complete.cases(All_sites.training),]
 
 #Train a model (trying both KNN and random forest)
 #Each of these takes awhile: approx 10 mins
-myControl <- trainControl(method="repeatedcv", repeats=5, number=10)
+
 
 model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+svm_Linear <- train(V14 ~., data = training, method = "svmLinear",
+                    trControl=trctrl,
+                    preProcess = c("center", "scale"),
+                    tuneLength = 10)
+
 
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
 model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
@@ -567,6 +549,12 @@ lb1 <- paste("R^2 == ", "0.70")
 RMSE1 <- paste("RMSE==", "0.76")
 lb2 <- paste("R^2 == ", "0.78")
 RMSE2 <- paste("RMSE==", "0.37")
+
+
+#I would like a function for each machine learning model that: 
+#1) runs the model and tells me the r-squared of each model
+#2) shows the seasonal cycle for key sites from each key flux location
+#3) compares IAV & monthly correlations
 
 #Plot predicted vs. measured
 #Model A1
@@ -1043,7 +1031,7 @@ library(lubridate)
 library(ggthemes)
 library(plyr)
 library(scales)
-Sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+Sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 Sites$site <- str_replace_all(Sites$site, "-", "_")
 str(Merged_Jung_Comp)
 Merged_Jung_Comp$diff <- Merged_Jung_Comp$GPP - Merged_Jung_Comp$Jung_GPP
