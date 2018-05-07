@@ -199,8 +199,9 @@ unique(Daymet_merge$site)
 #For both daymet and MODIS - 2197 obs for all
 
 Flux_daymet <- merge(Flux_merge, Daymet_merge, by="sitedate", all.x=T)
-Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate")
 str(Flux_daymet)
+Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate")
+str(Merged_all)
 unique(Flux_daymet$site.x)
 unique(Flux_daymet$site.y)
 unique(MODIS_merge$site)
@@ -231,7 +232,10 @@ substrRight <- function(x, n){
 }
 
 #Add NDVI in addition to EVI to the Allsites file
-setwd("F:/Upscaling_Project/MODIS_NDVI/")
+setwd("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
+
+ndvilist <- list.files("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
+ndvilist
 
 modis_ndvi <- function(file){
   filename <- tools::file_path_sans_ext(basename(file))
@@ -251,28 +255,48 @@ modis_ndvi <- function(file){
   return(mergendvi)
 }
 
-ndvilist <- list.files("F:/Upscaling_Project/MODIS_NDVI/")
 ndvi <- do.call("rbind", lapply(ndvilist, modis_ndvi))
 str(ndvi)
 str(ALL_inc_IGBP)
-str(All_sites)
-All_sites <- merge(ALL_inc_IGBP, ndvi, by="sitedate")
-str(All_sites)
-All_sites <- subset(All_sites, select = -c(site.y, monthyear.y))
-All_sites <- rename(All_sites, 'site'='site.x')
-All_sites <- rename(All_sites, 'monthyear'='monthyear.x')
-head(All_sites)
-write.csv(All_sites, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_6_2018.csv")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_6_2018.csv")
+unique(ndvi$site)
+unique(ALL_inc_IGBP$site)
+All_sites_ndvi <- merge(ALL_inc_IGBP, ndvi, by="sitedate")
+str(All_sites_ndvi)
+unique(All_sites_ndvi$site.x)
+All_sites_ndvi <- subset(All_sites_ndvi, select = -c(site.y, monthyear.y))
+All_sites_ndvi <- rename(All_sites_ndvi, 'site'='site.x')
+All_sites_ndvi <- rename(All_sites_ndvi, 'monthyear'='monthyear.x')
+head(All_sites_ndvi)
+write.csv(All_sites_ndvi, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
 #function to code month in a way that will allow for automatic s vs. n. hemisphere distinctions
 #going to have to split, apply, combine 
 #Function also calculates amplitude for each site
-X <- split(All_sites, All_sites$site)
-testfrm <- X[[1]]
-testfrm <- testfrm[order(as.Date(testfrm$date, "%Y-%m-%d")),]
-head(testfrm)
-max(testfrm$daylength)
-max(testfrm$daylength) - min(testfrm$daylength)
+X <- split(All_sites_ndvi, All_sites_ndvi$site)
+
+xf1  <- X[[1]]
+xf2  <- X[[2]]
+xf3  <- X[[3]]
+xf4  <- X[[4]]
+xf5  <- X[[5]]
+xf6  <- X[[6]]
+xf7  <- X[[7]]
+xf8  <- X[[8]]
+xf9  <- X[[9]]
+xf10 <- X[[10]]
+xf11 <- X[[11]]
+xf12 <- X[[12]]
+xf13 <- X[[13]]
+xf14 <- X[[14]]
+xf15 <- X[[15]]
+xf16 <- X[[16]]
+xf17 <- X[[17]]
+xf18 <- X[[18]]
+xf19 <- X[[19]]
+xf20 <- X[[20]]
+xf21 <- X[[21]]
+xf22 <- X[[22]]
+xf23 <- X[[23]]
+xf24 <- X[[24]]
 
 monthR <- function(x){
   #key data frame 
@@ -298,14 +322,25 @@ monthR <- function(x){
   
   y <- hem(x)
   y$amp <- max(y$daylength) - min(y$daylength)
-  colnames(y)[42] <- "hmon"
+  colnames(y)[41] <- "hmon"
   y$X <- NULL
   print(head(y))
   print(cor(y$vpd, y$VPD, use="complete.obs"))
+  return(y)
 
   }
 
+#Apply & combine#
+testfrm <- X[[1]]
+#testfrm <- testfrm[order(as.Date(testfrm$date, "%Y-%m-%d")),]
 monthR(testfrm)
+l2.df <- lapply(ls(pattern="xf[0-9]+"), function(x) get(x))
+str(l2.df)
+
+all_sites_hem <- do.call("rbind", lapply(l2.df, monthR))
+
+write.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv")
+
 #Function that incorporates month and daylength
 myplot <- ggplot(data=All_sites, aes(x=month, y=daylength, colour=site)) + geom_line()
 myplot %+% subset(All_sites, site %in% c("us-fuf", "mx-lpa"))
