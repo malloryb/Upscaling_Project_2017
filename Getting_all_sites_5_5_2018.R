@@ -166,7 +166,6 @@ SPEI_calc <- function(A){
   #return(final)
 }
 
-SPEI_calc(testspei)
 testspei <- l.df[[1]]
 #Get list of dataframes using pattern (thank you stack overflow!: https://stackoverflow.com/questions/14954399/put-multiple-data-frames-into-list-smart-way)
 l.df <- lapply(ls(pattern="df[0-9]+"), function(x) get(x))
@@ -208,11 +207,12 @@ unique(MODIS_merge$site)
 unique(Merged_all$site)
 #Cleanup
 #Delete extraneous columns
-Merged_all <- subset(Merged_all, select = -c(X, X1, date.x, site.x, date.y, site.y,sitedate))
+str(Merged_all)
+Merged_all <- subset(Merged_all, select = -c(X, X1, site.x, date.y, site.y,sitedate))
 Merged_all <- rename(Merged_all, 'EVI'='NDVI')
 Merged_all$sitedate <- paste(Merged_all$site, Merged_all$monthyear, sep="-")
 #Format_Date
-Merged_all$date <- as.Date(Merged_all$date)
+Merged_all <- plyr::rename(Merged_all, replace = c("date.x"= "date"))
 Merged_all$IGBP <- NA
 str(Merged_all)
 unique(Merged_all$site)
@@ -261,15 +261,18 @@ str(All_sites)
 All_sites <- subset(All_sites, select = -c(site.y, monthyear.y))
 All_sites <- rename(All_sites, 'site'='site.x')
 All_sites <- rename(All_sites, 'monthyear'='monthyear.x')
-
+head(All_sites)
+write.csv(All_sites, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_6_2018.csv")
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_6_2018.csv")
 #function to code month in a way that will allow for automatic s vs. n. hemisphere distinctions
 #going to have to split, apply, combine 
 #Function also calculates amplitude for each site
 X <- split(All_sites, All_sites$site)
 testfrm <- X[[1]]
 testfrm <- testfrm[order(as.Date(testfrm$date, "%Y-%m-%d")),]
-max(test$daylength)
-max(test$daylength) - min(test$daylength)
+head(testfrm)
+max(testfrm$daylength)
+max(testfrm$daylength) - min(testfrm$daylength)
 
 monthR <- function(x){
   #key data frame 
@@ -283,17 +286,22 @@ monthR <- function(x){
   x1 <- x[1:24,]
   maxmo <- x1$month[which.max(x1$daylength)]
   
-  
-  if(maxmo==6){merge(x, NH, by="month")
+  hem <- function(x) {if(maxmo==6){
+    return(merge(x, NH, by="month"))
   }
     else{
-      merge(x, SH, by="month")
+    return(merge(x, SH, by="month"))
     } 
+   
+}
+
   
-  
-  x$amp <- max(x$daylength) - min(x$daylength)
-  print(x)
-  print(cor(x$vpd, x$VPD, use="complete.obs"))
+  y <- hem(x)
+  y$amp <- max(y$daylength) - min(y$daylength)
+  colnames(y)[42] <- "hmon"
+  y$X <- NULL
+  print(head(y))
+  print(cor(y$vpd, y$VPD, use="complete.obs"))
 
   }
 
