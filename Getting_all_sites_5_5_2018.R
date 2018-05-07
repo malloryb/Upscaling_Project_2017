@@ -126,13 +126,15 @@ df24 <- X[[24]]
 #SPEI_calc_function - spei1, spei3, spei6, spei9, and spei12 
 SPEI_calc <- function(A){
   A <- A[order(A$date),]
+  A$date <- as.Date(A$date, format="%Y-%m-%d")
+  print(head(A))
   print(A$site[1])
   print("calculate water balance")
   A$PET <- thornthwaite(A$tmed, A$Latitude[1], na.rm=TRUE)
   A$BAL <- A$precip - A$PET
   print("calculate spei")
   spei1 <- (spei(A[,'BAL'], 1)$fitted)
-  spei1 <- data.frame(spei1 = c(spei1), time=c(time(spei1))) 
+  spei1 <- data.frame(spei1 = c(spei1), time=A$date) 
   spei3 <- (spei(A[,'BAL'], 3)$fitted)
   spei3 <- data.frame(spei3 = c(spei3), time = c(time(spei3))) 
   spei6 <- (spei(A[,'BAL'], 6)$fitted)
@@ -141,21 +143,24 @@ SPEI_calc <- function(A){
   spei9 <- data.frame(spei9 = c(spei9), time = c(time(spei9))) 
   spei12 <-(spei(A[,'BAL'], 12)$fitted)
   spei12 <-data.frame(spei12 = c(spei12), time = c(time(spei12))) 
+  print(spei12)
   print("bind everything together")
   A$PET <- as.numeric(A$PET)
   A$BAL <- as.numeric(A$BAL)
   spei_all <- cbind(spei1, spei3, spei6, spei9, spei12)
-  spei_all$date <- format(date_decimal(spei_all$time), "%m-%d-%Y")
-  spei_all$date <- as.Date(spei_all$date, format="%m-%d-%Y")
+  spei_all$date <- format(date_decimal(spei_all$time), "%Y-%m-%d")
+  spei_all$date <- as.Date(spei_all$date, format="%Y-%m-%d")
   spei_all$date <- floor_date((spei_all$date +1), "month")
   spei_all$month <- month(spei_all$date)
   #columns to get rid of in the final thing: 16, 18, 20, 22, 24 (all caled "time") and the second "date (postion=25)
+  #print(head(A))
+  print(head(spei_all))
   final <- cbind(A, spei_all)
   final <- final[-c(16,18,20,22,24,25)]
   print(head(final))
-  print(nrow(A))
-  print(nrow(final))
-  return(final)
+  #print(nrow(A))
+  #print(nrow(final))
+  #return(final)
 }
 
 SPEI_calc(testspei)
