@@ -52,7 +52,7 @@ merge.with.order <- function(x,y, ..., sort = T, keep_order)
 #Flux
 Flux_merge <- read.csv("F:/Upscaling_Project/Biederman_Flux/Fixed_flux_vars_3_2_2018.csv")
 #Daymet
-Daymet_merge <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet_monthly_all.csv") 
+Daymet_merge <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Daymet_monthly_all_5_5_18.csv") 
 #MODIS
 MODIS_merge <-  read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/MODIS_3km_monthly.csv")
 
@@ -68,6 +68,8 @@ Flux_merge$site <- str_replace_all(Flux_merge$site, "us-tes", "mx-tes")
 Flux_merge$site <- str_replace_all(Flux_merge$site, "us-lpa", "mx-lpa")
 Flux_merge$sitedate <- with(Flux_merge, paste(site,date, sep="-"))
 
+which(is.na(Flux_merge$date), arr.ind=TRUE)
+Flux_merge <- Flux_merge[-c(176, 1308), ]
 unique(Flux_merge$site)
 #Replace sites "us-ray" and "us-tex" with their proper name (they are from mexiflux not ameriflux)
 Daymet_merge<- subset(Daymet_merge, select = -c(X))
@@ -79,9 +81,10 @@ Daymet_merge$site <- str_replace_all(Daymet_merge$site, "us-lpa", "mx-lpa")
 Daymet_merge$sitedate <- with(Daymet_merge, paste(site,date, sep="-"))
 unique(Daymet_merge$site)
 
+
 #Set latittude by site for SPEI analysis
 str(Daymet_merge)
-IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+IGBP_lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 IGBP_lookup <- IGBP_lookup[,c("site", "lat")]
 IGBP_lookup$site <- str_replace_all(IGBP_lookup$site, "us-lpa", "mx-lpa")
 str(IGBP_lookup)
@@ -155,6 +158,8 @@ SPEI_calc <- function(A){
   return(final)
 }
 
+SPEI_calc(testspei)
+testspei <- l.df[[1]]
 #Get list of dataframes using pattern (thank you stack overflow!: https://stackoverflow.com/questions/14954399/put-multiple-data-frames-into-list-smart-way)
 l.df <- lapply(ls(pattern="df[0-9]+"), function(x) get(x))
 str(l.df)
@@ -185,32 +190,33 @@ unique(Daymet_merge$site)
 #Merge! And clean up merged mess. Final merged file should have same number
 #of observations as the "flux_merge" file since we should have complete records
 #For both daymet and MODIS - 2197 obs for all
+
 Flux_daymet <- merge(Flux_merge, Daymet_merge, by="sitedate", all.x=T)
-unique(Flux_daymet$site.y)
-Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate", all.x=T)
+Merged_all <- merge(Flux_daymet, MODIS_merge, by="sitedate")
 str(Flux_daymet)
-str(Merged_all)
-
-which(is.na(Flux_merge$date), arr.ind=TRUE)
-
+unique(Flux_daymet$site.x)
+unique(Flux_daymet$site.y)
+unique(MODIS_merge$site)
+unique(Merged_all$site)
 #Cleanup
 #Delete extraneous columns
-Merged_all <- subset(Merged_all, select = -c(X, X1, date.x, site.x, date.y, site.y))
+Merged_all <- subset(Merged_all, select = -c(X, X1, date.x, site.x, date.y, site.y,sitedate))
 Merged_all <- rename(Merged_all, 'EVI'='NDVI')
+Merged_all$sitedate <- paste(Merged_all$site, Merged_all$monthyear, sep="-")
 #Format_Date
 Merged_all$date <- as.Date(Merged_all$date)
 Merged_all$IGBP <- NA
 str(Merged_all)
 unique(Merged_all$site)
 #Add IGBP column based on lookup table------------------ not working yet 
-IGBP_lookup <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
+IGBP_lookup <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Site_Lookup_2018.csv")
 str(IGBP_lookup)
-IGBP_lookup
+IGBP_lookup$site <- str_replace_all(IGBP_lookup$site, "us-lpa", "mx-lpa")
 All_inc_IGBP <- merge(Merged_all, IGBP_lookup, by="site", all.x=T)
 str(All_inc_IGBP)
 All_inc_IGBP <- subset(All_inc_IGBP, select = -c(IGBP.x))
-ALL_inc_IGPB <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
-str(ALL_inc_IGPB)
+ALL_inc_IGBP <- plyr::rename(All_inc_IGBP, c("IGBP.y"="IGBP"))
+str(ALL_inc_IGBP)
 
 substrRight <- function(x, n){
   substr(x, nchar(x)-n+1, nchar(x))
@@ -230,18 +236,71 @@ modis_ndvi <- function(file){
   tstndvi$date <- paste(tstndvi$monthyear, "01", sep="-")
   mergendvi <- ddply(tstndvi, ~monthyear, summarize, NDVI=mean(NDVI, na.rm=TRUE))
   mergendvi$site <- paste("us", substr(filename, 1,3), sep="-")
+  mergendvi$site <- str_replace_all(mergendvi$site, "us-ray", "mx-ray")
+  mergendvi$site <- str_replace_all(mergendvi$site, "us-tes", "mx-tes")
+  mergendvi$site <- str_replace_all(mergendvi$site, "us-lpa", "mx-lpa")
   mergendvi$sitedate <- paste(mergendvi$site, mergendvi$monthyear, sep="-")
   return(mergendvi)
 }
 
-All_sites <- rename(All_sites, EVI=NDVI)
-All_sites <- merge(All_sites, ndvi, by="sitedate")
 ndvilist <- list.files("F:/Upscaling_Project/MODIS_NDVI/")
 ndvi <- do.call("rbind", lapply(ndvilist, modis_ndvi))
+str(ndvi)
+str(ALL_inc_IGBP)
+str(All_sites)
+All_sites <- merge(ALL_inc_IGBP, ndvi, by="sitedate")
+str(All_sites)
+All_sites <- subset(All_sites, select = -c(site.y, monthyear.y))
+All_sites <- rename(All_sites, 'site'='site.x')
+All_sites <- rename(All_sites, 'monthyear'='monthyear.x')
+
+#function to code month in a way that will allow for automatic s vs. n. hemisphere distinctions
+#going to have to split, apply, combine 
+#Function also calculates amplitude for each site
+X <- split(All_sites, All_sites$site)
+testfrm <- X[[1]]
+testfrm <- testfrm[order(as.Date(testfrm$date, "%Y-%m-%d")),]
+max(test$daylength)
+max(test$daylength) - min(test$daylength)
+
+monthR <- function(x){
+  #key data frame 
+  df=data.frame(month=numeric(12), SH=character(12), NH=character(12))
+  df$month <- c(1:12)
+  df$SH <- c("su2", "su3", "fa1", "fa2", "fa3", "wi1", "wi2", "wi3", "sp1", "sp2", "sp3", "su1")
+  df$NH <- c("wi2", "wi3", "sp1", "sp2", "sp3", "su1", "su2", "su3", "fa1", "fa2", "fa3", "wi1")
+  SH <- subset(df[1:2],)
+  NH <- df[,-2]
+  x <- x[order(as.Date(x$date, "%Y-%m-%d")),]
+  x1 <- x[1:24,]
+  maxmo <- x1$month[which.max(x1$daylength)]
+  
+  
+  if(maxmo==6){merge(x, NH, by="month")
+  }
+    else{
+      merge(x, SH, by="month")
+    } 
+  
+  
+  x$amp <- max(x$daylength) - min(x$daylength)
+  print(x)
+  print(cor(x$vpd, x$VPD, use="complete.obs"))
+
+  }
+
+monthR(testfrm)
+#Function that incorporates month and daylength
+myplot <- ggplot(data=All_sites, aes(x=month, y=daylength, colour=site)) + geom_line()
+myplot %+% subset(All_sites, site %in% c("us-fuf", "mx-lpa"))
+
+  geom_line(All_sites$site="us-fuf")+
+  geom_line(All_sites$site="mx-lpa")
 
 #Write out .csv file
-write.csv(ALL_inc_IGPB, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_5_5_2018.csv")
+write.csv(All_sites, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_5_5_2018.csv")
 
+str(All_sites)
 #Get random forest models (this code could be cleaned up significantly) 
 #2. Run site-based RF with proper variables ------------------
 library(lubridate)
@@ -252,8 +311,10 @@ library(plyr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_3_3_2018.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_All_Sites_5_5_2018.csv") 
 str(All_sites)
+
+
 head(All_sites)
 #Checking on SPEI
 #SPEI_Check <- All_sites[c("date", "site", "spei1", "spei12")]
