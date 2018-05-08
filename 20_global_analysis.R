@@ -3,9 +3,6 @@ library(gdal)
 library(gdalUtils)
 library(raster)
 library(stringr)
-devtools::install_github("benmarwick/rrtools")
-library(rrtools)
-rrtools::use_compendium('Dryflux2018')
 #To-do: create input raster. Testing on 1 month. 
 #NDVI data from: ftp://ftp.star.nesdis.noaa.gov/pub/corp/scsb/wguo/data/VHP_4km/geo_TIFF/
 #The data is weekly. Average the 4 .tifs together to get average veg...will be faster if subsetted first though...
@@ -525,6 +522,10 @@ GlobalAnalysis2(1377, 57, 2015, 09, "Sep", 03)
 GlobalAnalysis2(1378, 58, 2015, 10, "Oct", 04)
 GlobalAnalysis2(1379, 59, 2015, 11, "Nov", 05)
 GlobalAnalysis2(1380, 60, 2015, 12, "Dec", 06)
+### Get time series and compare with flux data
+### To do: 
+
+
 
 #OK compare strongest El Nino year in the data record with the strongest la nina year in the data record
 #El Nino: 2015
@@ -533,67 +534,24 @@ GlobalAnalysis2(1380, 60, 2015, 12, "Dec", 06)
 #months south vs. northern hemisphere: 
 #Northern:  1  2   3  4   5   6  7  8  9 10  11 12
 #Southern: 7   8  9  10  11  12  1  2 3  4  5  6
-Aus_ext <- extent(113.338953078,153.569469029, -43.6345972634,  -10.6681857235)
-x <- crop(sum2011, Aus_ext)
-plot(x)
-cellStats(x, sum)
-
-y <- crop(sum2003, Aus_ext)
-plot(y)
-cellStats(y, sum)
-
-
-
 lst2010 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2010_.tif", full.names=TRUE)
 stack2010 <- stack(lst2010)
 plot(stack2010)
 sum2010 <- calc(stack2010, sum, na.rm=TRUE) 
 plot(sum2010)
 
-lst2011 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2011_.tif", full.names=TRUE)
-stack2011 <- stack(lst2011)
-sum2011 <- calc(stack2011, sum, na.rm=TRUE) 
-plot(sum2011)
-
-
-lst2002 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2002_.tif", full.names=TRUE)
-stack2002 <- stack(lst2002)
-sum2002 <- calc(stack2002, sum, na.rm=TRUE) 
-plot(sum2002)
-
-
-lst2003 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2003_.tif", full.names=TRUE)
-stack2003 <- stack(lst2003)
-sum2003 <- calc(stack2003, sum, na.rm=TRUE) 
-plot(sum2003)
-
-
-lst2009 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2009_.tif", full.names=TRUE)
-stack2009 <- stack(lst2009)
-sum2009 <- calc(stack2009, sum, na.rm=TRUE) 
-plot(sum2009)
-
-
 lst2015 <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/", pattern="2015_.tif", full.names=TRUE)
 stack2015 <- stack(lst2015)
 plot(stack2015)
 sum2015 <- calc(stack2015, sum, na.rm=TRUE) 
 plot(sum2015)
-
-diff <- sum2011 - sum2003
-plot(percentdiff)
-percentdiff <- 100*((sum2003-sum2011)/(sum2003))
-plot(percentdiff)
+diff <- sum2015 - sum2010
+percentdiff <- 100*((sum2015-sum2010)/(sum2015))
 percentdiff[percentdiff==-Inf] <- NA
 plot(percentdiff)
 names(diff) <- "Difference"
-cellStats(sum2009, sum)
 cellStats(sum2010, sum)
-cellStats(sum2011, sum)
 cellStats(sum2015, sum)
-
-diff2 <- sum2015-sum2011
-plot(diff2)
 
 summary(percentdiff)
 
@@ -639,16 +597,15 @@ slices <- c(neg, pos)
 lbls <- c("Negative", "Positive")
 colors=c("black", "white")
 pie(slices, labels=lbls, col=colors)
-detach("package:ggplot2", unload=TRUE)
+
 #p <- levelplot(diff)
 #diverge0(p, "RdYlBu")
 mapTheme <- rasterTheme(region = brewer.pal(8, "RdBu"))
-plot <- levelplot(percentdiff, margin=F, par.settings=mapTheme, at=seq(-125, 125, length.out=40), main="% change in GPP: 2011 vs. 2003")
+plot <- levelplot(percentdiff, margin=F, par.settings=mapTheme, at=seq(-125, 125, length.out=40), main="% change in GPP: 2015 vs. 2010")
 plot + layer(sp.lines(worldSHP, lwd=0.8, col='gray'))
 trellis.focus("legend", side="right", clipp.off=TRUE, highlight=FALSE)
 grid.text(("% change \n in CO2 uptake"), 0.2, 0, hjust=0.5, vjust=1)
 trellis.unfocus()
-
 
 proj <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 worldSHP <- shapefile("F:/Upscaling_Project/Test_Global_Upscaling/TM_WORLD_BORDERS-0.3.shp")
@@ -659,240 +616,4 @@ require(colorRamps)
 col5 <- colorRampPalette(c('red', 'cornsilk', 'blue'))  #create color ramp starting from blue to red
 color_levels=10 #the number of colors to use
 max_absolute_value=4 #what is the maximum absolute value of raster?
-plot(diff, col=col5(n=color_levels), breaks=seq(-max_absolute_value,max_absolute_value,length.out=color_levels+1), axes=FALSE)
-
-#The half-degree compraisons russ wanted
-current.list <- list.files(path="D:/Upscaling_Project/Test_Global_Upscaling", 
-                           pattern ="_.tif$", full.names=TRUE)
-stack_FUF <- stack(current.list)
-plot(stack_FUF[1])
-FUFpoint <- cbind(-111.76, 35.0890)
-FUFresultA1 <-extract(stack_FUF, FUFpoint)
-str(FUFresultA1)
-FUFresultA2 <- as.data.frame(FUFresultA1)
-str(FUFresultA2)
-df <- cbind(names = rownames(FUFresultA2), FUFresultA2)
-library(reshape2)
-long <- melt(df, id.vars = c("names"))
-colnames(long) <- c("X", "name", "GPP")
-long$X <- NULL
-long$month <- substr(long$name, 3,5)
-long$year <- substr(long$name, 7,10)
-long$date <-  date <-as.Date(paste(long$year, long$month, "01", sep="-"), format="%Y-%b-%d")
-str(long)
-write.csv(long, "D:/Upscaling_Project/Test_Global_Upscaling/FUF_0.5_deg.csv")
-
-
-#US-Wkg
-WKGpoint <- cbind(-109.94, 31.7365)
-WKGresult <-extract(stack_FUF, WKGpoint)
-plot(WKGresult[1:12])
-detach("package:tibble", unload=TRUE)
-#TO DO 
-#remake 3 peaked graphs JUST for Kendall and Flagstaff unmanaged forest
-#You got this
-
-
-#Global validation
-#1) Stack up global all years
-library(raster)
-current.list <- list.files(path="F:/Upscaling_Project/Test_Global_Upscaling", 
-                           pattern ="_.tif$", full.names=TRUE)
-stack_val <- stack(current.list)
-#2) Extract Point around Ausflux sites, etc. 
-Drypoint <- cbind(132.3706, -15.2588)
-DryresultA1 <-extract(stack_val, Drypoint)
-str(DryresultA1)
-DryresultA2 <- as.data.frame(DryresultA1)
-str(DryresultA2)
-df <- cbind(names = rownames(DryresultA2), DryresultA2)
-library(reshape2)
-long <- melt(df, id.vars = c("names"))
-colnames(long) <- c("X", "name", "GPP")
-long$X <- NULL
-long$month <- substr(long$name, 3,5)
-long$year <- substr(long$name, 7,10)
-long$date <-  date <-as.Date(paste(long$year, long$month, "01", sep="-"), format="%Y-%b-%d")
-str(long)
-write.csv(long, "F:/Upscaling_Project/Test_Global_Upscaling/Dry_0.5_deg.csv")
-#3)Merge with flux data 
-Dry <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Validation/FLX_AU-Dry_FLUXNET2015_SUBSET_MM_2008-2014_2-3.csv")
-Flux <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Dry_0.5_deg.csv")
-str(Dry)
-Dry$month <- substr(Dry$TIMESTAMP, 5,6)
-Dry$year <-substr(Dry$TIMESTAMP, 1,4)
-Dry$date <- as.Date(paste(Dry$year, Dry$month, "01", sep="-"))
-Flux$date <- as.Date(Flux$date)
-Dry$FluxGPP <- Dry$GPP_DT_VUT_REF
-Flux$DryFluxGPP <- Flux$GPP
-str(Dry)
-str(Flux)
-Aus_Dry_Val <- merge(Dry, Flux, by="date")
-#4) plot!
-library(ggplot2)
-library(ggthemes)
-library(scales)
-library(psych)
-library(ggpubr)
-#  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
-#  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
-  
-#  print("calculated cors")
-#  rmssdGPP <- as.character(round(rmssd(x$GPP), 2))
-#  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 2))
-#  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 2))
-  
-#  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
-#  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
-  
-#  print("got RMSSD")
-#  lblGPP <- paste("RMSSDObserved =", rmssdGPP)
-#  lblB <- paste("rmseDryFlux =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
-#  lblJ <- paste("rmseFluxcom =", rmseJung, ",r=", J, ",RMSSD=",rmssdJ)
-  
-#  filename <- paste(x$site[1], "seasonal_comparison_3_29.png", sep="_")
-#  print(filename)
-  q <- ggplot() +
-    ggtitle("Global Validation - AUS-Dry")+
-    geom_line(data = Aus_Dry_Val, aes(x = date, y = FluxGPP, color =I("#BD2031")), size=2) +
-    geom_line(data = Aus_Dry_Val, aes(x = date, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
-    #geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP- Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="#5F20BD")+
-    #geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="#BD2031")+
-    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
-    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
-    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
-    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
-    #scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_few(base_size =12)+
-    theme(legend.position = c(0, 0))
-  plot(q)
-
-  
-  library(plyr)
-  plot_seasonal_cycle <- ddply(Aus_Dry_Val, .(month.x), summarize, DryFluxGPP_se=sd(DryFluxGPP, na.rm=TRUE)/sqrt(length(DryFluxGPP[!is.na(DryFluxGPP)])), DryFluxGPP=mean(DryFluxGPP, na.rm=TRUE),
-                               FluxGPP_se=sd(FluxGPP, na.rm=TRUE)/sqrt(length(FluxGPP[!is.na(FluxGPP)])), FluxGPP=mean(FluxGPP, na.rm=TRUE))
-
-  str(plot_seasonal_cycle)
-  plot_seasonal_cycle$month.x <- as.numeric(plot_seasonal_cycle$month.x)
-  p <- ggplot() +
-    ggtitle("Global Validation - AUS-Dry")+
-    geom_line(data = plot_seasonal_cycle, aes(x = month.x, y = FluxGPP, color =I("#BD2031")), size=2) +
-    geom_line(data = plot_seasonal_cycle, aes(x = month.x, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
-    geom_errorbar(data=plot_seasonal_cycle,aes(x=month.x, ymin=DryFluxGPP- DryFluxGPP_se, ymax=DryFluxGPP+DryFluxGPP_se),colour="#5F20BD")+
-    geom_errorbar(data=plot_seasonal_cycle,aes(x=month.x, ymin=FluxGPP-FluxGPP_se,ymax=FluxGPP+FluxGPP_se),colour="#BD2031")+
-    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
-    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
-    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
-    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
-    scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_few(base_size =18)+
-    theme(legend.position = c(0, 0))
-  plot(p)
-  
-  
-  #For STP----------
-  library(raster)
-  current.list <- list.files(path="F:/Upscaling_Project/Test_Global_Upscaling", 
-                             pattern ="_.tif$", full.names=TRUE)
-  stack_val <- stack(current.list)
-  #2) Extract Point around Ausflux sites, etc. 
-  Drypoint <- cbind(133.3502, -17.1507)
-  DryresultA1 <-extract(stack_val, Drypoint)
-  str(DryresultA1)
-  DryresultA2 <- as.data.frame(DryresultA1)
-  str(DryresultA2)
-  df <- cbind(names = rownames(DryresultA2), DryresultA2)
-  library(reshape2)
-  long <- melt(df, id.vars = c("names"))
-  colnames(long) <- c("X", "name", "GPP")
-  long$X <- NULL
-  long$month <- substr(long$name, 3,5)
-  long$year <- substr(long$name, 7,10)
-  long$date <-  date <-as.Date(paste(long$year, long$month, "01", sep="-"), format="%Y-%b-%d")
-  str(long)
-  write.csv(long, "F:/Upscaling_Project/Test_Global_Upscaling/Stp_0.5_deg.csv")
-  #3)Merge with flux data 
-  Dry <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Validation/FLX_AU-Stp_FLUXNET2015_SUBSET_MM_2008-2014_1-3.csv")
-  Flux <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/Dry_0.5_deg.csv")
-  str(Dry)
-  Dry$month <- substr(Dry$TIMESTAMP, 5,6)
-  Dry$year <-substr(Dry$TIMESTAMP, 1,4)
-  Dry$date <- as.Date(paste(Dry$year, Dry$month, "01", sep="-"))
-  Flux$date <- as.Date(Flux$date)
-  Dry$FluxGPP <- Dry$GPP_DT_VUT_REF
-  Flux$DryFluxGPP <- Flux$GPP
-  str(Dry)
-  str(Flux)
-  Aus_Stp_Val <- merge(Dry, Flux, by="date")
-  #4) plot!
-  library(ggplot2)
-  library(ggthemes)
-  library(scales)
-  library(psych)
-  library(ggpubr)
-  #  B<- as.character(round(cor(x$GPP, x$Barnes_GPP, use="complete.obs"), 2))
-  #  J<- as.character(round(cor(x$GPP, x$Jung_GPP, use="complete.obs"), 2))
-  
-  #  print("calculated cors")
-  #  rmssdGPP <- as.character(round(rmssd(x$GPP), 2))
-  #  rmssdB <- as.character(round(rmssd(x$Barnes_GPP), 2))
-  #  rmssdJ <- as.character(round(rmssd(x$Jung_GPP), 2))
-  
-  #  rmseBarnes =round(sqrt( mean((x$Barnes_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
-  #  rmseJung =round(sqrt( mean((x$Jung_GPP-x$GPP)^2 , na.rm = TRUE )), 2)
-  
-  #  print("got RMSSD")
-  #  lblGPP <- paste("RMSSDObserved =", rmssdGPP)
-  #  lblB <- paste("rmseDryFlux =", rmseBarnes, ",r=", B, ",RMSSD=",rmssdB)
-  #  lblJ <- paste("rmseFluxcom =", rmseJung, ",r=", J, ",RMSSD=",rmssdJ)
-  
-  #  filename <- paste(x$site[1], "seasonal_comparison_3_29.png", sep="_")
-  #  print(filename)
-  r <- ggplot() +
-    ggtitle("Global Validation - AUS-Stp")+
-    geom_line(data = Aus_Stp_Val, aes(x = date, y = FluxGPP, color =I("#BD2031")), size=2) +
-    geom_line(data = Aus_Stp_Val, aes(x = date, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
-    #geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP- Barnes_GPP_se, ymax=Barnes_GPP+Barnes_GPP_se),colour="#5F20BD")+
-    #geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="#BD2031")+
-    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
-    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
-    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
-    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
-    #scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_few(base_size =18)+
-    theme(legend.position = c(0, 0))
-  plot(r)
-  
-  
-  library(plyr)
-  plot_seasonal_cycle2 <- ddply(Aus_Stp_Val, .(month.x), summarize, DryFluxGPP_se=sd(DryFluxGPP, na.rm=TRUE)/sqrt(length(DryFluxGPP[!is.na(DryFluxGPP)])), DryFluxGPP=mean(DryFluxGPP, na.rm=TRUE),
-                               FluxGPP_se=sd(FluxGPP, na.rm=TRUE)/sqrt(length(FluxGPP[!is.na(FluxGPP)])), FluxGPP=mean(FluxGPP, na.rm=TRUE))
-  
-  str(plot_seasonal_cycle2)
-  plot_seasonal_cycle2$month.x <- as.numeric(plot_seasonal_cycle2$month.x)
-  s <- ggplot() +
-    ggtitle("Global Validation - AUS-Stp")+
-    geom_line(data = plot_seasonal_cycle2, aes(x = month.x, y = FluxGPP, color =I("#BD2031")), size=2) +
-    geom_line(data = plot_seasonal_cycle2, aes(x = month.x, y = DryFluxGPP, color = I("#5F20BD")), size=2) +
-    geom_errorbar(data=plot_seasonal_cycle2,aes(x=month.x, ymin=DryFluxGPP- DryFluxGPP_se, ymax=DryFluxGPP+DryFluxGPP_se),colour="#5F20BD")+
-    geom_errorbar(data=plot_seasonal_cycle2,aes(x=month.x, ymin=FluxGPP-FluxGPP_se,ymax=FluxGPP+FluxGPP_se),colour="#BD2031")+
-    #geom_errorbar(data=x,aes(x=month, ymin=Jung_GPP- Jung_GPP_se, ymax=Jung_GPP+Jung_GPP_se),colour="#7FBD20")+
-    #annotate("text", label = lblGPP, parse=FALSE, x =6, y = 6, size = 7, colour = "#BD2031")+
-    #annotate("text", label = lblB, parse=FALSE, x = 6, y = 7, size = 7, colour = "#5F20BD")+
-    #annotate("text", label = lblJ, parse=FALSE, x = 6, y = 8, size = 7, colour = "#7FBD20")+
-    scale_x_continuous(breaks=pretty_breaks())+
-    xlab('month')+
-    ylab('GPP')+
-    theme_few(base_size =18)+
-    theme(legend.position = c(0, 0))
-  plot(s)
-  
-  
-plot_seasonal_cycles2_scaled <- scale(plot_seasonal_cycle2[,2:5])
-str(plot_seasonal_cycles2_scaled)  
+plot(diff, col=col5(n=color_levels), breaks=seq(-max_absolute_value,max_absolute_value,length.out=color_levels+1) , axes=FALSE)
