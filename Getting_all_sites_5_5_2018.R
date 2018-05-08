@@ -366,8 +366,10 @@ str(All_sites)
 All_sites$elev <- as.numeric(All_sites$elev)
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
 All_sites$hmon <- as.factor(All_sites$hmon)
+All_sites$month <- as.factor(All_sites$month)
 All_sites$precip <- as.numeric(All_sites$precip)
 All_sites$swe <- as.numeric(All_sites$swe)
+str(All_sites)
 #Prepare your data
 #Normalization makes data easier for the RF algorithm to learn
 #Two types of normalization: 
@@ -385,9 +387,9 @@ nacols <- function(df) {
 }
 
 str(All_sites)
-All_sites <- All_sites[c("GPP", "MAP", "MAT", "elev", "hmon", "amp", "spei1", "spei3", "spei6", 
+All_sites <- All_sites[c("GPP", "MAP", "MAT", "elev", "daylength", "month", "amp", "spei1", "spei3", "spei6", 
                          "spei9", "spei12","spei24", "spei48","srad", "swe", "tmed", "tmax", "tmin", "precip", "vp", "vpd",
-                         "EVI","NDVI")]
+                         "NDVI")]
 
 #A couple rows in all_sites$spei3 are "Inf" for some reason, going to replace it with the average of the two surrounding values
 which(sapply(All_sites$spei3, is.infinite))
@@ -403,9 +405,10 @@ summary(All_sites)
 
 #Normalizing some predictor variables - except spei variables and categorical variables (e.g. hmon) 
 str(All_sites)
-All_normalized <- as.data.frame(lapply(All_sites[14:23], normalize))
+colnames(All_sites[15:23])
+All_normalized <- as.data.frame(lapply(All_sites[15:23], normalize))
 str(All_normalized)
-All <- cbind(All_sites[1:13], All_normalized)
+All <- cbind(All_sites[1:14], All_normalized)
 str(All)
 #Split into training and testing data
 index <- createDataPartition(All$GPP, p=0.80, list=FALSE)
@@ -422,9 +425,9 @@ head(All)
 dim(All)
 
 #Check for highly correlated variables: 
-correlationMatrix <- cor(All[,6:23])
+correlationMatrix <- cor(All[,7:23])
 # summarize the correlation matrix
-print(round(correlationMatrix,3))
+print(round(correlationMatrix,2))
 # find attributes that are highly corrected (ideally >0.75)
 highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.7)
 highlyCorrelated
@@ -436,34 +439,40 @@ colsA1 <- c(2:23)
 colnames(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
 #Model less highly correlated variables: EVI, swe, and tmed:
-colsA2 <- c(2:21, 23)
+colsA2 <- c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei1", "spei3", "spei6", "spei9", "spei12",
+            "spei24", "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
 colnames(All_sites.training[,colsA2])
 head(All_sites.training[,1:2])
 
-colsA3 <- c("MAP","MAT","elev", "hmon", "amp", "srad", "spei1", "spei3", "spei6", "spei9", "spei12", "spei24",
-            "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+colsA3 <- c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9",
+            "spei48", "tmin", "precip", "vp", "vpd", "NDVI")
 colnames(All_sites.training[,colsA3])
 head(All_sites.training[,1:2])
 
-colsA4 <- c("MAP","MAT","elev", "hmon", "amp", "srad", "spei3", "spei6", "spei9", "spei12", "spei48", "tmax", "tmin", "vp", "vpd", "NDVI")
+colsA4 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei9", 
+"spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
 colnames(All_sites.training[,colsA4])
 head(All_sites.training[,1:2])
 
-colsA5 <- c("MAP","MAT","elev", "hmon", "amp", "srad", "spei9", "spei48", "tmax", "tmin", "vp", "vpd", "NDVI")
-colnames(All_sites.training[,colsA4])
-head(All_sites.training[,1:2])
+#colsA5 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9", 
+ #            "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+#colnames(All_sites.training[,colsA5])
+#head(All_sites.training[,1:2])
 
-colsA6 <- c("elev", "hmon", "amp", "srad", "spei9", "spei48", "tmin", "vp", "vpd", "NDVI")
-colnames(All_sites.training[,colsA6])
-head(All_sites.training[,1:2])
+#colsA6 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9", 
+#             "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+#colnames(All_sites.training[,colsA6])
+#head(All_sites.training[,1:2])
 
-colsA7 <- c("elev", "hmon", "amp","spei9","tmin","vpd", "NDVI")
-colnames(All_sites.training[,colsA7])
-head(All_sites.training[,1:2])
+#colsA7 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9", 
+             #"spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+#colnames(All_sites.training[,colsA7])
+#head(All_sites.training[,1:2])
 
-colsA8 <- c("elev", "hmon", "spei9","NDVI")
-colnames(All_sites.training[,colsA8])
-head(All_sites.training[,1:2])
+#colsA8 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9", 
+             #"spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+#colnames(All_sites.training[,colsA8])
+#head(All_sites.training[,1:2])
 
 
 
@@ -475,37 +484,37 @@ myControl <- trainControl(method="repeatedcv", repeats=5, number=3)
 
 cluster <- makeCluster(detectCores() - 1) 
 registerDoParallel(cluster)
-model_rfM1 <- train(All_sites.training[,colsA1], All_sites.training[,1],
+model_rfN1 <- train(All_sites.training[,colsA1], All_sites.training[,1],
                     method='rf', trControl=myControl, importance=TRUE, 
                     do.trace=TRUE, allowParallel=TRUE)
 
-model_rfM2 <- train(All_sites.training[,colsA2], All_sites.training[,1], 
+model_rfN2 <- train(All_sites.training[,colsA2], All_sites.training[,1], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-model_rfM3 <- train(All_sites.training[,colsA3], All_sites.training[,1], 
+model_rfN3 <- train(All_sites.training[,colsA3], All_sites.training[,1], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-model_rfM4 <- train(All_sites.training[,colsA4], All_sites.training[,1], 
+model_rfN4 <- train(All_sites.training[,colsA4], All_sites.training[,1], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-model_rfM5 <- train(All_sites.training[,colsA5], All_sites.training[,1], 
-                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
-                    allowParallel=TRUE)
+#model_rfN5 <- train(All_sites.training[,colsA5], All_sites.training[,1], 
+                    #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    #allowParallel=TRUE)
 
-model_rfM6 <- train(All_sites.training[,colsA6], All_sites.training[,1], 
-                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
-                    allowParallel=TRUE)
+#model_rfN6 <- train(All_sites.training[,colsA6], All_sites.training[,1], 
+                    #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                   # allowParallel=TRUE)
 
-model_rfM7 <- train(All_sites.training[,colsA7], All_sites.training[,1], 
-                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
-                    allowParallel=TRUE)
+#model_rfN7 <- train(All_sites.training[,colsA7], All_sites.training[,1], 
+                    #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    #allowParallel=TRUE)
 
-model_rfM8 <- train(All_sites.training[,colsA8], All_sites.training[,1], 
-                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
-                    allowParallel=TRUE)
+#model_rfN8 <- train(All_sites.training[,colsA8], All_sites.training[,1], 
+                   # method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    #allowParallel=TRUE)
 
 
 #Stop cluster
@@ -546,26 +555,41 @@ diagnostics <- function(model, test, cols){
 
 colnames(All_sites.test[,colsA2])
 
-diagnostics(model_rfM1, All_sites.test, colsA1)
-diagnostics(model_rfM2, All_sites.test, colsA2)
-diagnostics(model_rfM3, All_sites.test, colsA3)
-diagnostics(model_rfM4, All_sites.test, colsA4)
-diagnostics(model_rfM5, All_sites.test, colsA5)
-diagnostics(model_rfM6, All_sites.test, colsA6)
-diagnostics(model_rfM7, All_sites.test, colsA7)
-diagnostics(model_rfM8, All_sites.test, colsA8)
+diagnostics(model_rfN1, All_sites.test, colsA1)
+diagnostics(model_rfN2, All_sites.test, colsA2)
+diagnostics(model_rfN3, All_sites.test, colsA3)
+diagnostics(model_rfN4, All_sites.test, colsA4)
+#diagnostics(model_rfN5, All_sites.test, colsA5)
+#diagnostics(model_rfN6, All_sites.test, colsA6)
+#diagnostics(model_rfN7, All_sites.test, colsA7)
+#diagnostics(model_rfN8, All_sites.test, colsA8)
 
-saveRDS(model_rfM1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M1_5_8.rds")
-saveRDS(model_rfM2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M2_5_8.rds")
-saveRDS(model_rfM3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M3_5_8.rds")
-saveRDS(model_rfM4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M4_5_8.rds")
-saveRDS(model_rfM5, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M5_5_8.rds")
-saveRDS(model_rfM6, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M6_5_8.rds")
-saveRDS(model_rfM7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M7_5_8.rds")
-saveRDS(model_rfM8, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M8_5_8.rds")
+saveRDS(model_rfN1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N1_5_8.rds")
+saveRDS(model_rfN2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N2_5_8.rds")
+saveRDS(model_rfN3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N3_5_8.rds")
+saveRDS(model_rfN4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N4_5_8.rds")
+#saveRDS(model_rfN5, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N5_5_8.rds")
+#saveRDS(model_rfN6, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N6_5_8.rds")
+#saveRDS(model_rfN7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N7_5_8.rds")
+#saveRDS(model_rfN8, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N8_5_8.rds")
 
 ###Global Upscaling for analysis and validation: --------------------------
-GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
+#create amplitude file: 
+dayl <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylight.csv")
+dayl$max <- apply(dayl[,2:13], 1, max)
+dayl$min <- apply(dayl[,2:13], 1, min)
+dayl$amp <- dayl$max- dayl$min
+dayl$max <- NULL
+dayl$min <- NULL
+str(dayl)
+write.csv(dayl, "F:/Upscaling_Project/Test_Global_Upscaling/daylamp.csv")
+
+
+#Currently doing this with RF_N4_5_8.rds
+#Cols in this model: colsA4 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei9", 
+#"spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+
+GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
   require(lubridate)
   require(plyr)
   require(dplyr)
@@ -576,8 +600,6 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   require(ncdf4)
   date <-as.Date(paste(year, month, "01", sep="-"), format="%Y-%m-%d")
   #SPEI now
-  spei6 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei06.nc")[[bandsp]]
-  spei12 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei12.nc")[[bandsp]]
   spei48 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei48.nc")[[bandsp]]
   spei9 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei09.nc")[[bandsp]]
   spei3 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei03.nc")[[bandsp]]
@@ -592,32 +614,6 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   vp<- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.vap.dat.nc")[[bandcru]]
   
   print("spei and cru data read in")
-  
-  monthR <- function(x){
-    #key data frame 
-    df=data.frame(month=numeric(12), SH=character(12), NH=character(12))
-    df$month <- c(1:12)
-    df$SH <- c("su2", "su3", "fa1", "fa2", "fa3", "wi1", "wi2", "wi3", "sp1", "sp2", "sp3", "su1")
-    df$NH <- c("wi2", "wi3", "sp1", "sp2", "sp3", "su1", "su2", "su3", "fa1", "fa2", "fa3", "wi1")
-    SH <- subset(df[1:2],)
-    NH <- df[,-2]
-    x <- x[order(as.Date(x$date, "%Y-%m-%d")),]
-    x1 <- x[1:24,]
-    maxmo <- x1$month[which.max(x1$daylength)]
-    
-    hem <- function(x) {if(maxmo==6){
-      return(merge(x, NH, by="month"))
-    }
-      else{
-        return(merge(x, SH, by="month"))
-      } 
-      
-    }
-    
-    
-    y <- hem(x)
-    y$amp <- max(y$daylength) - min(y$daylength)
-  
   #month raster
   cru_ext <- extent(-180,180,-90, 90)
   sh <- extent(-180,180,-90, 0)
@@ -626,10 +622,13 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   values(monthrast) <- month
   values(shrast) <- shmonth
   monthR <- mosaic(monthrast, shrast, fun=ifelse(month <7, max, min))
-  #plot(monthR)
+  plot(monthR)
   print("monthrast calculated")
   pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
-  head(pts)
+  pts <- pts[,c("Lat", "Lon")]
+  pts2  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylamp.csv")
+  pts2 <- pts2[,c("Lat", moname, "amp")]
+  merged <- merge(pts, pts2, by="Lat")
   pts <- pts[,c("Lat", "Lon", moname)]
   coordinates(pts)=~Lon+Lat
   proj4string(pts)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # set it to lat-long
@@ -638,10 +637,6 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   srad = raster(pts)
   projection(srad) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
   #Daylength
-  pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
-  pts <- pts[,c("Lat", "Lon")]
-  pts2  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylight.csv")
-  pts2 <- pts2[,c("Lat", moname)]
   merged <- merge(pts, pts2, by="Lat")
   coordinates(merged)=~Lon+Lat
   proj4string(merged)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # set it to lat-long
@@ -658,7 +653,6 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   #elevation
   elev <- raster("F:/Upscaling_Project/Test_Global_Upscaling/elevation.tif")
   print("all files loaded")
-  
   print("getting NDVI files")
   ndvi_files <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/Gridded_NDVI/")
   #select all files for a given year and month
@@ -706,11 +700,11 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   print(NDVI)
   print("monthly NDVI obtained")
   
-  spei12 <- resample(spei12, vp, method="bilinear")
+  spei3 <- resample(spei3, vp, method="bilinear")
   print("spei12")
-  spei6 <- resample(spei6, vp, method="bilinear")
+  spei9 <- resample(spei9, vp, method="bilinear")
   print("spei6")
-  spei1 <- resample(spei1, vp, method="bilinear")
+  spei48 <- resample(spei48, vp, method="bilinear")
   print("spei1")
   elev <- resample(elev, vp, method="bilinear")
   print("elev")
@@ -728,12 +722,13 @@ GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
   print("NDVI")
   print("resampling done")
   
-  rast_stack <- stack(NDVI, monthR, elev, precip, tmax, tmin, MAP, MAT, srad, vp, dayl, spei1, spei6, spei12)
+  rast_stack <- stack(NDVI, monthR, elev, precip, tmax, tmin, MAP, MAT, srad, vp, dayl, spei3, spei9, spei48)
   rast_ext <- extent(rast_stack[[1]])
-  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "daylength", "spei1", "spei6","spei12"))
+  names(rast_stack) <- paste(c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei9", 
+        "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI"))
   #plot(rast_stack)
   
-  RFC3 <- readRDS("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_C3oversample_3_11.rds")
+  RFC3 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_N4_5_8.rds")
   #Going to mask before I do this
   
   # Read SHAPEFILE.shp from the current working directory (".")
