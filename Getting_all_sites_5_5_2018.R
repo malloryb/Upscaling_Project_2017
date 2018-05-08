@@ -555,58 +555,206 @@ diagnostics(model_rfM6, All_sites.test, colsA6)
 diagnostics(model_rfM7, All_sites.test, colsA7)
 diagnostics(model_rfM8, All_sites.test, colsA8)
 
-saveRDS(RF_F1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F1_2_16.rds")
-saveRDS(RF_T1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T1_2_16.rds")
-saveRDS(RF_F2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F2_2_16.rds")
-saveRDS(RF_T2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T2_2_16.rds")
-saveRDS(RF_F3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_3_3.rds")
-saveRDS(RF_T3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_3_3.rds")
-saveRDS(RF_F4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_3_3.rds")
-saveRDS(RF_T4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_3_3.rds")
+saveRDS(model_rfM1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M1_5_8.rds")
+saveRDS(model_rfM2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M2_5_8.rds")
+saveRDS(model_rfM3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M3_5_8.rds")
+saveRDS(model_rfM4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M4_5_8.rds")
+saveRDS(model_rfM5, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M5_5_8.rds")
+saveRDS(model_rfM6, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M6_5_8.rds")
+saveRDS(model_rfM7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M7_5_8.rds")
+saveRDS(model_rfM8, "F:/Upscaling_Project/Upscaling_Project_2017/RF_M8_5_8.rds")
 
-RFA1
-RFA2
-lb1 <- paste("R^2 == ", "0.70")
-RMSE1 <- paste("RMSE==", "0.76")
-lb2 <- paste("R^2 == ", "0.78")
-RMSE2 <- paste("RMSE==", "0.37")
+###Global Upscaling for analysis and validation: --------------------------
+GlobalAnalysis2 <- function(bandsp, bandcru, year, month, moname, shmonth){
+  require(lubridate)
+  require(plyr)
+  require(dplyr)
+  require(gdal)
+  require(caret)
+  require(randomForest)
+  require(raster)
+  require(ncdf4)
+  date <-as.Date(paste(year, month, "01", sep="-"), format="%Y-%m-%d")
+  #SPEI now
+  spei6 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei06.nc")[[bandsp]]
+  spei12 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei12.nc")[[bandsp]]
+  spei48 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei48.nc")[[bandsp]]
+  spei9 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei09.nc")[[bandsp]]
+  spei3 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei03.nc")[[bandsp]]
+  print("SPEI loaded")
+  #Precip
+  precip <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.pre.dat.nc")[[bandcru]]
+  #Tmin
+  tmin <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmn.dat.nc")[[bandcru]]
+  #Tmax
+  tmax <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmx.dat.nc")[[bandcru]]
+  #VP
+  vp<- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.vap.dat.nc")[[bandcru]]
+  
+  print("spei and cru data read in")
+  
+  monthR <- function(x){
+    #key data frame 
+    df=data.frame(month=numeric(12), SH=character(12), NH=character(12))
+    df$month <- c(1:12)
+    df$SH <- c("su2", "su3", "fa1", "fa2", "fa3", "wi1", "wi2", "wi3", "sp1", "sp2", "sp3", "su1")
+    df$NH <- c("wi2", "wi3", "sp1", "sp2", "sp3", "su1", "su2", "su3", "fa1", "fa2", "fa3", "wi1")
+    SH <- subset(df[1:2],)
+    NH <- df[,-2]
+    x <- x[order(as.Date(x$date, "%Y-%m-%d")),]
+    x1 <- x[1:24,]
+    maxmo <- x1$month[which.max(x1$daylength)]
+    
+    hem <- function(x) {if(maxmo==6){
+      return(merge(x, NH, by="month"))
+    }
+      else{
+        return(merge(x, SH, by="month"))
+      } 
+      
+    }
+    
+    
+    y <- hem(x)
+    y$amp <- max(y$daylength) - min(y$daylength)
+  
+  #month raster
+  cru_ext <- extent(-180,180,-90, 90)
+  sh <- extent(-180,180,-90, 0)
+  shrast = raster(ext=sh, res=0.5)
+  monthrast = raster(ext=cru_ext, res=0.5)
+  values(monthrast) <- month
+  values(shrast) <- shmonth
+  monthR <- mosaic(monthrast, shrast, fun=ifelse(month <7, max, min))
+  #plot(monthR)
+  print("monthrast calculated")
+  pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
+  head(pts)
+  pts <- pts[,c("Lat", "Lon", moname)]
+  coordinates(pts)=~Lon+Lat
+  proj4string(pts)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # set it to lat-long
+  pts = spTransform(pts,CRS(("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")))
+  gridded(pts) = TRUE
+  srad = raster(pts)
+  projection(srad) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+  #Daylength
+  pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
+  pts <- pts[,c("Lat", "Lon")]
+  pts2  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylight.csv")
+  pts2 <- pts2[,c("Lat", moname)]
+  merged <- merge(pts, pts2, by="Lat")
+  coordinates(merged)=~Lon+Lat
+  proj4string(merged)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # set it to lat-long
+  pts = spTransform(merged,CRS(("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")))
+  gridded(pts) = TRUE
+  dayl = raster(pts)
+  projection(dayl) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+  dayl <- dayl*3600
+  print("srad and elev read in")
+  #Mat and map
+  MAT <- raster("F:/Upscaling_Project/Test_Global_Upscaling/MAT_raster")
+  MAP <- raster("F:/Upscaling_Project/Test_Global_Upscaling/MAP_raster")
+  print("map and mat read in")
+  #elevation
+  elev <- raster("F:/Upscaling_Project/Test_Global_Upscaling/elevation.tif")
+  print("all files loaded")
+  
+  print("getting NDVI files")
+  ndvi_files <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/Gridded_NDVI/")
+  #select all files for a given year and month
+  ndvi_proc <- function(x){
+    year <- substring(basename(x), 17,20)
+    week <- as.numeric(substring(basename(x), 22,23))
+    roughday <- week*7
+    date <- as.Date(paste(year, roughday, sep="-"), "%Y-%j")
+    floor <- floor_date(date, unit=c("month"))
+    return(as.character(floor))
+  }
+  names(ndvi_files) <-lapply(ndvi_files, ndvi_proc)
+  
+  list_to_df <- function(listfordf){
+    
+    df <- list(list.element = listfordf)
+    class(df) <- c("data.frame")
+    attr(df, "row.names") <- .set_row_names(length(listfordf))
+    
+    if (!is.null(names(listfordf))) {
+      df$name <- names(listfordf)
+    }
+    
+    df
+  }
+  ndvi_files <- list_to_df(ndvi_files)
+  ndvi_files <- as.data.frame(do.call("cbind",ndvi_files))
+  ndvi_month <- (subset(ndvi_files, name==as.character(date)))
+  names(ndvi_month) <- c("filename", "date")
+  print(ndvi_month)
+  ndvi_to_average <- as.list(ndvi_month$filename)
+  print("processing ndvi")
+  proc_ndvi <- function(x){
+    filename <- paste("F:/Upscaling_Project/Test_Global_Upscaling/Gridded_NDVI/", x, sep="")
+    x <- raster(filename, ext=c(-180,180,-90,90))
+    proj4string(x)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+    x[x==-9999] <- NA
+    return(x)
+  }
+  
+  R <- stack(lapply(ndvi_to_average, proc_ndvi))
+  #plot(R)
+  NDVI <- calc(R, mean, na.rm=TRUE)
+  #plot(NDVI)
+  print(NDVI)
+  print("monthly NDVI obtained")
+  
+  spei12 <- resample(spei12, vp, method="bilinear")
+  print("spei12")
+  spei6 <- resample(spei6, vp, method="bilinear")
+  print("spei6")
+  spei1 <- resample(spei1, vp, method="bilinear")
+  print("spei1")
+  elev <- resample(elev, vp, method="bilinear")
+  print("elev")
+  srad <- resample(srad, vp, method="bilinear")
+  print("srad")
+  monthR <- resample(monthR, vp, method="bilinear")
+  print("month")
+  MAT <- resample(MAT, vp, method="bilinear")
+  print("MAT")
+  MAP <- resample(MAP, vp, method="bilinear")
+  print("MAP")
+  dayl <- resample(dayl, vp, method="bilinear")
+  print("dayl")
+  NDVI <- resample(NDVI, vp, method="bilinear")
+  print("NDVI")
+  print("resampling done")
+  
+  rast_stack <- stack(NDVI, monthR, elev, precip, tmax, tmin, MAP, MAT, srad, vp, dayl, spei1, spei6, spei12)
+  rast_ext <- extent(rast_stack[[1]])
+  names(rast_stack) <- paste(c("NDVI", "month", "elev", "precip", "tmax","tmin", "MAP", "MAT","srad", "vp", "daylength", "spei1", "spei6","spei12"))
+  #plot(rast_stack)
+  
+  RFC3 <- readRDS("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_C3oversample_3_11.rds")
+  #Going to mask before I do this
+  
+  # Read SHAPEFILE.shp from the current working directory (".")
+  GPP <- predict(rast_stack, RFC3, ext=rast_ext)
+  #plot(GPP)
+  mask <- raster("F:/Upscaling_Project/Test_Global_Upscaling/Drylands_dataset_2007/CBBNDrylands.tif")
+  #plot(mask)
+  mask[mask < 0.5] <- NA
+  mask[mask >0.5] <-1
+  #plot(mask)
+  mask <- resample(mask, GPP, method="bilinear")
+  GPP_drylands <- mask( GPP, mask)
+  title <- paste("Upscaled GPP", moname, year, sep=" ")
+  filenameF <- paste("F:/Upscaling_Project/Test_Global_Upscaling/", moname, year, ".tif", sep="_")
+  writeRaster(GPP_drylands, filenameF, overwrite=TRUE)
+  plot(GPP_drylands, ggtitle = title)  
+} 
 
 
-#I would like a function for each machine learning model that: 
-#1) runs the model and tells me the r-squared of each model
-#2) shows the seasonal cycle for key sites from each key flux location
-#3) compares IAV & monthly correlations
 
-#Plot predicted vs. measured
-#Model A1
-qplot(predsummer, All_sites.test[,5]) + 
-  geom_point(shape=19, colour="tomato2", size=3)+
-  geom_abline(intercept = 0, slope = 1)+
-  xlim(0,7.5)+
-  ylim(0,7.5)+
-  xlab("Flux monthly GPP")+
-  ylab("Predicted monthly GPP")+
-  theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
-  annotate("text", label = lb1, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
-  annotate("text", label = RMSE1, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
-  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("Random forest - A1")  
 
-#Model A2 
-qplot(predA2, All_sites.test[,5]) + 
-  geom_point(shape=19, colour="tomato2", size=3)+
-  geom_abline(intercept = 0, slope = 1)+
-  xlim(0,7.5)+
-  ylim(0,7.5)+
-  xlab("Flux monthly GPP")+
-  ylab("Predicted monthly GPP")+
-  theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
-  annotate("text", label = lb2, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
-  annotate("text", label = RMSE2, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
-  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("Random forest - A2 (A1 + water balance)")  
 
 ##3. Running RF models on gridded data subsets --------------------------
 library(caret)
@@ -624,7 +772,10 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   filenameDayl <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
   filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
   filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
-  filenameSPEI <- "F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif"
+  filenamespei12 <- "F:/SPEIBase/spei12.nc"
+  filenamespei12 <- "F:/SPEIBase/spei12.nc"
+  filenamespei12 <- "F:/SPEIBase/spei12.nc"
+  filenamespei12 <- "F:/SPEIBase/spei12.nc"
   filenamespei12 <- "F:/SPEIBase/spei12.nc"
   print(filename)
   MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
@@ -670,13 +821,15 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
      }
   
   #Trying to just do a radius around a point
+  #MX sites
+  LPApoint <- cbind(-110.438, 24.1293)
+  TESpoint<- cbind(-109.298,	27.8446)
+  RAYpoint <- cbind(-110.537,	29.741)
+  #US sites
   AUDpoint <- cbind(-110.509, 31.591)
   COPpoint <- cbind(-109.66, 38.162)
   FUFpoint <- cbind(-111.762,	35.089)
-  LPApoint <- cbind(-110.438, 24.1293)
   MPJpoint <- cbind(-106.239,	34.43828)
-  #MX site
-  RAYpoint <- cbind(-110.537,	29.741)
   SCCpoint<- cbind(-116.45,	33.61)
   SCFpoint<- cbind(-116.45,	33.808)
   SCWpoint<- cbind(-116.455,	33.605)
@@ -689,8 +842,6 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   SRCpoint<- cbind(-110.8395,	31.908)
   SRGpoint <- cbind(-110.828,	31.789)
   SRMpoint <- cbind(-110.866, 31.821)
-  #MX Site
-  TESpoint<- cbind(-109.298,	27.8446)
   VCMpoint<- cbind(-106.532,	35.888)
   VCPpoint<- cbind(-106.597,	35.864)
   WHSpoint<- cbind(-110.052,	31.744)
@@ -720,7 +871,6 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   rayex <- create_extent(RAYpoint)
   ray <- crop(rast_stack,rayex)
   ray <- extent(ray)
-  
   
   sccex <- create_extent(SCCpoint)
   scc <- crop(rast_stack,sccex)
