@@ -356,10 +356,11 @@ library(caret)
 library(randomForest)
 library(dplyr)
 library(plyr)
+library(ggpubr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv") 
+All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv") 
 head(All_sites)
 str(All_sites)
 All_sites$elev <- as.numeric(All_sites$elev)
@@ -388,10 +389,8 @@ All_sites <- All_sites[c("GPP", "MAP", "MAT", "elev", "hmon", "amp", "spei1", "s
                          "spei9", "spei12","spei24", "spei48","srad", "swe", "tmed", "tmax", "tmin", "precip", "vp", "vpd",
                          "EVI","NDVI")]
 
-#408th (row 409) value for All_Sites$spei3 is "Inf" for some reason, and so is the 1495th value. Going to replace it with the average of the two surrounding values: 0.495
-#Why are they in different spots? at 266 and 1448 this time
+#A couple rows in all_sites$spei3 are "Inf" for some reason, going to replace it with the average of the two surrounding values
 which(sapply(All_sites$spei3, is.infinite))
-
 All_sites$spei3[27:29]
 All_sites$spei3[28] <- ((All_sites$spei3[27] + All_sites$spei3[29])/2)
 All_sites$spei3[966:968]
@@ -401,11 +400,10 @@ All_sites$spei3[967] <- ((All_sites$spei3[966] + All_sites$spei3[968])/2)
 summary(All_sites)
 All_sites <- All_sites[complete.cases(All_sites),]
 summary(All_sites)
-#Going to try squaring GPP
-#Going to go back to normalizing some predictor variables - except spei variables and categorical variables (e.g. hmon) 
+
+#Normalizing some predictor variables - except spei variables and categorical variables (e.g. hmon) 
 str(All_sites)
 All_normalized <- as.data.frame(lapply(All_sites[14:23], normalize))
-str(All_normalized)
 str(All_normalized)
 All <- cbind(All_sites[1:13], All_normalized)
 str(All)
@@ -423,52 +421,83 @@ str(All_sites.test)
 names(getModelInfo())
 head(All)
 dim(All)
+
 #Model with all:
-colsA1 <- c(1:23)
-head(All_sites.training)
-head(All_sites.training[,colsA1])
-str(All_sites.training[,colsA1])
+colsA1 <- c(2:23)
+colnames(All_sites.training[,colsA1])
+head(All_sites.training[,1:2])
+#Model less highly correlated variables: EVI, swe, and tmed:
+colsA2 <- c(2:21, 23)
+colnames(All_sites.training[,colsA2])
 head(All_sites.training[,1:2])
 
 #First to whittle down variables: 
-myControl <- trainControl(method="repeatedcv", repeats=4, number=10)
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+library(parallel)
+library(doParallel)
 
+myControl <- trainControl(method="repeatedcv", repeats=5, number=3)
 
+cluster <- makeCluster(detectCores() - 1) 
+registerDoParallel(cluster)
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1],
+                    method='rf', trControl=myControl, importance=TRUE, 
+                    do.trace=TRUE, allowParallel=TRUE)
 
-str(All_sites.training)
-#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, spei12, PET, tmax, elev, tmin, precip, spei1
-colsA2 <- c(3, 5:7, 10:11, 13:19, 23)
-head(All_sites.training)
-head(All_sites.training[,colsA2])
-head(All_sites.training[,5:6])
+model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+#Stop cluster
+stopCluster(cluster)
+registerDoSEQ()
+str(model_rfA2)
 
-
-#Model with: NDVI, daylength, MAP, MAT, vp, month, srad, tmax, elev, tmin, precip, spei3, spei9, spei12, spei6, spei1)
-colsA3 <- c(3, 5:7, 10:11, 14:18)
-head(All_sites.training)
-head(All_sites.training[,colsA3])
-head(All_sites.training[,5:6])
-
-#Model same as A2 but without PET 
-colsA4 <- c(3, 5:7, 10:11, 14:19, 23)
-head(All_sites.training)
-head(All_sites.training[,colsA4])
-head(All_sites.training[,5:6])
-
-#this doesn't seem to be working
-All_sites.training[!complete.cases(All_sites.training),]
-
-#Train a model (trying both KNN and random forest)
-#Each of these takes awhile: approx 10 mins
-
-
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA1 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
+varImp(model_rfA2$finalModel)
+varImpPlot(model_rfA2)
 svm_Linear <- train(V14 ~., data = training, method = "svmLinear",
                     trControl=trctrl,
                     preProcess = c("center", "scale"),
                     tuneLength = 10)
+
+diagnostics <- function(model, test, cols){
+  print(model)
+  print(cols)
+  pred <- as.numeric(predict(object=model, test[,cols]))
+  print(colnames(cols))
+  print(cor(pred, test[,1]))
+  print(postResample(pred=pred, obs=test[,1]))
+  MOD <- model$finalModel
+  par(mfrow=c(1,2))
+  varImpPlot(MOD)
+  d <-qplot(pred, test[,1]) + 
+    geom_point(shape=19, colour="tomato2", size=3)+
+    geom_abline(intercept = 0, slope = 1)+
+    xlim(0,7.5)+
+    ylim(0,7.5)+
+    xlab("Flux monthly GPP")+
+    ylab("Predicted monthly GPP")+
+    theme(axis.text.x=element_text(size=14), axis.text.y = element_text(size=14), axis.title=element_text(size=18), plot.title = element_text(size = 18, face = "bold"))+
+    #annotate("text", label = lb1, parse=TRUE, x = 0.5, y = 6, size = 5, colour = "Black")+
+    #annotate("text", label = RMSE1, parse=TRUE, x = 0.5, y = 5.5, size = 5, colour = "Black")+
+    theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=1),
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  print(d)
+
+}
+
+colnames(All_sites.test[,colsA2])
+
+diagnostics(model_rfA1, All_sites.test, colsA1)
+diagnostics(model_rfA2, All_sites.test, colsA2)
+
+
+correlationMatrix <- cor(All[,6:23])
+# summarize the correlation matrix
+print(round(correlationMatrix,3))
+# find attributes that are highly corrected (ideally >0.75)
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.7)
+highlyCorrelated
+# print indexes of highly correlated attributes
+print(highlyCorrelated)
 
 
 model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
