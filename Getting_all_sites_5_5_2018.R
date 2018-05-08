@@ -414,13 +414,22 @@ index
 #Subset training set
 All_sites.training <- All[index,]
 All_sites.test <- All[-index,]
-#All_sites.trianing <- preProcess(All_sites.training, method = c("center", "scale"))
-str(All_sites.training)
-str(All_sites.test)
+dim(All_sites.training)
+dim(All_sites.test)
 #Overview of algorithms supported by caret function
 names(getModelInfo())
 head(All)
 dim(All)
+
+#Check for highly correlated variables: 
+correlationMatrix <- cor(All[,6:23])
+# summarize the correlation matrix
+print(round(correlationMatrix,3))
+# find attributes that are highly corrected (ideally >0.75)
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.7)
+highlyCorrelated
+# print indexes of highly correlated attributes
+print(highlyCorrelated)
 
 #Model with all:
 colsA1 <- c(2:23)
@@ -431,6 +440,33 @@ colsA2 <- c(2:21, 23)
 colnames(All_sites.training[,colsA2])
 head(All_sites.training[,1:2])
 
+colsA3 <- c("MAP","MAT","elev", "hmon", "amp", "srad", "spei1", "spei3", "spei6", "spei9", "spei12", "spei24",
+            "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+colnames(All_sites.training[,colsA3])
+head(All_sites.training[,1:2])
+
+colsA4 <- c("MAP","MAT","elev", "hmon", "amp", "srad", "spei3", "spei6", "spei9", "spei12", "spei48", "tmax", "tmin", "vp", "vpd", "NDVI")
+colnames(All_sites.training[,colsA4])
+head(All_sites.training[,1:2])
+
+colsA5 <- c("MAP","MAT","elev", "hmon", "amp", "srad", "spei9", "spei48", "tmax", "tmin", "vp", "vpd", "NDVI")
+colnames(All_sites.training[,colsA4])
+head(All_sites.training[,1:2])
+
+colsA6 <- c("elev", "hmon", "amp", "srad", "spei9", "spei48", "tmin", "vp", "vpd", "NDVI")
+colnames(All_sites.training[,colsA6])
+head(All_sites.training[,1:2])
+
+colsA7 <- c("elev", "hmon", "amp","spei9","tmin","vpd", "NDVI")
+colnames(All_sites.training[,colsA7])
+head(All_sites.training[,1:2])
+
+colsA8 <- c("elev", "hmon", "spei9","NDVI")
+colnames(All_sites.training[,colsA8])
+head(All_sites.training[,1:2])
+
+
+
 #First to whittle down variables: 
 library(parallel)
 library(doParallel)
@@ -439,20 +475,44 @@ myControl <- trainControl(method="repeatedcv", repeats=5, number=3)
 
 cluster <- makeCluster(detectCores() - 1) 
 registerDoParallel(cluster)
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,1],
+model_rfM1 <- train(All_sites.training[,colsA1], All_sites.training[,1],
                     method='rf', trControl=myControl, importance=TRUE, 
                     do.trace=TRUE, allowParallel=TRUE)
 
-model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], 
+model_rfM2 <- train(All_sites.training[,colsA2], All_sites.training[,1], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
+
+model_rfM3 <- train(All_sites.training[,colsA3], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+
+model_rfM4 <- train(All_sites.training[,colsA4], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+
+model_rfM5 <- train(All_sites.training[,colsA5], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+
+model_rfM6 <- train(All_sites.training[,colsA6], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+
+model_rfM7 <- train(All_sites.training[,colsA7], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+
+model_rfM8 <- train(All_sites.training[,colsA8], All_sites.training[,1], 
+                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    allowParallel=TRUE)
+
+
 #Stop cluster
 stopCluster(cluster)
 registerDoSEQ()
-str(model_rfA2)
 
-varImp(model_rfA2$finalModel)
-varImpPlot(model_rfA2)
+
 svm_Linear <- train(V14 ~., data = training, method = "svmLinear",
                     trControl=trctrl,
                     preProcess = c("center", "scale"),
@@ -486,82 +546,14 @@ diagnostics <- function(model, test, cols){
 
 colnames(All_sites.test[,colsA2])
 
-diagnostics(model_rfA1, All_sites.test, colsA1)
-diagnostics(model_rfA2, All_sites.test, colsA2)
-
-
-correlationMatrix <- cor(All[,6:23])
-# summarize the correlation matrix
-print(round(correlationMatrix,3))
-# find attributes that are highly corrected (ideally >0.75)
-highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.7)
-highlyCorrelated
-# print indexes of highly correlated attributes
-print(highlyCorrelated)
-
-
-model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA2 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-model_rfA3 <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA3.sqrt <- train(All_sites.training[,colsA3], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-model_rfA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-model_tsA4 <- train(All_sites.training[,colsA4], All_sites.training[,1], method='rf', trControl=trainControl(method="timeslice", initialWindow=48, horizon=12, fixedWindow =TRUE), importance=TRUE, do.trace=TRUE, allowParallel=TRUE)
-
-pred_rfA1 <- as.numeric(predict(object=model_rfA1, All_sites.test[,colsA1]))
-pred_tsA1 <- as.numeric(predict(object=model_tsA1, All_sites.test[,colsA1]))
-
-pred_rfA2 <- as.numeric(predict(object=model_rfA2, All_sites.test[,colsA2]))
-pred_tsA2 <- as.numeric(predict(object=model_tsA2, All_sites.test[,colsA2]))
-
-pred_rfA3 <- as.numeric(predict(object=model_rfA3, All_sites.test[,colsA3]))
-pred_tsA3t <- as.numeric(predict(object=model_tsA3, All_sites.test[,colsA3]))
-
-pred_rfA4 <- as.numeric(predict(object=model_rfA4, All_sites.test[,colsA4]))
-pred_tsA4 <- as.numeric(predict(object=model_tsA4, All_sites.test[,colsA4]))
-
-
-cor(pred_rfA1, All_sites.test[,1])
-cor(pred_tsA1, All_sites.test[,1])
-cor(pred_rfA2, All_sites.test[,1])
-cor(pred_tsA2, All_sites.test[,1])
-cor(pred_rfA3, All_sites.test[,1])
-cor(pred_tsA3, All_sites.test[,1])
-cor(pred_rfA4, All_sites.test[,1])
-cor(pred_tsA4, All_sites.test[,1])
-
-
-postResample(pred=pred_rfA1, obs=All_sites.test[,1])
-postResample(pred=pred_tsA1, obs=All_sites.test[,1])
-postResample(pred=pred_rfA2, obs=All_sites.test[,1])
-postResample(pred=pred_tsA2, obs=All_sites.test[,1])
-postResample(pred=pred_rfA3, obs=All_sites.test[,1])
-postResample(pred=pred_tsA3, obs=All_sites.test[,1])
-
-postResample(pred=pred_rfA4, obs=All_sites.test[,1])
-postResample(pred=pred_tsA4, obs=All_sites.test[,1])
-
-
-RF_F1 <- model_rfA1$finalModel
-RF_T1 <- model_tsA1$finalModel
-RF_F2 <- model_rfA2$finalModel
-RF_T2 <- model_tsA2$finalModel
-RF_F3 <- model_rfA3$finalModel
-RF_T3 <- model_tsA3$finalModel
-RF_F4 <- model_rfA4$finalModel
-RF_T4 <- model_tsA4$finalModel
-
-
-varImpPlot(RF_F1)
-varImpPlot(RF_T1)
-varImpPlot(RF_F2)
-varImpPlot(RF_T2)
-varImpPlot(RF_F3)
-varImpPlot(RF_T3)
-
-varImpPlot(RF_F4)
-varImpPlot(RF_T4)
+diagnostics(model_rfM1, All_sites.test, colsA1)
+diagnostics(model_rfM2, All_sites.test, colsA2)
+diagnostics(model_rfM3, All_sites.test, colsA3)
+diagnostics(model_rfM4, All_sites.test, colsA4)
+diagnostics(model_rfM5, All_sites.test, colsA5)
+diagnostics(model_rfM6, All_sites.test, colsA6)
+diagnostics(model_rfM7, All_sites.test, colsA7)
+diagnostics(model_rfM8, All_sites.test, colsA8)
 
 saveRDS(RF_F1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_F1_2_16.rds")
 saveRDS(RF_T1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_T1_2_16.rds")
