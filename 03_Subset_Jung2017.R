@@ -1,7 +1,7 @@
 library(reshape2)
 
 #Jung_2017
-Jung_2017 <- read.csv("C:/Users/rsstudent/odrive/UA_Google_Drive/MARS_GPP_all_years_3_22_20117.csv")
+Jung_2017 <- read.csv("C:/Users/rsstudent/Documents/Fluxcom_2017/RF_GPP_1999_to_2013.csv")
 #Jung_2011
 Jung_2011 <- read.csv("C:/Users/rsstudent/Upscaling_Data/Jung_2011/MR_GPP_all.csv")
 names(Jung_2011) <- gsub("\\.", "_", names(Jung_2011))
@@ -34,10 +34,36 @@ us_whs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.
 us_wjs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-105.75 & Jung_2017$lat==34.25), 1000*86400*subset(Jung_2011, Jung_2011$lon==-105.75 & Jung_2011$lat==34.25))
 us_wkg<- bind_rows(subset(Jung_2017, Jung_2017$lon==-109.75 & Jung_2017$lat==31.75), 1000*86400*subset(Jung_2011, Jung_2011$lon==-109.75 & Jung_2011$lat==31.75))
 
-setwd("C:/Users/rsstudent/odrive/UA_Google_Drive/Upscaling_Data/")
+#Just Jung 2017
+us_aud <- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.75))
+us_cop <- bind_rows(subset(Jung_2017, Jung_2017$lon==-109.75 & Jung_2017$lat==31.75))
+us_fuf <- bind_rows(subset(Jung_2017, Jung_2017$lon==-111.75 & Jung_2017$lat==35.25))
+us_lpa <- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.25))
+us_mpj <- bind_rows(subset(Jung_2017, Jung_2017$lon==-106.25 & Jung_2017$lat==34.25))
+us_ray <- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==29.75))
+us_scc <- bind_rows(subset(Jung_2017, Jung_2017$lon==-116.25 & Jung_2017$lat==33.75))
+us_scf <- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.25))
+us_scw<- bind_rows(subset(Jung_2017, Jung_2017$lon==-116.75 & Jung_2017$lat==33.75))
+us_seg<- bind_rows(subset(Jung_2017, Jung_2017$lon==-106.75 & Jung_2017$lat==34.25))
+us_sen<- bind_rows(subset(Jung_2017, Jung_2017$lon==-106.75 & Jung_2017$lat==34.25))
+us_ses<- bind_rows(subset(Jung_2017, Jung_2017$lon==-106.75 & Jung_2017$lat==34.25))
+us_so2<- bind_rows(subset(Jung_2017, Jung_2017$lon==-116.75 & Jung_2017$lat==33.25))
+us_so4<- bind_rows(subset(Jung_2017, Jung_2017$lon==-116.75 & Jung_2017$lat==33.25))
+us_so3<- bind_rows(subset(Jung_2017, Jung_2017$lon==-116.75 & Jung_2017$lat==33.25))
+us_src<- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.75))
+us_srg<- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.75))
+us_srm<- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.75))
+us_tes<- bind_rows(subset(Jung_2017, Jung_2017$lon==-109.25 & Jung_2017$lat==27.75))
+us_vcp<- bind_rows(subset(Jung_2017, Jung_2017$lon==-106.75 & Jung_2017$lat==35.75))
+us_vcm<- bind_rows(subset(Jung_2017, Jung_2017$lon==-106.75 & Jung_2017$lat==35.75))
+us_whs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-110.75 & Jung_2017$lat==31.25))
+us_wjs<- bind_rows(subset(Jung_2017, Jung_2017$lon==-105.75 & Jung_2017$lat==34.25))
+us_wkg<- bind_rows(subset(Jung_2017, Jung_2017$lon==-109.75 & Jung_2017$lat==31.75))
 
-d.list <- list(us_aud, us_cop, us_fuf, us_lpa, us_mpj, us_ray, us_scc, us_scf, us_scw, us_seg, us_sen, us_ses, us_sob, us_son,
-               us_soy, us_src, us_srg, us_srm, us_tes, us_vcp, us_vcm, us_whs, us_wjs, us_wkg)
+
+
+d.list <- list(us_aud, us_cop, us_fuf, us_lpa, us_mpj, us_ray, us_scc, us_scf, us_scw, us_seg, us_sen, us_ses, us_so2, us_so4,
+               us_so3, us_src, us_srg, us_srm, us_tes, us_vcp, us_vcm, us_whs, us_wjs, us_wkg)
 
 
 name_my_rows <- function(df){
@@ -46,8 +72,15 @@ name_my_rows <- function(df){
     return(x)
 }
 
-d.list <- lapply(d.list, name_my_rows)
+name_my_rows2 <- function(df){
+  row.names(df) <- c("Jung_2017")
+  x <-t(df)
+  return(x)
+}
 
+
+d.list <- lapply(d.list, name_my_rows2)
+#where all the files with Jung 2011 and Jung 2017 get written out. But where do they get merged? 
 write.csv(d.list[1], "us_aud.csv")
 write.csv(d.list[2], "us_cop.csv")
 write.csv(d.list[3], "us_fuf.csv")
@@ -74,4 +107,5 @@ write.csv(d.list[23], "us_wjs.csv")
 write.csv(d.list[24], "us_wkg.csv")
 
 
-
+d.list <- list(us_aud, us_cop, us_fuf, us_lpa, us_mpj, us_ray, us_scc, us_scf, us_scw, us_seg, us_sen, us_ses, us_so2, us_so4,
+               us_so3, us_src, us_srg, us_srm, us_tes, us_vcp, us_vcm, us_whs, us_wjs, us_wkg)

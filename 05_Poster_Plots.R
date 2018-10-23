@@ -2,6 +2,8 @@ library(ggplot2)
 library(plyr)
 library(lubridate)
 
+
+
 file <- read.csv("C:/Users/Mallory/Documents/Flux_Plus_Jung/Flux_Plus_Jung/Merged_to_plot/us-wkg_merged.csv")
 file$date <- as.Date(paste("01", file$monthyear, sep="_"), format="%d_%b_%Y")
 str(file)
