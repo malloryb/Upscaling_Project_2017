@@ -6,8 +6,14 @@
 #Also worked on parallel processing to try and speed things up. Still slow though. 
 #Maybe run on storm? 
 
+#To do 12/3/2018: 
+#Figure out how to do training/cross validtion with 80% of the SITES not 80% of the observations
+#This may actually reduce the need for oversampling
+#Look into randomforest explainer package too
+
 #Run site-based RF with proper variables ------------------
-devtools::install_github('topepo/caret/pkg/caret', dependencies = c("Depends", "Imports", "Suggests"))
+#devtools::install_github('topepo/caret/pkg/caret', dependencies = c("Depends", "Imports", "Suggests"))
+sessionInfo()
 library(lubridate)
 library(caret)
 library(randomForest)
@@ -57,34 +63,34 @@ ggplot(data=All_sites, aes(x=date, y=diff, colour=site, group=1)) +
   geom_line(size=1.2)
 
 
-cutoff_index <- ddply(All_sites, .(site), summarize, cutoff=quantile(GPP, 0.75, na.rm=TRUE))
-cutoff_index <- cutoff_index[-c(23),]
-All_sites <- merge(All_sites, cutoff_index, by="site")
+#cutoff_index <- ddply(All_sites, .(site), summarize, cutoff=quantile(GPP, 0.75, na.rm=TRUE))
+#cutoff_index <- cutoff_index[-c(23),]
+#All_sites <- merge(All_sites, cutoff_index, by="site")
 summary(All_sites$GPP)
 #Fix column names and add numeric columns
 str(All_sites)
 #Values above 3rd quartile
-All_sites$period <- as.factor(ifelse(All_sites$GPP <1.6, "Inactive", "Active"))
+#All_sites$period <- as.factor(ifelse(All_sites$GPP <1.6, "Inactive", "Active"))
 #Values above 4th quartile
-All_sites$period2 <-as.factor(ifelse(All_sites$GPP <2.5, "Inactive", "Active"))
-All_sites$period3 <- as.factor(ifelse(All_sites$month >10 | All_sites$month <3, "0", "1"))
-All_sites$period4 <- as.factor(ifelse(All_sites$GPP < All_sites$cutoff, "Low", "High"))
+#All_sites$period2 <-as.factor(ifelse(All_sites$GPP <2.5, "Inactive", "Active"))
+#All_sites$period3 <- as.factor(ifelse(All_sites$month >10 | All_sites$month <3, "0", "1"))
+#All_sites$period4 <- as.factor(ifelse(All_sites$GPP < All_sites$cutoff, "Low", "High"))
 All_sites$elev <- as.numeric(All_sites$elev)
 All_sites$year <- as.factor(year(as.Date(All_sites$date, format="%Y-%m-%d")))
 All_sites$precip <- as.numeric(All_sites$precip)
 All_sites$swe <- as.numeric(All_sites$swe)
-All_sites$GPPsquared <- (All_sites$GPP*All_sites$GPP)
-index <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-values <- c("winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "fall", "fall", "fall", "winter")
-All_sites$season <- values[match(All_sites$month, index)]
+#All_sites$GPPsquared <- (All_sites$GPP*All_sites$GPP)
+#index <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+#values <- c("winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "fall", "fall", "fall", "winter")
+#All_sites$season <- values[match(All_sites$month, index)]
 All_sites$month <- as.factor(All_sites$month)
-All_sites$season <- as.factor(All_sites$season)
+#All_sites$season <- as.factor(All_sites$season)
 
 str(All_sites)
 All_sites <- All_sites[c("GPP", "date", "daylength", "site", "elev", "month", "srad", "swe", "tmed", "tmax", "tmin", "BAL", "PET", 
                          "precip", "vp", "MAP", "MAT", "NDVI", "EVI", "spei1", "spei3", "spei6", "spei9", "spei12","period", "period2","season", "period3", "period4")]
 #Trying to plot
-#Rows are -Inf for SPEI3 for some reason. Fixing 266 and 1448 by just using the mean of the surrounding two values.
+#Rows are -Inf for SPEI3 for some reason. Fixing 236 and 1461 by just using the mean of the surrounding two values.
 which(sapply(All_sites$spei3, is.infinite))
 
 All_sites$spei3[235:237]
@@ -98,7 +104,7 @@ All_sites <- All_sites[complete.cases(All_sites),]
 summary(All_sites)
 #Split into training and testing data
 set.seed(455)
-index <- createDataPartition(All_sites$GPP, p=0.80, list=FALSE)
+index <- createDataPartition(All_sites$site, p=0.80, list=FALSE)
 index
 #Subset training set
 All_sites.training <- All_sites[index,]
@@ -107,13 +113,13 @@ All_sites.test <- All_sites[-index,]
 
 str(All_sites.training)
 #Here's where I double the number of 'high gpp observations' - two levels: high and very high
-hist(All_sites.training[,"GPP"])
-All_sites.training <- rbind(All_sites.training, subset(All_sites.training, period4=="High"))
-hist(All_sites.training[,"GPP"])
-All_sites.training <- rbind(All_sites.training, subset(All_sites.training, period4=="High"))
-hist(All_sites.training[,"GPP"])
-All_sites.training <- rbind(All_sites.training, subset(All_sites.training, period4=="High"))
-hist(All_sites.training[,"GPP"])
+#hist(All_sites.training[,"GPP"])
+#All_sites.training <- rbind(All_sites.training, subset(All_sites.training, period4=="High"))
+#hist(All_sites.training[,"GPP"])
+#All_sites.training <- rbind(All_sites.training, subset(All_sites.training, period4=="High"))
+#hist(All_sites.training[,"GPP"])
+#All_sites.training <- rbind(All_sites.training, subset(All_sites.training, period4=="High"))
+#hist(All_sites.training[,"GPP"])
 #All_sites.training[,"GPP"] <- (All_sites.training[,"GPP"])*(All_sites.training[,"GPP"])
 #did this 2 times
 
@@ -218,10 +224,10 @@ cluster <- makeCluster(detectCores() - 1)
 registerDoParallel(cluster)
 #ctrl1 <- trainControl(method = "LOOCV", allowParallel = TRUE)
 ctrl2 <- trainControl(method = "repeatedcv", number=5, repeats=3, allowParallel = TRUE)
-ctrl3 <- trainControl(method = "repeatedcv", number=5, repeats=3, summaryFunction=costSummary, allowParallel = TRUE)
+#ctrl3 <- trainControl(method = "repeatedcv", number=5, repeats=3, summaryFunction=costSummary, allowParallel = TRUE)
 
 #model_tsC2 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=ctrl1, importance=TRUE, do.trace=TRUE)
-model_tsC3 <- train(All_sites.training[,colsA1], All_sites.training[,1], method='rf', trControl=ctrl2, importance=TRUE, do.trace=TRUE)
+model_tsC3 <- train(All_sites.training[,colsA1], All_sites.training[,"GPP"], method='rf', trControl=ctrl2, importance=TRUE, do.trace=TRUE)
 model_tsC4 <- train(All_sites.training[,colsA2], All_sites.training[,1], method='rf', trControl=ctrl2, importance=TRUE, do.trace=TRUE)
 
 #Stop cluster
@@ -234,10 +240,10 @@ varImp(model_tsC4)
 pred_tsC3 <- as.numeric(predict(object=model_tsC3, All_sites.test[,colsA1]))
 pred_tsC4 <- as.numeric(predict(object=model_tsC4, All_sites.test[,colsA2]))
 
-cor(pred_tsC3, All_sites.test[,1])
+cor(pred_tsC3, All_sites.test[,"GPP"])
 cor(pred_tsC4, All_sites.test[,1])
 
-postResample(pred=pred_tsC3, obs=All_sites.test[,1])
+postResample(pred=pred_tsC3, obs=All_sites.test[,"GPP"])
 
 RF_C3 <- model_tsC3$finalModel
 RF_C4 <- model_tsC4$finalModel
@@ -245,7 +251,7 @@ RF_C4 <- model_tsC4$finalModel
 varImpPlot(RF_C3)
 varImpPlot(RF_C4)
 
-saveRDS(RF_C3, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_NDVI_4_24.rds")
+saveRDS(RF_C3, "/Users/mallory/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_NDVI_12_6.rds")
 saveRDS(RF_C4, "C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_EVI_4_24.rds")
 
 #Testing seasonal cycle------------------------------
@@ -289,7 +295,7 @@ RF_Val_Input_Created_Subset <- function(month, monthno, year, bandsp){
   }
   
   #Read models
-  RFP3<- readRDS("Upscaling_Project/Upscaling_Project_2017/RF_C2_3_10.rds")
+  RFP3<- readRDS("/Users/mallory/Dropbox (Dissertation Dropbox)/Upscaling_Project_2017/RF_NDVI_12_6.rds")
   
   #For each site- write function and lapply over list of extents? Or at least function to apply models and write them out
   FUFpoint <- cbind(-111.762,	35.089)
