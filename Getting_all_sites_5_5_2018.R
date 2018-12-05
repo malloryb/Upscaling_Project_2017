@@ -762,7 +762,7 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
 ##3. Running RF models on gridded data subsets --------------------------
 library(caret)
 library(randomForest)
-raster("F:/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif", band=93)
+raster("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/Monthly_scale_SPEI_2000-2013.tif", band=93)
 #Giant function to do all analyses and create input data - however doing this on STORM with a
 #modified functino now 
 RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
@@ -771,18 +771,18 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   require(raster)
   require(dplyr)
   #Read in files
-  filename <- paste0("F:/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
-  filenameDayl <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
-  filenameSrad <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
-  filenameVP <- "F:/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
-  filenamespei12 <- "F:/SPEIBase/spei12.nc"
-  filenamespei12 <- "F:/SPEIBase/spei12.nc"
-  filenamespei12 <- "F:/SPEIBase/spei12.nc"
-  filenamespei12 <- "F:/SPEIBase/spei12.nc"
-  filenamespei12 <- "F:/SPEIBase/spei12.nc"
+  filename <- paste0("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filenameDayl <- "/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
+  filenameSrad <- "/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
+  filenameVP <- "/Volumes/Elements/DATA/Upscaling_Project/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
+  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
+  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
+  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
+  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
+  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
   print(filename)
-  MAP_resample <- raster("F:/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
-  MAT_resample <- stack("F:/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
+  MAP_resample <- raster("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
+  MAT_resample <- stack("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
   names(inputrast) <- paste(c("NDVI", "month", "elev", "precip", "tmax", "tmin"))
   #inputrast <-(dropLayer(inputrast, 6))
@@ -962,11 +962,11 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
     print(month)
     print(year)
     #Function needs to apply to a site and 
-    RFF3_predicted <- predict(rast_stack, RFF3, ext=site)
+    RFN1_predicted <- predict(rast_stack, RFN1, ext=site)
     plot(RFF3_predicted)
-    RFT3_predicted <- predict(rast_stack, RFT3, ext=site)
-    RFF4_predicted <- predict(rast_stack, RFF4, ext=site)
-    RFT4_predicted <- predict(rast_stack, RFT4, ext=site)
+    RFN2_predicted <- predict(rast_stack, RFN2, ext=site)
+    RFN3_predicted <- predict(rast_stack, RFN3, ext=site)
+    RFN4_predicted <- predict(rast_stack, RFN4, ext=site)
     
     print(month)
     print(year)
