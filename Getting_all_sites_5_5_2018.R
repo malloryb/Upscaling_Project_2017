@@ -238,9 +238,9 @@ substrRight <- function(x, n){
 }
 
 #Add NDVI in addition to EVI to the Allsites file
-setwd("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
+setwd("/Users/mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
 
-ndvilist <- list.files("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
+ndvilist <- list.files("/Users/mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/MODIS_NDVI/")
 ndvilist
 
 modis_ndvi <- function(file){
@@ -274,7 +274,7 @@ All_sites_ndvi <- rename(All_sites_ndvi, 'site'='site.x')
 All_sites_ndvi <- rename(All_sites_ndvi, 'monthyear'='monthyear.x')
 head(All_sites_ndvi)
 write.csv(All_sites_ndvi, "C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
-All_sites_ndvi <- read.csv("C:/Users/Mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
+All_sites_ndvi <- read.csv("/Users/mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_5_7_2018.csv")
 #function to code month in a way that will allow for automatic s vs. n. hemisphere distinctions
 #going to have to split, apply, combine 
 #Function also calculates amplitude for each site
