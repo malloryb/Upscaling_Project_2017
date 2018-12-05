@@ -368,7 +368,7 @@ library(ggpubr)
 
 #From UC-Irvine Machine learning repository
 #Now Doing 3 different models: one for spring ("Mar-May), summer("Jun-Sep"), Inactive("Oct-"feb")
-All_sites <- read.csv("C:/Users/rsstudent/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv") 
+All_sites <- read.csv("/Users/mallory/Dropbox (Dissertation Dropbox)/Upscaling_Projct/All_sites_hmon_5_6.csv") 
 head(All_sites)
 str(All_sites)
 All_sites$elev <- as.numeric(All_sites$elev)
@@ -395,7 +395,7 @@ nacols <- function(df) {
 }
 
 str(All_sites)
-All_sites <- All_sites[c("GPP", "MAP", "MAT", "elev", "daylength", "month", "amp", "spei1", "spei3", "spei6", 
+All_sites <- All_sites[c("GPP", "site", "MAP", "MAT", "elev", "daylength", "month", "amp", "spei1", "spei3", "spei6", 
                          "spei9", "spei12","spei24", "spei48","srad", "swe", "tmed", "tmax", "tmin", "precip", "vp", "vpd",
                          "NDVI")]
 
@@ -413,13 +413,13 @@ summary(All_sites)
 
 #Normalizing some predictor variables - except spei variables and categorical variables (e.g. hmon) 
 str(All_sites)
-colnames(All_sites[15:23])
-All_normalized <- as.data.frame(lapply(All_sites[15:23], normalize))
+colnames(All_sites[15:24])
+All_normalized <- as.data.frame(lapply(All_sites[15:24], normalize))
 str(All_normalized)
 All <- cbind(All_sites[1:14], All_normalized)
 str(All)
 #Split into training and testing data
-index <- createDataPartition(All$GPP, p=0.80, list=FALSE)
+index <- createDataPartition(All$site, p=0.80, list=FALSE)
 index
 #Resample data to overrepresent high GPP observations(? should I have done this)
 #Subset training set
@@ -433,7 +433,7 @@ head(All)
 dim(All)
 
 #Check for highly correlated variables: 
-correlationMatrix <- cor(All[,7:23])
+correlationMatrix <- cor(All[,8:24])
 # summarize the correlation matrix
 print(round(correlationMatrix,2))
 # find attributes that are highly corrected (ideally >0.75)
@@ -443,7 +443,7 @@ highlyCorrelated
 print(highlyCorrelated)
 
 #Model with all:
-colsA1 <- c(2:23)
+colsA1 <- c(3:24)
 colnames(All_sites.training[,colsA1])
 head(All_sites.training[,1:2])
 #Model less highly correlated variables: EVI, swe, and tmed:
@@ -492,35 +492,35 @@ myControl <- trainControl(method="repeatedcv", repeats=5, number=3)
 
 cluster <- makeCluster(detectCores() - 1) 
 registerDoParallel(cluster)
-model_rfN1 <- train(All_sites.training[,colsA1], All_sites.training[,1],
+model_rfN1 <- train(All_sites.training[,colsA1], All_sites.training[,"GPP"],
                     method='rf', trControl=myControl, importance=TRUE, 
                     do.trace=TRUE, allowParallel=TRUE)
 
-model_rfN2 <- train(All_sites.training[,colsA2], All_sites.training[,1], 
+model_rfN2 <- train(All_sites.training[,colsA2], All_sites.training[,"GPP"], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-model_rfN3 <- train(All_sites.training[,colsA3], All_sites.training[,1], 
+model_rfN3 <- train(All_sites.training[,colsA3], All_sites.training[,"GPP"], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-model_rfN4 <- train(All_sites.training[,colsA4], All_sites.training[,1], 
+model_rfN4 <- train(All_sites.training[,colsA4], All_sites.training[,"GPP"], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-#model_rfN5 <- train(All_sites.training[,colsA5], All_sites.training[,1], 
+#model_rfN5 <- train(All_sites.training[,colsA5], All_sites.training[,"GPP"], 
                     #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     #allowParallel=TRUE)
 
-#model_rfN6 <- train(All_sites.training[,colsA6], All_sites.training[,1], 
+#model_rfN6 <- train(All_sites.training[,colsA6], All_sites.training[,"GPP"], 
                     #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                    # allowParallel=TRUE)
 
-#model_rfN7 <- train(All_sites.training[,colsA7], All_sites.training[,1], 
+#model_rfN7 <- train(All_sites.training[,colsA7], All_sites.training[,"GPP"], 
                     #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     #allowParallel=TRUE)
 
-#model_rfN8 <- train(All_sites.training[,colsA8], All_sites.training[,1], 
+#model_rfN8 <- train(All_sites.training[,colsA8], All_sites.training[,"GPP"], 
                    # method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     #allowParallel=TRUE)
 
@@ -572,10 +572,10 @@ diagnostics(model_rfN4, All_sites.test, colsA4)
 #diagnostics(model_rfN7, All_sites.test, colsA7)
 #diagnostics(model_rfN8, All_sites.test, colsA8)
 
-saveRDS(model_rfN1, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N1_5_8.rds")
-saveRDS(model_rfN2, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N2_5_8.rds")
-saveRDS(model_rfN3, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N3_5_8.rds")
-saveRDS(model_rfN4, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N4_5_8.rds")
+saveRDS(model_rfN1, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
+saveRDS(model_rfN2, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
+saveRDS(model_rfN3, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
+saveRDS(model_rfN4, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
 #saveRDS(model_rfN5, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N5_5_8.rds")
 #saveRDS(model_rfN6, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N6_5_8.rds")
 #saveRDS(model_rfN7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N7_5_8.rds")
@@ -950,11 +950,10 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   print("subset points")
   
   #Read models
-  RFF3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F3_2_16.rds")
-  RFT3<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T3_2_16.rds")
-  RFF4<- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_F4_2_27.rds")
-  RFT4 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_T4_2_27.rds")
-  RFC3 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF")
+  RFN1<- readRDS("/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
+  RFN2<- readRDS("/Users/mallory/Documents/Upscaling/RF_N2_12_6.rds")
+  RFN3<- readRDS("/Users/mallory/Documents/Upscaling/RF_N3_12_6.rds")
+  RFN4 <- readRDS("/Users/mallory/Documents/Upscaling/RF_N4_12_6.rds")
   
   
   #For each site: 4 .tifs written out - write function and lapply over list of extents? Or at least function to apply models and write them out
