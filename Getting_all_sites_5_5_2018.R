@@ -427,6 +427,13 @@ All_sites.training <- All[index,]
 All_sites.test <- All[-index,]
 dim(All_sites.training)
 dim(All_sites.test)
+#Undersample low GPP observations in training dataset
+str(All_sites.training)
+hist(All_sites.training[,"GPP"])
+All_sites.training <- (All_sites.training[-sample(1:nrow(subset(All_sites.training, GPP<1)), 0.96*nrow(subset(All_sites.training, GPP<1))),])
+hist(All_sites.training[,"GPP"])
+
+
 #Overview of algorithms supported by caret function
 names(getModelInfo())
 head(All)
@@ -488,7 +495,7 @@ head(All_sites.training[,1:2])
 library(parallel)
 library(doParallel)
 
-myControl <- trainControl(method="repeatedcv", repeats=5, number=3)
+myControl <- trainControl(method="repeatedcv", repeats=3, number=10, verboseIter=TRUE)
 
 cluster <- makeCluster(detectCores() - 1) 
 registerDoParallel(cluster)
@@ -629,14 +636,14 @@ seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
 
 ###Global Upscaling for analysis and validation: --------------------------
 #create amplitude file: 
-dayl <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylight.csv")
+dayl <- read.csv("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/daylight.csv")
 dayl$max <- apply(dayl[,2:13], 1, max)
 dayl$min <- apply(dayl[,2:13], 1, min)
 dayl$amp <- dayl$max- dayl$min
 dayl$max <- NULL
 dayl$min <- NULL
 str(dayl)
-write.csv(dayl, "F:/Upscaling_Project/Test_Global_Upscaling/daylamp.csv")
+write.csv(dayl, "/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/daylamp.csv")
 
 
 #Currently doing this with RF_N4_5_8.rds
@@ -654,18 +661,18 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
   require(ncdf4)
   date <-as.Date(paste(year, month, "01", sep="-"), format="%Y-%m-%d")
   #SPEI now
-  spei48 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei48.nc")[[bandsp]]
-  spei9 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei09.nc")[[bandsp]]
-  spei3 <- brick("F:/Upscaling_Project/Test_Global_Upscaling/spei03.nc")[[bandsp]]
+  spei48 <- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/spei48.nc")[[bandsp]]
+  spei9 <- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/spei09.nc")[[bandsp]]
+  spei3 <- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/spei03.nc")[[bandsp]]
   print("SPEI loaded")
   #Precip
-  precip <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.pre.dat.nc")[[bandcru]]
+  precip <- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.pre.dat.nc")[[bandcru]]
   #Tmin
-  tmin <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmn.dat.nc")[[bandcru]]
+  tmin <- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmn.dat.nc")[[bandcru]]
   #Tmax
-  tmax <- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmx.dat.nc")[[bandcru]]
+  tmax <- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.tmx.dat.nc")[[bandcru]]
   #VP
-  vp<- brick("F:/Upscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.vap.dat.nc")[[bandcru]]
+  vp<- brick("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/cru_ts4.01.2011.2016.vap.dat.nc")[[bandcru]]
   
   print("spei and cru data read in")
   #month raster
@@ -678,9 +685,9 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
   monthR <- mosaic(monthrast, shrast, fun=ifelse(month <7, max, min))
   plot(monthR)
   print("monthrast calculated")
-  pts  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/global_radiation.csv")
+  pts  <- read.csv("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/global_radiation.csv")
   pts <- pts[,c("Lat", "Lon")]
-  pts2  <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylamp.csv")
+  pts2  <- read.csv("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/daylamp.csv")
   pts2 <- pts2[,c("Lat", moname, "amp")]
   merged <- merge(pts, pts2, by="Lat")
   pts <- pts[,c("Lat", "Lon", moname)]
@@ -701,14 +708,14 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
   dayl <- dayl*3600
   print("srad and elev read in")
   #Mat and map
-  MAT <- raster("F:/Upscaling_Project/Test_Global_Upscaling/MAT_raster")
-  MAP <- raster("F:/Upscaling_Project/Test_Global_Upscaling/MAP_raster")
+  MAT <- raster("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/MAT_raster")
+  MAP <- raster("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/MAP_raster")
   print("map and mat read in")
   #elevation
-  elev <- raster("F:/Upscaling_Project/Test_Global_Upscaling/elevation.tif")
+  elev <- raster("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/elevation.tif")
   print("all files loaded")
   print("getting NDVI files")
-  ndvi_files <- list.files("F:/Upscaling_Project/Test_Global_Upscaling/Gridded_NDVI/")
+  ndvi_files <- list.files("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/Gridded_NDVI/")
   #select all files for a given year and month
   ndvi_proc <- function(x){
     year <- substring(basename(x), 17,20)
@@ -740,7 +747,7 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
   ndvi_to_average <- as.list(ndvi_month$filename)
   print("processing ndvi")
   proc_ndvi <- function(x){
-    filename <- paste("F:/Upscaling_Project/Test_Global_Upscaling/Gridded_NDVI/", x, sep="")
+    filename <- paste("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/Gridded_NDVI/", x, sep="")
     x <- raster(filename, ext=c(-180,180,-90,90))
     proj4string(x)=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
     x[x==-9999] <- NA
@@ -782,13 +789,13 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
         "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI"))
   #plot(rast_stack)
   
-  RFC3 <- readRDS("F:/Upscaling_Project/Upscaling_Project_2017/RF_N4_5_8.rds")
+  RFC3 <- readRDS("/Volumes/Elements/DATAUpscaling_Project/Upscaling_Project_2017/RF_N4_5_8.rds")
   #Going to mask before I do this
   
   # Read SHAPEFILE.shp from the current working directory (".")
   GPP <- predict(rast_stack, RFC3, ext=rast_ext)
   #plot(GPP)
-  mask <- raster("F:/Upscaling_Project/Test_Global_Upscaling/Drylands_dataset_2007/CBBNDrylands.tif")
+  mask <- raster("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/Drylands_dataset_2007/CBBNDrylands.tif")
   #plot(mask)
   mask[mask < 0.5] <- NA
   mask[mask >0.5] <-1
@@ -796,7 +803,7 @@ GlobalAnalysis3 <- function(bandsp, bandcru, year, month, moname, shmonth){
   mask <- resample(mask, GPP, method="bilinear")
   GPP_drylands <- mask( GPP, mask)
   title <- paste("Upscaled GPP", moname, year, sep=" ")
-  filenameF <- paste("F:/Upscaling_Project/Test_Global_Upscaling/", moname, year, ".tif", sep="_")
+  filenameF <- paste("/Volumes/Elements/DATAUpscaling_Project/Test_Global_Upscaling/", moname, year, ".tif", sep="_")
   writeRaster(GPP_drylands, filenameF, overwrite=TRUE)
   plot(GPP_drylands, ggtitle = title)  
 } 
