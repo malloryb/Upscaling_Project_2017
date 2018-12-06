@@ -581,6 +581,52 @@ saveRDS(model_rfN4, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
 #saveRDS(model_rfN7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N7_5_8.rds")
 #saveRDS(model_rfN8, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N8_5_8.rds")
 
+#Attempting to assess seasonal cycle by running model back through input data----------
+Predicted <- All_sites
+Predicted$Barnes_GPP <- (predict(model_rfN4, All_sites))
+str(Predicted)
+#Split Apply Combine
+out2 <- split(Predicted, Predicted$site)
+str(out2)
+#Apply
+setwd("/Users/mallory/Documents/Upscaling/")
+plot_seasonal <- function(y){
+  require("ggplot2")
+  require("ggthemes")
+  require("scales")
+  require("psych")
+  x <- ddply(y, .(month), summarize, Barnes_se=sd(Barnes_GPP, na.rm=TRUE)/sqrt(length(Barnes_GPP[!is.na(Barnes_GPP)])) , Barnes_GPP=mean(Barnes_GPP, na.rm=TRUE),
+                   GPP_se=sd(GPP, na.rm=TRUE)/sqrt(length(GPP[!is.na(GPP)])), GPP=mean(GPP, na.rm=TRUE))
+  
+  r <- as.character(round(cor(x$GPP, x$Barnes_GPP), 3))
+  rmssdGPP <- as.character(round(rmssd(x$GPP), 3))
+  rmssdBarnesGPP <- as.character(round(rmssd(x$Barnes_GPP), 3))
+  lbl1 <- paste("rmssdFlux =", rmssdGPP)
+  lbl2 <- paste("rmssdBarnes =", rmssdBarnesGPP)
+  filename <- paste(y$site[1], "seasonal_comparison.png", sep="_")
+  print(filename)
+  q <- ggplot() +
+    ggtitle(x$site)+
+    geom_line(data = x, aes(x = month, group=1, y = GPP, color =I("red")), size=2) +
+    geom_line(data = x, aes(x = month, group=1, y = Barnes_GPP, color = I("purple")), size=2) +
+    geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
+    annotate("text", label = lbl1, parse=FALSE, x = 3, y = 4.5, size = 5, colour = "Black")+
+    annotate("text", label = lbl2, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
+    geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP-Barnes_se,ymax=Barnes_GPP+Barnes_se),colour="blue")+
+    #scale_x_continuous(breaks=pretty_breaks())+
+    xlab('month')+
+    ylab('GPP')+
+    theme_classic()+
+    theme(legend.position = c(0, 0))
+  
+  plot(q)
+  ggsave(filename, device='png', width=16, height=16, plot=q, dpi = 300, units = "cm")
+}
+
+lapply(out2, plot_seasonal)
+#Combine
+seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
+
 ###Global Upscaling for analysis and validation: --------------------------
 #create amplitude file: 
 dayl <- read.csv("F:/Upscaling_Project/Test_Global_Upscaling/daylight.csv")
@@ -771,16 +817,11 @@ RF_Val_Analysis <- function(band1, bandsp, month, monthno, year){
   require(raster)
   require(dplyr)
   #Read in files
-  filename <- paste0("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/Input_rasters/",month,"_",year, ".tif")
+  filename <- paste0("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/",month,"_",year, "_test2.tif")
   filenameDayl <- "/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_dayl_2000_2016_AOI.tif"
   filenameSrad <- "/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/upscalingArea_DAYMET_srad_2000_2016_AOI.tif"
   filenameVP <- "/Volumes/Elements/DATA/Upscaling_Project/upscalingArea_DAYMET_vp_2000_2016_AOI.tif"
   filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
-  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
-  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
-  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
-  filenamespei12 <- "/Volumes/Elements/DATA/SPEIBase/spei12.nc"
-  print(filename)
   MAP_resample <- raster("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/MAP_resample.tif")
   MAT_resample <- stack("/Volumes/Elements/DATA/Upscaling_Project/Gridded_Inputs/MAT_resample.tif")
   inputrast <- stack(filename)
@@ -1615,6 +1656,7 @@ lapply(out, seasonal_func)
 #Combine
 seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
 
+#Seasonal_plotting------------
 #Plotting function that plots all sites serparately and writes out graphs
 #Where to write out .png files
 setwd("F:/Upscaling_Project/Upscaled_GPP/")
