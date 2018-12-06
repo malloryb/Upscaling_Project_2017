@@ -459,20 +459,20 @@ colsA2 <- c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei1", "s
 colnames(All_sites.training[,colsA2])
 head(All_sites.training[,1:2])
 
-colsA3 <- c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9",
-            "spei48", "tmin", "precip", "vp", "vpd", "NDVI")
-colnames(All_sites.training[,colsA3])
-head(All_sites.training[,1:2])
-
-colsA4 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei9", 
-"spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
-colnames(All_sites.training[,colsA4])
-head(All_sites.training[,1:2])
-
-#colsA5 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9", 
- #            "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
-#colnames(All_sites.training[,colsA5])
+#colsA3 <- c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9",
+         #   "spei48", "tmin", "precip", "vp", "vpd", "NDVI")
+#colnames(All_sites.training[,colsA3])
 #head(All_sites.training[,1:2])
+
+#colsA4 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei9", 
+#"spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
+#colnames(All_sites.training[,colsA4])
+#head(All_sites.training[,1:2])
+
+colsA5 <-  c("MAP","MAT","elev", "month", "daylength", "srad", "spei12", "spei6", "spei1", 
+             "tmax", "tmin", "precip", "vp", "NDVI")
+colnames(All_sites.training[,colsA5])
+head(All_sites.training[,1:2])
 
 #colsA6 <-  c("MAP","MAT","elev", "month", "daylength", "amp", "srad", "spei3", "spei6", "spei9", 
 #             "spei48", "tmax", "tmin", "precip", "vp", "vpd", "NDVI")
@@ -499,21 +499,21 @@ myControl <- trainControl(method="repeatedcv", repeats=3, number=10, verboseIter
 
 cluster <- makeCluster(detectCores() - 1) 
 registerDoParallel(cluster)
-model_rfN1 <- train(All_sites.training[,colsA1], All_sites.training[,"GPP"],
+model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,"GPP"],
                     method='rf', trControl=myControl, importance=TRUE, 
                     do.trace=TRUE, allowParallel=TRUE)
 
-model_rfN2 <- train(All_sites.training[,colsA2], All_sites.training[,"GPP"], 
+model_rfA5 <- train(All_sites.training[,colsA5], All_sites.training[,"GPP"], 
                     method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
                     allowParallel=TRUE)
 
-model_rfN3 <- train(All_sites.training[,colsA3], All_sites.training[,"GPP"], 
-                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
-                    allowParallel=TRUE)
+#model_rfN3 <- train(All_sites.training[,colsA3], All_sites.training[,"GPP"], 
+                    #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    #allowParallel=TRUE)
 
-model_rfN4 <- train(All_sites.training[,colsA4], All_sites.training[,"GPP"], 
-                    method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
-                    allowParallel=TRUE)
+#model_rfN4 <- train(All_sites.training[,colsA4], All_sites.training[,"GPP"], 
+                    #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
+                    #allowParallel=TRUE)
 
 #model_rfN5 <- train(All_sites.training[,colsA5], All_sites.training[,"GPP"], 
                     #method='rf', trControl=myControl, importance=TRUE, do.trace=TRUE, 
@@ -570,19 +570,19 @@ diagnostics <- function(model, test, cols){
 
 colnames(All_sites.test[,colsA2])
 
-diagnostics(model_rfN1, All_sites.test, colsA1)
-diagnostics(model_rfN2, All_sites.test, colsA2)
-diagnostics(model_rfN3, All_sites.test, colsA3)
-diagnostics(model_rfN4, All_sites.test, colsA4)
+diagnostics(model_rfA1, All_sites.test, colsA1)
+diagnostics(model_rfA5, All_sites.test, colsA5)
+#diagnostics(model_rfN3, All_sites.test, colsA3)
+#diagnostics(model_rfN4, All_sites.test, colsA4)
 #diagnostics(model_rfN5, All_sites.test, colsA5)
 #diagnostics(model_rfN6, All_sites.test, colsA6)
 #diagnostics(model_rfN7, All_sites.test, colsA7)
 #diagnostics(model_rfN8, All_sites.test, colsA8)
 
-saveRDS(model_rfN1, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
-saveRDS(model_rfN2, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
-saveRDS(model_rfN3, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
-saveRDS(model_rfN4, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
+saveRDS(model_rfA1, "/Users/mallory/Documents/Upscaling/RF_A1_12_6.rds")
+saveRDS(model_rfA5, "/Users/mallory/Documents/Upscaling/RF_A5_12_6.rds")
+#saveRDS(model_rfN3, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
+#saveRDS(model_rfN4, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
 #saveRDS(model_rfN5, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N5_5_8.rds")
 #saveRDS(model_rfN6, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N6_5_8.rds")
 #saveRDS(model_rfN7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N7_5_8.rds")
@@ -619,7 +619,7 @@ plot_seasonal <- function(y){
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
     annotate("text", label = lbl1, parse=FALSE, x = 3, y = 4.5, size = 5, colour = "Black")+
     annotate("text", label = lbl2, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
-    geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP-Barnes_se,ymax=Barnes_GPP+Barnes_se),colour="blue")+
+    geom_errorbar(data=x,aes(x=month, ymin=Barnes_GPP-Barnes_se,ymax=Barnes_GPP+Barnes_se),colour="purple")+
     #scale_x_continuous(breaks=pretty_breaks())+
     xlab('month')+
     ylab('GPP')+
@@ -631,8 +631,6 @@ plot_seasonal <- function(y){
 }
 
 lapply(out2, plot_seasonal)
-#Combine
-seasonal_to_plot <- do.call(rbind, lapply(out, seasonal_func))
 
 ###Global Upscaling for analysis and validation: --------------------------
 #create amplitude file: 
