@@ -22,7 +22,7 @@ library(lubridate)
 library(tidyverse)
 library(stringr)
 library(SPEI)
-
+library(randomForestExplainer)
 merge.with.order <- function(x,y, ..., sort = T, keep_order)
 {
   #Function from here: https://www.r-statistics.com/2012/01/merging-two-data-frame-objects-while-preserving-the-rows-order/
@@ -395,6 +395,7 @@ nacols <- function(df) {
 }
 
 str(All_sites)
+hist(All_sites$daylength)
 All_sites <- All_sites[c("GPP", "site", "MAP", "MAT", "elev", "daylength", "month", "amp", "spei1", "spei3", "spei6", 
                          "spei9", "spei12","spei24", "spei48","srad", "swe", "tmed", "tmax", "tmin", "precip", "vp", "vpd",
                          "NDVI")]
@@ -413,10 +414,10 @@ summary(All_sites)
 
 #Normalizing some predictor variables - except spei variables and categorical variables (e.g. hmon) 
 str(All_sites)
-colnames(All_sites[15:24])
-All_normalized <- as.data.frame(lapply(All_sites[15:24], normalize))
+colnames(All_sites[16:24])
+All_normalized <- as.data.frame(lapply(All_sites[16:24], normalize))
 str(All_normalized)
-All <- cbind(All_sites[1:14], All_normalized)
+All <- cbind(All_sites[1:15], All_normalized)
 str(All)
 #Split into training and testing data
 index <- createDataPartition(All$site, p=0.80, list=FALSE)
@@ -430,9 +431,10 @@ dim(All_sites.test)
 #Undersample low GPP observations in training dataset
 str(All_sites.training)
 hist(All_sites.training[,"GPP"])
-All_sites.training <- (All_sites.training[-sample(1:nrow(subset(All_sites.training, GPP<1)), 0.96*nrow(subset(All_sites.training, GPP<1))),])
+All_sites.training <- rbind(All_sites.training, subset(All_sites.training, as.numeric(month) > 4 & as.numeric(month) <9))
+All_sites.training <- rbind(All_sites.training, subset(All_sites.training, as.numeric(month) > 7 & as.numeric(month) <9))
+#All_sites.training <- rbind(All_sites.training, (All_sites.training[-sample(1:nrow(subset(All_sites.training, daylength>47000)), 0.99*nrow(subset(All_sites.training, daylength>47000))),]))
 hist(All_sites.training[,"GPP"])
-
 
 #Overview of algorithms supported by caret function
 names(getModelInfo())
@@ -495,11 +497,12 @@ head(All_sites.training[,1:2])
 library(parallel)
 library(doParallel)
 
-myControl <- trainControl(method="repeatedcv", repeats=3, number=10, verboseIter=TRUE)
+myTimeControl <- trainControl(method = "timeslice", initialWindow = 36, horizon = 12, fixedWindow = TRUE)
+myControl <- trainControl(method="repeatedcv", repeats=3, number=10)
 
 cluster <- makeCluster(detectCores() - 1) 
 registerDoParallel(cluster)
-model_rfA1 <- train(All_sites.training[,colsA1], All_sites.training[,"GPP"],
+model_rfA2 <- train(All_sites.training[,colsA2], All_sites.training[,"GPP"],
                     method='rf', trControl=myControl, importance=TRUE, 
                     do.trace=TRUE, allowParallel=TRUE)
 
@@ -537,10 +540,10 @@ stopCluster(cluster)
 registerDoSEQ()
 
 
-svm_Linear <- train(V14 ~., data = training, method = "svmLinear",
-                    trControl=trctrl,
-                    preProcess = c("center", "scale"),
-                    tuneLength = 10)
+#svm_Linear <- train(V14 ~., data = training, method = "svmLinear",
+                    #trControl=trctrl,
+                    #preProcess = c("center", "scale"),
+                    #tuneLength = 10)
 
 diagnostics <- function(model, test, cols){
   print(model)
@@ -570,7 +573,7 @@ diagnostics <- function(model, test, cols){
 
 colnames(All_sites.test[,colsA2])
 
-diagnostics(model_rfA1, All_sites.test, colsA1)
+diagnostics(model_rfA2, All_sites.test, colsA2)
 diagnostics(model_rfA5, All_sites.test, colsA5)
 #diagnostics(model_rfN3, All_sites.test, colsA3)
 #diagnostics(model_rfN4, All_sites.test, colsA4)
@@ -578,8 +581,18 @@ diagnostics(model_rfA5, All_sites.test, colsA5)
 #diagnostics(model_rfN6, All_sites.test, colsA6)
 #diagnostics(model_rfN7, All_sites.test, colsA7)
 #diagnostics(model_rfN8, All_sites.test, colsA8)
+importance_frame <- measure_importance(model_rfA5$finalModel)
+save(importance_frame, file = "importance_frame_rf5.rda")
+load("importance_frame_rf5.rda")
+plot_multi_way_importance(importance_frame, x_measure = "node_purity_increase", y_measure = "mse_increase", size_measure = "p_value", no_of_labels = 5)
+plot_multi_way_importance(importance_frame, size_measure = "no_of_nodes")
 
-saveRDS(model_rfA1, "/Users/mallory/Documents/Upscaling/RF_A1_12_6.rds")
+varImpPlot(model_rfA5$finalModel)
+plot_predict_interaction(model_rfA5$finalModel, All_sites, "NDVI", "spei6")
+model_rfA5$finalModel
+explain_forest(model_rfA5$finalModel, interactions = TRUE, data = All_sites)
+
+saveRDS(model_rfA2, "/Users/mallory/Documents/Upscaling/RF_A2_12_6.rds")
 saveRDS(model_rfA5, "/Users/mallory/Documents/Upscaling/RF_A5_12_6.rds")
 #saveRDS(model_rfN3, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
 #saveRDS(model_rfN4, "/Users/mallory/Documents/Upscaling/RF_N1_12_6.rds")
@@ -587,10 +600,10 @@ saveRDS(model_rfA5, "/Users/mallory/Documents/Upscaling/RF_A5_12_6.rds")
 #saveRDS(model_rfN6, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N6_5_8.rds")
 #saveRDS(model_rfN7, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N7_5_8.rds")
 #saveRDS(model_rfN8, "F:/Upscaling_Project/Upscaling_Project_2017/RF_N8_5_8.rds")
-
+plot_predict_interaction(model_rfA5$finalModel, All_sites, "spei6", "NDVI")
 #Attempting to assess seasonal cycle by running model back through input data----------
 Predicted <- All_sites
-Predicted$Barnes_GPP <- (predict(model_rfN4, All_sites))
+Predicted$Barnes_GPP <- (predict(model_rfA5$finalModel, All_sites))
 str(Predicted)
 #Split Apply Combine
 out2 <- split(Predicted, Predicted$site)
@@ -615,7 +628,7 @@ plot_seasonal <- function(y){
   q <- ggplot() +
     ggtitle(x$site)+
     geom_line(data = x, aes(x = month, group=1, y = GPP, color =I("red")), size=2) +
-    geom_line(data = x, aes(x = month, group=1, y = Barnes_GPP, color = I("purple")), size=2) +
+    geom_line(data = x, aes(x = month, group=1, y = Barnes_GPP, color = I("blue")), size=2) +
     geom_errorbar(data=x,aes(x=month, ymin=GPP-GPP_se,ymax=GPP+GPP_se),colour="red")+
     annotate("text", label = lbl1, parse=FALSE, x = 3, y = 4.5, size = 5, colour = "Black")+
     annotate("text", label = lbl2, parse=FALSE, x = 3, y = 5, size = 5, colour = "Black")+
@@ -627,7 +640,7 @@ plot_seasonal <- function(y){
     theme(legend.position = c(0, 0))
   
   plot(q)
-  ggsave(filename, device='png', width=16, height=16, plot=q, dpi = 300, units = "cm")
+  #ggsave(filename, device='png', width=16, height=16, plot=q, dpi = 300, units = "cm")
 }
 
 lapply(out2, plot_seasonal)
@@ -1788,4 +1801,23 @@ plot_seasonal_cycle_RF <- function(x){
 #split
 #apply (and write out)
 lapply(list_seasonsRF, plot_seasonal_cycle_RF)
-
+#Animate Raster Stack--------------
+library(raster)
+setwd("/Volumes/Elements/DATA/Upscaling_Project/Upscaled_GPP/AGU_Model_A1/")
+lst2007 <- list.files(pattern='*.tif')
+aJan <- raster("Jan_2007.tif")
+bFeb <- raster("Feb_2007.tif")
+cMar <- raster("Mar_2007.tif")
+dApr <- raster("Apr_2007.tif")
+eMay <- raster("May_2007.tif")
+fJun <- raster("Jun_2007.tif")
+gJul <- raster("Jul_2007.tif")
+hAug <- raster("Aug_2007.tif")
+iSep <- raster("Sep_2007.tif")
+jOct <- raster("Oct_2007.tif")
+kNov <- raster("Nov_2007.tif")
+lDec <- raster("Dec_2007.tif")
+stack2007 <- stack(aJan, bFeb, cMar, dApr, eMay, fJun, gJul, hAug, iSep, jOct, kNov, lDec)
+names(stack2007) <- c('January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December')
+animate(stack2007, pause=0.5, maxpixels=50000, n=12)
